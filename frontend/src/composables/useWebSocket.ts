@@ -1,4 +1,4 @@
-import { ref, computed, onUnmounted, readonly } from 'vue'
+import { ref, computed, readonly } from 'vue'
 import type {
   ConnectionState,
   WebSocketConfig,
@@ -372,10 +372,8 @@ export function useWebSocket(config: Partial<WebSocketConfig> = {}): UseWebSocke
     errorHandlers.push(callback)
   }
   
-  // Cleanup on component unmount
-  onUnmounted(() => {
-    disconnect()
-  })
+  // Note: Manual cleanup is preferred for composables
+  // Components should call disconnect() in their own onUnmounted hooks if needed
   
   return {
     // State

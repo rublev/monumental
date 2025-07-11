@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted, onUnmounted, ref } from 'vue'
 import { useWebSocket } from '@/composables/useWebSocket'
 import WebSocketStatus from '@/components/WebSocketStatus.vue'
 
@@ -71,6 +71,11 @@ function handleClearQueue() {
 // Auto-connect on mount for testing
 onMounted(() => {
   connect()
+})
+
+// Clean up on unmount
+onUnmounted(() => {
+  disconnect()
 })
 </script>
 

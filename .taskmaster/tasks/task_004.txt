@@ -1,6 +1,6 @@
 # Task ID: 4
 # Title: Create Three.js Scene with TresJS Components
-# Status: pending
+# Status: in-progress
 # Dependencies: 2
 # Priority: medium
 # Description: Implement a 3D scene using TresJS components with a rotating cube and OrbitControls from @tresjs/cientos
@@ -11,7 +11,7 @@ Create ThreeScene.vue component using <script setup lang="ts">. Import necessary
 Verify ThreeScene component renders without WebGL errors. Confirm green cube is visible and rotating smoothly. Test OrbitControls by clicking and dragging to rotate camera view. Check mouse wheel zoom functionality. Verify scene is responsive when resizing browser window. Ensure TypeScript provides proper type checking for all TresJS components and refs.
 
 # Subtasks:
-## 1. Install TresJS dependencies and create base component structure [pending]
+## 1. Install TresJS dependencies and create base component structure [done]
 ### Dependencies: None
 ### Description: Set up TresJS core packages and create the initial Vue component file with proper imports
 ### Details:
@@ -40,4 +40,10 @@ Create TresMesh with TresBoxGeometry (size 1x1x1) and TresMeshStandardMaterial w
 ### Description: Import and properly mount the 3D scene component in the main App.vue with appropriate styling
 ### Details:
 Import the created 3D scene component into App.vue, add it to the template with a proper container div, and style it to take appropriate space (e.g., height: 400px, width: 100%). Ensure the scene renders correctly alongside existing content.
+
+## 6. Fix Vue onUnmounted warning [pending]
+### Dependencies: None
+### Description: Fix the console warning: 'onUnmounted is called when there is no active component instance to be associated with' that appears when using the WebSocket composable
+### Details:
+The warning occurs because the useWebSocket composable calls onUnmounted for cleanup, but it may be called outside of a component setup context. Need to add proper guards to ensure lifecycle hooks are only called within active component instances.
 

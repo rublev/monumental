@@ -24,7 +24,11 @@
       "mcp__task-master-ai__update_task",
       "mcp__task-master-ai__update_subtask",
       "Bash(mv:*)",
-      "Bash(pnpm install:*)"
+      "Bash(pnpm install:*)",
+      "mcp__tavily-mcp__tavily-extract",
+      "mcp__playwright__browser_navigate",
+      "Bash(pkill:*)",
+      "mcp__playwright__browser_console_messages"
     ],
     "deny": []
   }
