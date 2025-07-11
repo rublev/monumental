@@ -19,6 +19,7 @@ const {
 } = useWebSocket()
 
 const queueStatus = ref(getQueueStatus())
+const isExpanded = ref(false)
 
 // Test message handler
 onMessage((message) => {
@@ -81,9 +82,35 @@ onUnmounted(() => {
 
 <template>
   <div class="w-full">
-    <div class="bg-white rounded-lg shadow-md p-4">
-      <h2 class="text-xl font-bold text-gray-900 mb-4">WebSocket Test</h2>
+    <div class="bg-white rounded-lg shadow-md">
+      <!-- Header with toggle button -->
+      <div 
+        class="p-4 cursor-pointer flex items-center justify-between rounded-t-lg"
+        @click="isExpanded = !isExpanded"
+      >
+        <h2 class="text-xl font-bold text-gray-900">WebSocket Test</h2>
+        <div class="flex items-center space-x-2">
+          <!-- Status indicator -->
+          <WebSocketStatus 
+            :connection-state="connectionState"
+            :client-id="clientId"
+          />
+          <!-- Expand/collapse icon -->
+          <svg 
+            class="w-5 h-5 text-gray-500 transition-transform duration-200"
+            :class="{ 'rotate-180': isExpanded }"
+            fill="none" 
+            stroke="currentColor" 
+            viewBox="0 0 24 24"
+          >
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </div>
+      </div>
       
+      <!-- Collapsible content -->
+      <div v-show="isExpanded" class="border-t border-gray-200 p-4">
+        
       <!-- Connection Status -->
       <div class="mb-4">
         <h3 class="text-base font-semibold text-gray-700 mb-2">Connection Status</h3>
@@ -196,6 +223,8 @@ onUnmounted(() => {
           <li>• Try stopping the backend to test reconnection and queuing</li>
         </ul>
       </div>
+      
+      </div> <!-- End collapsible content -->
     </div>
   </div>
 </template>

@@ -4,7 +4,7 @@ import ThreeScene from '@/components/ThreeScene.vue'
 </script>
 
 <template>
-  <div class="px-4 py-6 sm:px-0 space-y-6">
+  <div class="px-4 pb-6 sm:px-0 space-y-6">
     <!-- WebSocket Test Component -->
     <WebSocketTest />
     <!-- Three.js Scene Component -->
