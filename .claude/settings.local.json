@@ -28,7 +28,10 @@
       "mcp__tavily-mcp__tavily-extract",
       "mcp__playwright__browser_navigate",
       "Bash(pkill:*)",
-      "mcp__playwright__browser_console_messages"
+      "mcp__playwright__browser_console_messages",
+      "mcp__playwright__browser_take_screenshot",
+      "mcp__playwright__browser_press_key",
+      "mcp__playwright__browser_snapshot"
     ],
     "deny": []
   }
