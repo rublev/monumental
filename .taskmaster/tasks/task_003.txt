@@ -42,7 +42,7 @@ Implement message queue to store messages when disconnected. Add `send()` method
 Track connection state, reconnection attempts, and last connection time. Implement ping/pong for latency measurement. Add message counters for sent/received/failed messages. Create computed properties for connection health indicators. Use Vue 3's reactive/ref for all state variables.
 
 ## 6. Design connection status UI component with visual indicators [done]
-### Dependencies: 3.5
+### Dependencies: None
 ### Description: Create a reusable Vue component to display WebSocket connection status and controls
 ### Details:
 Build `WebSocketStatus.vue` component showing connection state with color-coded indicators. Display reconnection attempts and countdown timer. Add manual reconnect button when disconnected. Show latency and message statistics in development mode. Use Tailwind CSS for styling with smooth transitions.

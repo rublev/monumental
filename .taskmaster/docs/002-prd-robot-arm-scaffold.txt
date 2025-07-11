@@ -1,0 +1,234 @@
+# Product Requirements Document: 4-DOF Robotic Crane Visualization System
+
+## Project Overview
+
+Transform the existing Vue3 + TypeScript + TresJS demo into a 4-DOF robotic crane visualization and control system for a job assignment demonstration. This system will showcase real-time 3D visualization of a robotic crane with intuitive control interfaces and WebSocket-based communication.
+
+## Core Requirements
+
+### 1. Robotic Crane Model (4-DOF + Gripper)
+- **Swing**: 360deg base rotation around vertical axis
+- **Lift**: Vertical linear movement of boom assembly along tower mast
+- **Elbow**: Horizontal boom arm rotation for reach positioning
+- **Wrist**: End effector assembly rotation for orientation control
+- **Gripper**: Linear extension/retraction mechanism (not counted in DOF)
+
+### 2. Backend Mock Crane System
+- **State Management**: Store current actuator positions (swing deg, lift mm, elbow deg, wrist deg, gripper mm)
+- **Motion Planning**: Apply movement commands with realistic speeds and acceleration per actuator
+- **WebSocket Streaming**: Broadcast current state to frontend at fixed interval (30-60fps)
+- **Command Processing**: Receive and execute movement commands from frontend
+- **Inverse Kinematics**: Calculate desired robotic pose from 3D coordinates submitted by frontend
+
+### 3. 3D Visualization System
+- Replace rotating cube with detailed 4-DOF crane model
+- Real-time crane state rendering using TresJS/Three.js
+- Smooth joint animations with interpolation
+- Visual feedback for gripper state and collision warnings
+- Camera controls for optimal viewing angles
+
+### 4. Control Interface
+- **Manual Joint Controls**: Individual sliders for swing, elbow, wrist, lift, and gripper
+- **Inverse Kinematics Controls**: 
+  - X, Y, Z numeric input fields with "Go to Position" button
+  - Click-to-position: click anywhere in 3D space to move gripper there
+  - Raycasting system for accurate 3D coordinate selection
+- **Visual Feedback**: Target sphere showing IK destination, joint angle displays
+- **Preset Positions**: Common crane configurations (home, extended, pickup, etc.)
+- **Emergency Stop**: Immediate halt of all actuators
+- **Status Display**: Real-time joint angles, target coordinates, and gripper state
+
+### 5. Inverse Kinematics System
+- **CCDIKSolver Integration**: Use Three.js CCDIKSolver with CCD (Cyclic Coordinate Descent) algorithm
+- **Bone Chain Structure**: Root → Swing → Lift → Elbow → Wrist → Gripper end effector
+- **Joint Constraints**: rotationMin/rotationMax limits for each joint to prevent invalid positions
+- **Target-Based Control**: Click coordinate → set target bone position → automatic joint solving
+- **Real-time Updates**: IK solver integration with render loop for smooth motion
+
+### 6. Physics Engine Integration
+- **Rapier.js Physics**: WebAssembly-based physics engine for optimal performance
+- **Simple API**: `physics.addMesh(brick, mass, restitution)` for easy object physics
+- **Collision Detection**: Ground plane and brick-to-brick interactions
+- **Gravity Simulation**: Realistic falling and stacking behavior
+- **Performance**: Real-time physics at 60fps for smooth interactions
+
+### 7. Interactive Objects System
+- **Brick Spawning**: UI controls to create rectangular brick objects
+- **Physics Properties**: Configurable mass, bounce, and friction for each brick
+- **Pickup Detection**: Proximity-based detection when gripper approaches objects
+- **Visual Feedback**: Highlight grabbable objects, show pickup/attached states
+- **Stacking Behavior**: Stable brick-on-brick placement with physics constraints
+
+## Technical Architecture
+
+### IK Bone Chain Specification
+
+```javascript
+// Crane bone hierarchy for CCDIKSolver
+const craneIKConfig = {
+  target: 6,      // Target bone (gripper target position)
+  effector: 5,    // End effector (gripper bone)
+  links: [
+    {
+      index: 4,   // Wrist joint
+      rotationMin: new THREE.Vector3(-Math.PI/2, -Math.PI, -Math.PI/2),
+      rotationMax: new THREE.Vector3(Math.PI/2, Math.PI, Math.PI/2)
+    },
+    {
+      index: 3,   // Elbow joint  
+      rotationMin: new THREE.Vector3(-Math.PI, -Math.PI/4, -Math.PI),
+      rotationMax: new THREE.Vector3(Math.PI, Math.PI/2, Math.PI)
+    },
+    {
+      index: 2,   // Lift mechanism (converted to rotational for IK)
+      rotationMin: new THREE.Vector3(0, -Math.PI, 0),
+      rotationMax: new THREE.Vector3(Math.PI/2, Math.PI, 0)
+    },
+    {
+      index: 1,   // Swing/base rotation
+      rotationMin: new THREE.Vector3(-Math.PI, -Math.PI, -Math.PI),
+      rotationMax: new THREE.Vector3(Math.PI, Math.PI, Math.PI)
+    }
+  ]
+}
+```
+
+### Backend Components
+1. **Mock Crane State Management**
+   - Store current actuator positions: swing (deg), lift (mm), elbow (deg), wrist (deg), gripper (mm)
+   - Motion planning with realistic speeds and acceleration per actuator
+   - State validation and constraint enforcement
+   - Real-time state updates
+
+2. **WebSocket Server (uWebSockets.js)**
+   - Stream current crane state to frontend at fixed interval (30-60fps)
+   - Receive movement commands from frontend
+   - Receive coordinate inputs for inverse kinematics
+   - Broadcast state updates to connected clients
+
+3. **Inverse Kinematics Solver**
+   - Calculate desired robotic pose from 3D coordinates
+   - Simple analytical IK for 4-DOF crane (per REQUIREMENTS.md)
+   - Apply IK solution to mock crane state with motion planning
+   - Handle unreachable positions gracefully
+
+### Frontend Components
+1. **3D Crane Visualization (Three.js/TresJS)**
+   - WebGL-based 3D crane model reflecting backend state
+   - Real-time rendering of actuator positions received via WebSocket
+   - Camera controls (OrbitControls) for optimal viewing
+   - Visual feedback for current crane pose
+
+2. **UI Control Interface**
+   - Individual actuator controls (sliders/inputs) for manual movement
+   - X, Y, Z coordinate input fields for inverse kinematics
+   - Click-to-position: raycasting for 3D coordinate selection
+   - Visual target sphere showing IK destination
+   - Send commands to backend via WebSocket
+
+3. **WebSocket Client & State Management**
+   - Receive real-time crane state updates from backend
+   - Send movement commands and coordinate inputs to backend
+   - Handle connection states and error conditions
+   - Synchronize UI with received crane state
+
+## User Experience Goals
+
+### Primary Use Cases
+1. **Crane Operator**: Control crane movement through intuitive interfaces
+2. **Observer**: Monitor crane operations and system status
+3. **Trainer**: Use system for crane operation education
+
+### Interaction Patterns
+- **Direct Manipulation**: Click and drag joints in 3D space
+- **Precision Control**: Numeric input for exact positioning
+- **Visual Feedback**: Immediate response to all user actions
+- **Error Prevention**: Clear indication of invalid operations
+
+## Technical Constraints
+- Build on existing Vue3 + TypeScript + TresJS foundation
+- Maintain WebSocket communication architecture
+- Use Tailwind CSS for consistent styling
+- Support minimum 60fps 3D rendering performance
+- Browser compatibility: Chrome, Firefox, Safari (latest versions)
+
+## Implementation Phases
+
+### Phase 1: Basic Backend + Frontend WebSocket Communication
+- **Backend**: Mock crane with actuator state storage (swing, lift, elbow, wrist, gripper)
+- **WebSocket Server**: Stream current state to frontend at fixed interval
+- **Frontend**: Basic 3D crane visualization reflecting WebSocket state
+- **Communication**: Backend owns state, frontend renders received data
+- End-to-end working system per REQUIREMENTS.md
+
+### Phase 2: Manual Actuator Controls
+- **Frontend UI**: Individual controls for each actuator (sliders/inputs)
+- **Command Sending**: Frontend sends movement commands via WebSocket
+- **Backend Motion**: Apply commands with realistic speeds and acceleration  
+- **Visual Feedback**: Smooth crane animation as backend state updates
+- Working manual control system per REQUIREMENTS.md
+
+### Phase 3: Inverse Kinematics Coordinate Input
+- **Frontend Input**: X, Y, Z coordinate input fields + click-to-position
+- **Backend IK Solver**: Calculate desired pose from 3D coordinates
+- **Command Processing**: Backend applies IK solution with motion planning
+- **Visual Target**: Show target sphere and smooth movement to position
+- Complete IK system per REQUIREMENTS.md
+
+### Phase 4: Brick Spawning System (Beyond Requirements)
+- Add Rapier.js physics engine to frontend
+- "Spawn Brick" UI button to add rectangular objects  
+- Brick physics properties and gravity simulation
+- Backend awareness of brick positions via WebSocket
+- Multiple bricks can exist simultaneously
+
+### Phase 5: Pick and Place Functionality (Beyond Requirements)
+- Gripper proximity detection for bricks
+- Visual feedback for grabbable objects
+- Backend pickup/release commands via WebSocket
+- Stable brick stacking with physics simulation
+- Complete pick-and-place demo capability
+
+## Development Tools & Debugging
+
+### CCDIKHelper Integration
+- **Visual Bone Chain**: Use CCDIKHelper to visualize bone connections during development
+- **Constraint Testing**: Visual feedback for rotation limits and joint behavior
+- **IK Debugging**: Real-time visualization of target positions and bone solving
+
+```javascript
+// Development helper setup
+import { CCDIKHelper } from 'three/addons/animation/CCDIKSolver.js';
+const ikHelper = new CCDIKHelper(skinnedMesh, ikConfigs, 0.01);
+scene.add(ikHelper);
+```
+
+### Integration Workflow
+1. **Model Creation**: Build SkinnedMesh crane with proper bone hierarchy
+2. **IK Configuration**: Set up CCDIKSolver with joint constraints
+3. **Target Control**: Create interactive target bone for coordinate input
+4. **Render Loop**: Call `ikSolver.update()` before rendering
+5. **WebSocket Sync**: Broadcast bone positions to backend for simulation
+
+## Risk Mitigation
+- **Performance**: Optimize 3D rendering and IK calculations for 60fps target
+- **Complexity**: Break down into manageable, testable components  
+- **IK Convergence**: Handle cases where target positions are unreachable
+- **Joint Limits**: Ensure constraints prevent invalid crane configurations
+- **Technical Debt**: Maintain clean architecture and documentation
+
+## Future Enhancements (Optional)
+
+### Advanced Physics Features
+- **Path Planning**: Smooth trajectory generation between positions
+- **Safety Zones**: Visual workspace boundaries and collision avoidance
+- **Advanced Constraints**: Complex joint coupling and workspace limitations
+- **Soft Body Physics**: Rope/cable simulation for more realistic crane behavior
+
+### User Experience Improvements
+- **Preset Positions**: Common crane configurations (home, extended, pickup, etc.)
+- **Routine Recording**: Capture and replay sequences of movements
+- **Error States**: Better handling of unreachable positions and constraints
+- **Performance Optimization**: Further optimization for complex scenes
+
+This PRD implements the complete REQUIREMENTS.md assignment plus brick spawning and pick-and-place functionality for an impressive job assignment demonstration.
