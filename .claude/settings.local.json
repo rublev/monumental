@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__task-master-ai__parse_prd",
+      "mcp__task-master-ai__analyze_project_complexity",
+      "mcp__task-master-ai__complexity_report",
+      "mcp__context7__resolve-library-id",
+      "mcp__context7__get-library-docs",
+      "WebFetch(domain:github.com)",
+      "mcp__task-master-ai__update",
+      "mcp__task-master-ai__expand_all"
+    ],
+    "deny": []
+  }
+}

@@ -1,0 +1,379 @@
+{
+  "master": {
+    "tasks": [
+      {
+        "id": 1,
+        "title": "Initialize Backend with uWebSockets.js and TypeScript",
+        "description": "Set up the backend project structure with uWebSockets.js v20.52.0 for WebSocket communication using TypeScript",
+        "status": "pending",
+        "dependencies": [],
+        "priority": "high",
+        "details": "Create a new directory for the backend (e.g., 'backend' or 'server'). Initialize package.json with npm init -y. Install uWebSockets.js v20.52.0 using npm install uWebSockets.js@20.52.0. Install TypeScript and necessary types: npm install -D typescript @types/node. Create tsconfig.json with appropriate Node.js settings. Create a server file (server.ts) that imports uWebSockets.js with proper TypeScript types. Set up a uWebSockets.js app instance using App() constructor. Configure the WebSocket endpoint using app.ws('/ws', { message: (ws, message, isBinary) => {} }) pattern. Implement message echo functionality in the message handler. Add open and close handlers for connection tracking. Set the server to listen on port 8080 using app.listen(8080, (token) => {}). Add npm scripts for build (tsc) and start (node dist/server.js) in package.json.",
+        "testStrategy": "Compile TypeScript code and verify no type errors. Start the server and verify it runs without errors on port 8080. Use a WebSocket testing tool like wscat or Postman to connect to ws://localhost:8080/ws and send test messages. Verify that messages are echoed back correctly and connection/disconnection events are handled properly. Test server graceful shutdown with Ctrl+C.",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Initialize Node.js project and directory structure",
+            "description": "Create a new Node.js project with proper directory structure for the backend WebSocket server",
+            "dependencies": [],
+            "details": "Initialize npm project with package.json, create src directory for source files, setup basic project structure including directories for handlers, utils, and config. Create .gitignore file with node_modules and other common exclusions.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 2,
+            "title": "Install and configure uWebSockets.js",
+            "description": "Install uWebSockets.js library and set up basic server configuration",
+            "dependencies": [
+              1
+            ],
+            "details": "Install uWebSockets.js using npm install uWebSockets.js. Create a server configuration file that imports the library and sets up basic server options including port configuration, compression settings, and SSL options (if needed). Ensure compatibility with the project's Node.js version.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 3,
+            "title": "Implement WebSocket endpoint and message handlers",
+            "description": "Create WebSocket endpoint with proper message handling for client-server communication",
+            "dependencies": [
+              2
+            ],
+            "details": "Implement the main WebSocket endpoint (e.g., /ws) with handlers for different message types. Create message parsing logic to handle JSON payloads, implement basic message validation, and set up response formatting. Include error handling for malformed messages.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 4,
+            "title": "Implement connection lifecycle management",
+            "description": "Handle WebSocket connection events including open, close, and error states",
+            "dependencies": [
+              3
+            ],
+            "details": "Implement connection tracking with unique client IDs, handle connection open events with proper initialization, implement graceful connection closing with cleanup logic, add error handling for connection failures, and create a connection pool or map to track active connections.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 5,
+            "title": "Configure server startup and environment settings",
+            "description": "Set up server initialization, environment configuration, and startup scripts",
+            "dependencies": [
+              4
+            ],
+            "details": "Create main server entry point (e.g., index.js or server.js), implement environment variable loading for configuration (PORT, HOST, etc.), add server startup logging, create npm scripts for development and production modes, and implement graceful shutdown handling for process termination.",
+            "status": "pending",
+            "testStrategy": ""
+          }
+        ]
+      },
+      {
+        "id": 2,
+        "title": "Initialize Vue 3 Frontend with Composition API, TypeScript, and Core Dependencies",
+        "description": "Create Vue 3 project with Composition API (<script setup>), TypeScript support, and install TresJS, Tailwind CSS v4.1, and shadcn-vue",
+        "status": "pending",
+        "dependencies": [],
+        "priority": "high",
+        "details": "Use npm create vue@latest to scaffold a new Vue 3 project with TypeScript and Composition API support. Ensure project uses <script setup> syntax throughout. Install and configure Tailwind CSS v4.1: npm install tailwindcss@next @tailwindcss/postcss@next postcss autoprefixer. Create tailwind.config.js and configure content paths for Vue files. Add Tailwind directives (@tailwind base; @tailwind components; @tailwind utilities;) to main CSS file. Install TresJS packages: npm install @tresjs/core @tresjs/cientos three @types/three for Three.js Vue integration. Install and configure shadcn-vue following their Vue setup guide - install dependencies (radix-vue, clsx, tailwind-merge, class-variance-authority) and set up components.json. Create project structure with components/, views/, composables/, and types/ directories. Update App.vue to use <script setup lang=\"ts\"> with a clean starting template.",
+        "testStrategy": "Run npm run dev and verify the Vue 3 application starts without TypeScript errors. Create a test component using <script setup lang=\"ts\"> syntax and verify it works. Test Tailwind CSS by applying classes and checking styles are applied. Import and use a shadcn-vue Button component to verify proper setup. Ensure no console errors in browser developer tools. Verify all dependencies are compatible and no version conflicts exist.",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Create Vue3 project with TypeScript support",
+            "description": "Initialize a new Vue3 project using create-vue with TypeScript template and essential configurations",
+            "dependencies": [],
+            "details": "Use 'npm create vue@latest' or 'pnpm create vue' with TypeScript option enabled. Select Vue Router, Pinia for state management, and ESLint + Prettier for code quality. Ensure the project uses Vite as the build tool for optimal performance.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 2,
+            "title": "Install and configure Tailwind CSS v4.1",
+            "description": "Set up Tailwind CSS v4.1 with PostCSS configuration and create initial styling structure",
+            "dependencies": [
+              1
+            ],
+            "details": "Install Tailwind CSS v4.1 beta using 'npm install tailwindcss@next @tailwindcss/postcss@next'. Create tailwind.config.ts with TypeScript support. Set up CSS entry file with Tailwind directives. Configure PostCSS with autoprefixer. Update vite.config.ts to ensure proper CSS processing.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 3,
+            "title": "Install and configure TresJS for 3D graphics",
+            "description": "Add TresJS library and set up basic 3D scene configuration with TypeScript types",
+            "dependencies": [
+              1
+            ],
+            "details": "Install @tresjs/core and @tresjs/cientos packages. Create a basic TresJS plugin file for Vue app registration. Set up TypeScript declarations for TresJS components. Configure vite.config.ts to handle GLSL shaders if needed. Create a sample 3D component to verify installation.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 4,
+            "title": "Set up Shadcn/vue component library",
+            "description": "Install and configure shadcn/vue with TypeScript support and Tailwind CSS integration",
+            "dependencies": [
+              1,
+              2
+            ],
+            "details": "Install shadcn-vue CLI and run initialization. Configure components.json with TypeScript paths and Tailwind CSS. Set up the required dependencies: radix-vue, clsx, tailwind-merge, class-variance-authority. Create lib/utils.ts for cn() helper function. Install and configure lucide-vue for icons.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 5,
+            "title": "Organize project structure",
+            "description": "Create a scalable folder structure following Vue3 and TypeScript best practices",
+            "dependencies": [
+              1
+            ],
+            "details": "Create directories: src/components (UI components), src/views (page components), src/composables (Vue composables), src/utils (utility functions), src/types (TypeScript types), src/assets (static assets), src/styles (global styles). Set up path aliases in tsconfig.json and vite.config.ts for clean imports like '@/components'.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 6,
+            "title": "Clean up initial template and configure base files",
+            "description": "Remove boilerplate code and set up essential configuration files",
+            "dependencies": [
+              1,
+              2,
+              3,
+              4,
+              5
+            ],
+            "details": "Remove default Vue components and styles. Update App.vue with a clean layout structure. Configure index.html with proper meta tags. Set up environment variables (.env files). Update README.md with project information. Configure .gitignore for Vue/TypeScript project. Create a base layout component structure.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 7,
+            "title": "Verify all dependencies and create integration test",
+            "description": "Ensure all libraries work together and create a demo component using all technologies",
+            "dependencies": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6
+            ],
+            "details": "Run type checking with 'vue-tsc --noEmit'. Verify build process with 'npm run build'. Create a demo component that uses Shadcn/vue UI components, Tailwind CSS styling, and TresJS 3D graphics. Test hot module replacement (HMR) functionality. Document any version conflicts or workarounds needed. Set up basic error boundary for 3D content.",
+            "status": "pending",
+            "testStrategy": ""
+          }
+        ]
+      },
+      {
+        "id": 3,
+        "title": "Implement WebSocket Client Connection with Vue 3 Composable",
+        "description": "Create WebSocket client functionality using Vue 3 Composition API with TypeScript and reactive state management",
+        "status": "pending",
+        "dependencies": [
+          1,
+          2
+        ],
+        "priority": "medium",
+        "details": "Create a composable (useWebSocket.ts) in composables directory using native WebSocket API. Define TypeScript interfaces for message types and connection states. Use ref() for WebSocket instance and reactive() for connection state (status: 'connecting' | 'connected' | 'disconnected'). Implement connection logic to ws://localhost:8080/ws with reconnection capability using exponential backoff. Create typed methods: connect(), disconnect(), send(message: MessageType), with proper error handling. Add WebSocket event handlers (onopen, onclose, onerror, onmessage) updating reactive state. Implement auto-reconnection logic with configurable max attempts. Export composable with full TypeScript types. In App.vue, use the composable with <script setup lang=\"ts\">: const { status, connect, send } = useWebSocket(). Call connect() in onMounted lifecycle hook. Display connection status using shadcn-vue Badge component with dynamic styling based on status.",
+        "testStrategy": "Start both backend and frontend servers. Verify TypeScript compilation has no errors. Check browser console for successful WebSocket connection. Test sending typed messages and verify they're echoed back. Stop backend server and verify reconnection attempts with exponential backoff. Restart backend and confirm automatic reconnection. Verify reactive status updates trigger UI changes in the Badge component.",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Create WebSocket composable with TypeScript interfaces",
+            "description": "Create a Vue 3 composable for WebSocket connection management with proper TypeScript typing",
+            "dependencies": [],
+            "details": "Create `useWebSocket.ts` composable in the composables directory. Define TypeScript interfaces for WebSocket message types, connection options, and state. Include generic type parameters for message payload types. Set up the basic composable structure with reactive state variables.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 2,
+            "title": "Implement WebSocket connection lifecycle methods",
+            "description": "Add connect, disconnect, and connection state management to the WebSocket composable",
+            "dependencies": [
+              1
+            ],
+            "details": "Implement `connect()` method with WebSocket initialization and event listeners. Add `disconnect()` method with proper cleanup. Create reactive state for connection status (connecting, connected, disconnected, error). Handle WebSocket open, close, and error events.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 3,
+            "title": "Add automatic reconnection with exponential backoff",
+            "description": "Implement reconnection logic with configurable retry attempts and exponential backoff strategy",
+            "dependencies": [
+              2
+            ],
+            "details": "Create reconnection mechanism that triggers on unexpected disconnections. Implement exponential backoff algorithm with configurable base delay and max attempts. Add jitter to prevent thundering herd. Provide manual reconnect method and ability to cancel reconnection attempts.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 4,
+            "title": "Build message queue and handler system",
+            "description": "Create a robust message handling system with queuing for offline messages",
+            "dependencies": [
+              2
+            ],
+            "details": "Implement message queue to store messages when disconnected. Add `send()` method with automatic queuing when offline. Create message handler registration system with event emitter pattern. Add JSON parsing/stringifying with error handling. Implement message acknowledgment tracking if needed.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 5,
+            "title": "Create reactive state management for connection metrics",
+            "description": "Add comprehensive state tracking for connection status, latency, and message statistics",
+            "dependencies": [
+              3,
+              4
+            ],
+            "details": "Track connection state, reconnection attempts, and last connection time. Implement ping/pong for latency measurement. Add message counters for sent/received/failed messages. Create computed properties for connection health indicators. Use Vue 3's reactive/ref for all state variables.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 6,
+            "title": "Design connection status UI component with visual indicators",
+            "description": "Create a reusable Vue component to display WebSocket connection status and controls",
+            "dependencies": [
+              5
+            ],
+            "details": "Build `WebSocketStatus.vue` component showing connection state with color-coded indicators. Display reconnection attempts and countdown timer. Add manual reconnect button when disconnected. Show latency and message statistics in development mode. Use Tailwind CSS for styling with smooth transitions.",
+            "status": "pending",
+            "testStrategy": ""
+          }
+        ]
+      },
+      {
+        "id": 4,
+        "title": "Create Three.js Scene with TresJS Components",
+        "description": "Implement a 3D scene using TresJS components with a rotating cube and OrbitControls from @tresjs/cientos",
+        "status": "pending",
+        "dependencies": [
+          2
+        ],
+        "priority": "medium",
+        "details": "Create ThreeScene.vue component using <script setup lang=\"ts\">. Import necessary types from @tresjs/core and @tresjs/cientos. Set up scene with <TresCanvas> component with window-size prop for responsiveness. Add <TresPerspectiveCamera> with :position=\"[0, 0, 5]\" and :look-at=\"[0, 0, 0]\". Include <TresAmbientLight> with :intensity=\"0.5\" and <TresDirectionalLight> with :position=\"[5, 5, 5]\". Create rotating cube using: <TresMesh ref=\"cubeRef\"> with nested <TresBoxGeometry :args=\"[1, 1, 1]\" /> and <TresMeshBasicMaterial :color=\"0x00ff88\" />. Import and add <OrbitControls> from @tresjs/cientos for camera interaction. Use useRenderLoop from @tresjs/core or onBeforeRender to rotate cube: cubeRef.value.rotation.x += 0.01. Add component to App.vue with proper sizing (e.g., class=\"w-full h-96\"). Include TypeScript types for all refs and props.",
+        "testStrategy": "Verify ThreeScene component renders without WebGL errors. Confirm green cube is visible and rotating smoothly. Test OrbitControls by clicking and dragging to rotate camera view. Check mouse wheel zoom functionality. Verify scene is responsive when resizing browser window. Ensure TypeScript provides proper type checking for all TresJS components and refs.",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Install TresJS dependencies and create base component structure",
+            "description": "Set up TresJS core packages and create the initial Vue component file with proper imports",
+            "dependencies": [],
+            "details": "Install @tresjs/core and @tresjs/cientos packages. Create a new Vue component file for the 3D scene with basic template structure and script setup. Import necessary TresJS components like TresCanvas, TresMesh, and other primitives.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 2,
+            "title": "Configure camera positioning and viewport settings",
+            "description": "Set up the perspective camera with proper position, field of view, and responsive viewport handling",
+            "dependencies": [
+              1
+            ],
+            "details": "Configure TresPerspectiveCamera with position at [0, 0, 5], set appropriate field of view (75 degrees), and ensure the canvas fills its container with proper aspect ratio. Add window resize handling for responsive behavior.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 3,
+            "title": "Implement ambient and directional lighting",
+            "description": "Add lighting to the scene for proper 3D object visibility and depth perception",
+            "dependencies": [
+              1
+            ],
+            "details": "Add TresAmbientLight with low intensity (0.5) for base illumination and TresDirectionalLight positioned at [5, 5, 5] with higher intensity for shadows and highlights. Configure light colors as needed.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 4,
+            "title": "Create rotating 3D cube mesh with material",
+            "description": "Build the 3D cube geometry with material and implement rotation animation using composables",
+            "dependencies": [
+              1
+            ],
+            "details": "Create TresMesh with TresBoxGeometry (size 1x1x1) and TresMeshStandardMaterial with a color. Use useRenderLoop composable from @tresjs/core to animate rotation on X and Y axes. Store mesh reference using template refs.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 5,
+            "title": "Integrate 3D scene component into main application",
+            "description": "Import and properly mount the 3D scene component in the main App.vue with appropriate styling",
+            "dependencies": [
+              1,
+              2,
+              3,
+              4
+            ],
+            "details": "Import the created 3D scene component into App.vue, add it to the template with a proper container div, and style it to take appropriate space (e.g., height: 400px, width: 100%). Ensure the scene renders correctly alongside existing content.",
+            "status": "pending",
+            "testStrategy": ""
+          }
+        ]
+      },
+      {
+        "id": 5,
+        "title": "Integration with shadcn-vue Components and Final Polish",
+        "description": "Integrate WebSocket status display using shadcn-vue components, add error handling, and create clear documentation",
+        "status": "pending",
+        "dependencies": [
+          3,
+          4
+        ],
+        "priority": "low",
+        "details": "Create StatusDisplay.vue component using <script setup lang=\"ts\"> and shadcn-vue Card component. Inside Card, use Badge component with computed color based on WebSocket status (green for connected, yellow for connecting, red for disconnected). Add error handling with try-catch blocks in WebSocket composable and Three.js initialization. Display errors using shadcn-vue Alert component with error variant. Keep console logging simple and descriptive (e.g., 'WebSocket connected', 'WebSocket error:', error). Clean up code: remove unused imports, ensure consistent TypeScript usage. Create README.md with: project overview, prerequisites (Node.js 18+), installation steps (cd backend && npm install, cd frontend && npm install), running instructions (backend: npm start, frontend: npm run dev), basic architecture explanation. Add proper TypeScript interfaces for all WebSocket message formats in types/websocket.ts. Ensure all components use <script setup lang=\"ts\"> consistently.",
+        "testStrategy": "Test complete flow: start backend, start frontend, verify connection status shows in UI. Test error states by stopping backend and checking error display. Verify console logs are helpful and not excessive. Follow README instructions in a clean environment to ensure accuracy. Run npm run type-check to verify no TypeScript errors. Test UI components resize properly and maintain functionality.",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Create WebSocket Status UI Component",
+            "description": "Implement a React component that displays real-time WebSocket connection status with visual indicators",
+            "dependencies": [],
+            "details": "Create a StatusIndicator component in src/components/StatusIndicator.tsx that shows connection state (connected/disconnected/connecting) with appropriate colors (green/red/yellow). Include reconnection attempt counter and last connection timestamp. Use existing WebSocket context for state management.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 2,
+            "title": "Implement Comprehensive Error Handling",
+            "description": "Add robust error handling across WebSocket connections, API calls, and UI interactions",
+            "dependencies": [],
+            "details": "Implement try-catch blocks in WebSocket event handlers, add error boundaries for React components, create centralized error logging utility, handle network failures gracefully with user-friendly messages, and implement exponential backoff for reconnection attempts.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 3,
+            "title": "Code Cleanup and Optimization",
+            "description": "Refactor and optimize existing codebase for better performance and maintainability",
+            "dependencies": [
+              1,
+              2
+            ],
+            "details": "Remove unused imports and dead code, consolidate duplicate logic, optimize re-renders with React.memo and useMemo, ensure proper cleanup in useEffect hooks, standardize naming conventions, and add TypeScript types where missing.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 4,
+            "title": "Write Comprehensive README Documentation",
+            "description": "Create detailed README.md with setup instructions, architecture overview, and usage examples",
+            "dependencies": [
+              3
+            ],
+            "details": "Document project overview and features, provide step-by-step installation and setup instructions, explain WebSocket architecture and connection flow, include API endpoints documentation, add troubleshooting section for common issues, and provide code examples for key features.",
+            "status": "pending",
+            "testStrategy": ""
+          }
+        ]
+      }
+    ],
+    "metadata": {
+      "created": "2025-07-11T19:14:02.076Z",
+      "updated": "2025-07-11T19:14:02.077Z",
+      "description": "Tasks for master context"
+    }
+  }
+}

@@ -1,0 +1,83 @@
+# Overview
+Create a minimal full-stack application with Vue3/TypeScript frontend and uWebSockets.js backend. The project demonstrates basic WebSocket communication and renders a simple Three.js scene. Focus on simplicity and readability.
+
+# Core Features
+1. **Frontend Setup**
+   - Vue3 with TypeScript configuration
+   - TresJS for Three.js integration
+   - Tailwind CSS v4.1 for styling
+   - Shadcn/vue for UI components
+
+2. **Backend Setup**
+   - Simple uWebSockets.js server
+   - Basic WebSocket endpoint
+   - Minimal configuration
+
+3. **WebSocket Communication**
+   - Basic connection between frontend and backend
+   - Simple message exchange
+   - Console logging of connection status and messages
+
+4. **Three.js Scene**
+   - Basic 3D scene with TresJS
+   - Simple geometry (cube or sphere)
+   - Basic lighting and camera setup
+   - Visible in browser
+
+# Technical Architecture
+**Frontend:**
+- Vue3 project with TypeScript
+- TresJS for Three.js in Vue
+- Tailwind v4.1 configuration
+- Shadcn/vue component setup
+- WebSocket client connection
+
+**Backend:**
+- uWebSockets.js server
+- Single WebSocket endpoint
+- Basic message handling
+- Simple server setup file
+
+# Development Roadmap
+**Phase 1 - Backend Setup:**
+- Initialize backend project with package.json
+- Install uWebSockets.js
+- Create basic WebSocket server
+- Add simple message echo functionality
+- Test server runs on specified port
+
+**Phase 2 - Frontend Setup:**
+- Initialize Vue3 project with TypeScript
+- Configure Tailwind CSS v4.1
+- Install and configure TresJS
+- Setup Shadcn/vue
+- Create basic project structure
+
+**Phase 3 - WebSocket Connection:**
+- Implement WebSocket client in frontend
+- Connect to backend server
+- Send test message on connection
+- Display connection status in console
+- Echo messages back and forth
+
+**Phase 4 - Three.js Scene:**
+- Create basic TresJS scene component
+- Add simple 3D object (rotating cube)
+- Setup camera and lighting
+- Render scene in main view
+- Ensure scene is visible and working
+
+**Phase 5 - Integration:**
+- Display WebSocket status using Shadcn component
+- Log all WebSocket events to console
+- Clean up and simplify code
+- Add basic error handling
+- Create simple README with run instructions
+
+# Appendix
+**Key Requirements:**
+- Keep code simple and readable
+- Avoid over-engineering
+- Focus on working MVP
+- Clear console output for debugging
+- Minimal dependencies
