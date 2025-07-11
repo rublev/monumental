@@ -5,10 +5,10 @@
 # Priority: low
 # Description: Integrate WebSocket status display using shadcn-vue components, add error handling, and create clear documentation
 # Details:
-Create StatusDisplay.vue component using <script setup lang="ts"> and shadcn-vue Card component. Inside Card, use Badge component with computed color based on WebSocket status (green for connected, yellow for connecting, red for disconnected). Add error handling with try-catch blocks in WebSocket composable and Three.js initialization. Display errors using shadcn-vue Alert component with error variant. Keep console logging simple and descriptive (e.g., 'WebSocket connected', 'WebSocket error:', error). Clean up code: remove unused imports, ensure consistent TypeScript usage. Create README.md with: project overview, prerequisites (Node.js 18+), installation steps (cd backend && npm install, cd frontend && npm install), running instructions (backend: npm start, frontend: npm run dev), basic architecture explanation. Add proper TypeScript interfaces for all WebSocket message formats in types/websocket.ts. Ensure all components use <script setup lang="ts"> consistently.
+Create StatusDisplay.vue component using <script setup lang="ts"> and shadcn-vue Card component. Inside Card, use Badge component with computed color based on WebSocket status (green for connected, yellow for connecting, red for disconnected). Add error handling with try-catch blocks in WebSocket composable and Three.js initialization. Display errors using shadcn-vue Alert component with error variant. Keep console logging simple and descriptive (e.g., 'WebSocket connected', 'WebSocket error:', error). Clean up code: remove unused imports, ensure consistent TypeScript usage. Create README.md with: project overview, prerequisites (Node.js 18+), installation steps (cd backend && pnpm install, cd frontend && pnpm install), running instructions (backend: pnpm start, frontend: pnpm run dev), basic architecture explanation. Add proper TypeScript interfaces for all WebSocket message formats in types/websocket.ts. Ensure all components use <script setup lang="ts"> consistently.
 
 # Test Strategy:
-Test complete flow: start backend, start frontend, verify connection status shows in UI. Test error states by stopping backend and checking error display. Verify console logs are helpful and not excessive. Follow README instructions in a clean environment to ensure accuracy. Run npm run type-check to verify no TypeScript errors. Test UI components resize properly and maintain functionality.
+Test complete flow: start backend, start frontend, verify connection status shows in UI. Test error states by stopping backend and checking error display. Verify console logs are helpful and not excessive. Follow README instructions in a clean environment to ensure accuracy. Run pnpm run type-check to verify no TypeScript errors. Test UI components resize properly and maintain functionality.
 
 # Subtasks:
 ## 1. Create WebSocket Status UI Component [pending]
@@ -33,5 +33,5 @@ Remove unused imports and dead code, consolidate duplicate logic, optimize re-re
 ### Dependencies: 5.3
 ### Description: Create detailed README.md with setup instructions, architecture overview, and usage examples
 ### Details:
-Document project overview and features, provide step-by-step installation and setup instructions, explain WebSocket architecture and connection flow, include API endpoints documentation, add troubleshooting section for common issues, and provide code examples for key features.
+Document project overview and features, provide step-by-step installation and setup instructions (using pnpm install for both backend and frontend), explain WebSocket architecture and connection flow, include API endpoints documentation, add troubleshooting section for common issues, and provide code examples for key features.
 

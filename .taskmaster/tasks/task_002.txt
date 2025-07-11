@@ -3,14 +3,50 @@
 # Status: pending
 # Dependencies: None
 # Priority: high
-# Description: Create Vue 3 project with Composition API (<script setup>), TypeScript support, and install TresJS, Tailwind CSS v4.1, and shadcn-vue
+# Description: Create Vue 3 project with Composition API (<script setup>), TypeScript support, and install TresJS, Tailwind CSS v4.1, and shadcn-vue with minimal SCSS usage
 # Details:
-Use npm create vue@latest to scaffold a new Vue 3 project with TypeScript and Composition API support. Ensure project uses <script setup> syntax throughout. Install and configure Tailwind CSS v4.1: npm install tailwindcss@next @tailwindcss/postcss@next postcss autoprefixer. Create tailwind.config.js and configure content paths for Vue files. Add Tailwind directives (@tailwind base; @tailwind components; @tailwind utilities;) to main CSS file. Install TresJS packages: npm install @tresjs/core @tresjs/cientos three @types/three for Three.js Vue integration. Install and configure shadcn-vue following their Vue setup guide - install dependencies (radix-vue, clsx, tailwind-merge, class-variance-authority) and set up components.json. Create project structure with components/, views/, composables/, and types/ directories. Update App.vue to use <script setup lang="ts"> with a clean starting template.
+Use pnpm create vue@latest to scaffold a new Vue 3 project with TypeScript and Composition API support. Ensure project uses <script setup> syntax throughout. Install and configure Tailwind CSS v4.1: pnpm install tailwindcss@next @tailwindcss/postcss@next postcss autoprefixer. Create tailwind.config.js and configure content paths for Vue files. Add Tailwind directives (@tailwind base; @tailwind components; @tailwind utilities;) to main.scss file. Keep only main.scss and base.scss files for essential styling - rely on Tailwind CSS utility classes and shadcn-vue components for all other styling needs. Install TresJS packages: pnpm install @tresjs/core @tresjs/cientos three @types/three for Three.js Vue integration. Install and configure shadcn-vue following their Vue setup guide - install dependencies (radix-vue, clsx, tailwind-merge, class-variance-authority) and set up components.json. Create project structure with components/, views/, composables/, and types/ directories. Update App.vue to use <script setup lang="ts"> with a clean starting template using Tailwind classes.
 
 # Test Strategy:
-Run npm run dev and verify the Vue 3 application starts without TypeScript errors. Create a test component using <script setup lang="ts"> syntax and verify it works. Test Tailwind CSS by applying classes and checking styles are applied. Import and use a shadcn-vue Button component to verify proper setup. Ensure no console errors in browser developer tools. Verify all dependencies are compatible and no version conflicts exist.
+Run pnpm run dev and verify the Vue 3 application starts without TypeScript errors. Create a test component using <script setup lang="ts"> syntax with Tailwind classes only and verify it works. Test Tailwind CSS by applying utility classes and checking styles are applied. Import and use a shadcn-vue Button component to verify proper setup. Ensure only main.scss and base.scss exist in styles directory. Verify all components use Tailwind classes instead of custom CSS/SCSS. Ensure no console errors in browser developer tools. Verify all dependencies are compatible and no version conflicts exist.
 
 # Subtasks:
+## 4. Organize project structure [done]
+### Dependencies: 2.1
+### Description: Create a scalable folder structure following Vue3 and TypeScript best practices with minimal SCSS approach
+### Details:
+Create directories: src/components (UI components), src/views (page components), src/composables (Vue composables), src/utils (utility functions), src/types (TypeScript types), src/assets (static assets), src/styles (contains only main.scss and base.scss). Set up path aliases in tsconfig.json and vite.config.ts for clean imports like '@/components'. Ensure no additional CSS/SCSS files are created outside of main.scss and base.scss.
+
+## 5. Clean up initial template and configure base files [done]
+### Dependencies: 2.1, 2.2, 2.3, 2.4
+### Description: Remove boilerplate code and set up essential configuration files with Tailwind-first approach
+### Details:
+Remove default Vue components and styles. Update App.vue with a clean layout structure using only Tailwind classes. Configure index.html with proper meta tags. Set up environment variables (.env files). Update README.md with project information including note about minimal SCSS usage. Configure .gitignore for Vue/TypeScript project. Create a base layout component structure using Tailwind utilities and shadcn-vue components.
+
+## 6. Clean up excessive SCSS files and enforce Tailwind-first approach [done]
+### Dependencies: None
+### Description: Remove all SCSS files except main.scss and base.scss, update components to use Tailwind classes only
+### Details:
+Audit styles directory and remove all CSS/SCSS files except main.scss and base.scss. Review all existing components and convert any custom styles to Tailwind utility classes. Update any component templates that reference removed style files. Document the Tailwind-first approach in project README. Create a style guide documenting common Tailwind patterns to use instead of custom styles. Ensure main.scss only contains Tailwind directives and base.scss only contains essential global resets.
+
+## 7. Create Vue3 project with TypeScript support [done]
+### Dependencies: None
+### Description: Initialize a new Vue3 project using create-vue with TypeScript template and essential configurations
+### Details:
+Use 'npm create vue@latest' or 'pnpm create vue' with TypeScript option enabled. Select Vue Router, Pinia for state management, and ESLint + Prettier for code quality. Ensure the project uses Vite as the build tool for optimal performance.
+
+## 9. Fix SCSS migration and Tailwind upgrade issues [done]
+### Dependencies: None
+### Description: Convert CSS files to SCSS, fix import references, and resolve Tailwind upgrade compatibility issues
+### Details:
+Rename CSS files to SCSS extensions and update all import statements. Fix Tailwind CSS upgrade error by running 'pnpm upgrade -D @tailwindcss/postcss tailwindcss' and 'pnpm up --latest' to resolve missing field negated on ScannerOptions.sources issue. Install sass-embedded for SCSS processing.
+
+## 3. Fix SCSS migration and Tailwind upgrade issues [done]
+### Dependencies: None
+### Description: Convert CSS files to SCSS, fix import references, and resolve Tailwind upgrade compatibility issues
+### Details:
+Rename CSS files to SCSS extensions and update all import statements. Fix Tailwind CSS upgrade error by running 'pnpm upgrade -D @tailwindcss/postcss tailwindcss' and 'pnpm up --latest' to resolve missing field negated on ScannerOptions.sources issue. Install sass-embedded for SCSS processing.
+
 ## 1. Create Vue3 project with TypeScript support [done]
 ### Dependencies: None
 ### Description: Initialize a new Vue3 project using create-vue with TypeScript template and essential configurations
@@ -22,40 +58,35 @@ Use 'npm create vue@latest' or 'pnpm create vue' with TypeScript option enabled.
 ### Description: Set up Tailwind CSS v4.1 with PostCSS configuration and create initial styling structure
 ### Details:
 Install Tailwind CSS v4.1 beta using 'npm install tailwindcss@next @tailwindcss/postcss@next'. Create tailwind.config.ts with TypeScript support. Set up CSS entry file with Tailwind directives. Configure PostCSS with autoprefixer. Update vite.config.ts to ensure proper CSS processing.
-
-## 3. Install and configure TresJS for 3D graphics [pending]
-### Dependencies: 2.1
-### Description: Add TresJS library and set up basic 3D scene configuration with TypeScript types
-### Details:
-Install @tresjs/core and @tresjs/cientos packages. Create a basic TresJS plugin file for Vue app registration. Set up TypeScript declarations for TresJS components. Configure vite.config.ts to handle GLSL shaders if needed. Create a sample 3D component to verify installation.
-
-## 4. Set up Shadcn/vue component library [pending]
-### Dependencies: 2.1, 2.2
-### Description: Install and configure shadcn/vue with TypeScript support and Tailwind CSS integration
-### Details:
-Install shadcn-vue CLI and run initialization. Configure components.json with TypeScript paths and Tailwind CSS. Set up the required dependencies: radix-vue, clsx, tailwind-merge, class-variance-authority. Create lib/utils.ts for cn() helper function. Install and configure lucide-vue for icons.
-
-## 5. Organize project structure [pending]
-### Dependencies: 2.1
-### Description: Create a scalable folder structure following Vue3 and TypeScript best practices
-### Details:
-Create directories: src/components (UI components), src/views (page components), src/composables (Vue composables), src/utils (utility functions), src/types (TypeScript types), src/assets (static assets), src/styles (global styles). Set up path aliases in tsconfig.json and vite.config.ts for clean imports like '@/components'.
-
-## 6. Clean up initial template and configure base files [pending]
-### Dependencies: 2.1, 2.2, 2.3, 2.4, 2.5
-### Description: Remove boilerplate code and set up essential configuration files
-### Details:
-Remove default Vue components and styles. Update App.vue with a clean layout structure. Configure index.html with proper meta tags. Set up environment variables (.env files). Update README.md with project information. Configure .gitignore for Vue/TypeScript project. Create a base layout component structure.
-
-## 7. Verify all dependencies and create integration test [pending]
-### Dependencies: 2.1, 2.2, 2.3, 2.4, 2.5, 2.6
-### Description: Ensure all libraries work together and create a demo component using all technologies
-### Details:
-Run type checking with 'vue-tsc --noEmit'. Verify build process with 'npm run build'. Create a demo component that uses Shadcn/vue UI components, Tailwind CSS styling, and TresJS 3D graphics. Test hot module replacement (HMR) functionality. Document any version conflicts or workarounds needed. Set up basic error boundary for 3D content.
+<info added on 2025-07-11T20:04:10.623Z>
+The project has been updated to use SCSS instead of CSS. The implementation now includes:
+- SCSS entry file (src/styles/main.scss) with Tailwind directives
+- PostCSS configuration updated to support SCSS processing with autoprefixer
+- Vite configuration adjusted to handle SCSS files and ensure proper compilation
+- All style imports changed from .css to .scss extensions
+</info added on 2025-07-11T20:04:10.623Z>
+<info added on 2025-07-11T20:07:09.914Z>
+The project has been simplified to use a minimal SCSS approach with only two essential files: main.scss (containing Tailwind directives) and base.scss (for any necessary global styles). All component styling should now be handled through Tailwind utility classes and shadcn-vue components. Custom SCSS files should be avoided going forward unless absolutely necessary for special cases. This Tailwind-first approach eliminates the need for component-specific stylesheets and promotes consistency through utility classes.
+</info added on 2025-07-11T20:07:09.914Z>
+<info added on 2025-07-11T20:09:18.272Z>
+The installation command has been updated to use pnpm instead of npm. Use 'pnpm install tailwindcss@next @tailwindcss/postcss@next' to install Tailwind CSS v4.1 beta and its PostCSS integration.
+</info added on 2025-07-11T20:09:18.272Z>
 
 ## 8. Fix SCSS migration and Tailwind upgrade issues [done]
 ### Dependencies: None
 ### Description: Convert CSS files to SCSS, fix import references, and resolve Tailwind upgrade compatibility issues
 ### Details:
 Rename CSS files to SCSS extensions and update all import statements. Fix Tailwind CSS upgrade error by running 'pnpm upgrade -D @tailwindcss/postcss tailwindcss' and 'pnpm up --latest' to resolve missing field negated on ScannerOptions.sources issue. Install sass-embedded for SCSS processing.
+
+## 10. Document proper SCSS and Tailwind separation [done]
+### Dependencies: None
+### Description: Update styling guide to clarify that base.scss is for CSS variables only, never @apply rules, and Tailwind is imported in main.ts
+### Details:
+Update STYLING_GUIDE.md to clarify the correct approach: base.scss contains only CSS variables and global resets (no @apply rules), main.scss only imports base.scss and tailwindcss, and all component styling uses pure Tailwind utility classes. Tailwind is imported in main.ts, not main.scss. Document that @apply should never be used - this maintains proper separation between CSS variables/global styles and Tailwind utilities.
+
+## 11. Finalize CSS setup with shadcn official styles [done]
+### Dependencies: None
+### Description: Document the final CSS architecture using shadcn's official CSS file instead of SCSS
+### Details:
+Update project documentation to reflect the final CSS setup: removed base.scss, renamed main.scss to main.css, using shadcn's official CSS file for design tokens and Tailwind imports. This provides a cleaner, more maintainable approach with official shadcn design system integration. Update STYLING_GUIDE.md to reflect this simpler architecture where main.css contains shadcn's design tokens and Tailwind imports, and all components use pure Tailwind utility classes.
 
