@@ -8,7 +8,14 @@
       "mcp__context7__get-library-docs",
       "WebFetch(domain:github.com)",
       "mcp__task-master-ai__update",
-      "mcp__task-master-ai__expand_all"
+      "mcp__task-master-ai__expand_all",
+      "mcp__task-master-ai__get_task",
+      "mcp__task-master-ai__set_task_status",
+      "Bash(mkdir:*)",
+      "Bash(pnpm init:*)",
+      "Bash(ls:*)",
+      "Bash(pnpm add:*)",
+      "Bash(pnpm run:*)"
     ],
     "deny": []
   }
