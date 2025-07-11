@@ -17,7 +17,9 @@
       "Bash(pnpm add:*)",
       "Bash(pnpm run:*)",
       "Bash(pnpm create:*)",
-      "Bash(pnpm format:*)"
+      "Bash(pnpm format:*)",
+      "Bash(pnpm dev:*)",
+      "mcp__task-master-ai__add_subtask"
     ],
     "deny": []
   }

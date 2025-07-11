@@ -1,0 +1,43 @@
+# Task ID: 4
+# Title: Create Three.js Scene with TresJS Components
+# Status: pending
+# Dependencies: 2
+# Priority: medium
+# Description: Implement a 3D scene using TresJS components with a rotating cube and OrbitControls from @tresjs/cientos
+# Details:
+Create ThreeScene.vue component using <script setup lang="ts">. Import necessary types from @tresjs/core and @tresjs/cientos. Set up scene with <TresCanvas> component with window-size prop for responsiveness. Add <TresPerspectiveCamera> with :position="[0, 0, 5]" and :look-at="[0, 0, 0]". Include <TresAmbientLight> with :intensity="0.5" and <TresDirectionalLight> with :position="[5, 5, 5]". Create rotating cube using: <TresMesh ref="cubeRef"> with nested <TresBoxGeometry :args="[1, 1, 1]" /> and <TresMeshBasicMaterial :color="0x00ff88" />. Import and add <OrbitControls> from @tresjs/cientos for camera interaction. Use useRenderLoop from @tresjs/core or onBeforeRender to rotate cube: cubeRef.value.rotation.x += 0.01. Add component to App.vue with proper sizing (e.g., class="w-full h-96"). Include TypeScript types for all refs and props.
+
+# Test Strategy:
+Verify ThreeScene component renders without WebGL errors. Confirm green cube is visible and rotating smoothly. Test OrbitControls by clicking and dragging to rotate camera view. Check mouse wheel zoom functionality. Verify scene is responsive when resizing browser window. Ensure TypeScript provides proper type checking for all TresJS components and refs.
+
+# Subtasks:
+## 1. Install TresJS dependencies and create base component structure [pending]
+### Dependencies: None
+### Description: Set up TresJS core packages and create the initial Vue component file with proper imports
+### Details:
+Install @tresjs/core and @tresjs/cientos packages. Create a new Vue component file for the 3D scene with basic template structure and script setup. Import necessary TresJS components like TresCanvas, TresMesh, and other primitives.
+
+## 2. Configure camera positioning and viewport settings [pending]
+### Dependencies: 4.1
+### Description: Set up the perspective camera with proper position, field of view, and responsive viewport handling
+### Details:
+Configure TresPerspectiveCamera with position at [0, 0, 5], set appropriate field of view (75 degrees), and ensure the canvas fills its container with proper aspect ratio. Add window resize handling for responsive behavior.
+
+## 3. Implement ambient and directional lighting [pending]
+### Dependencies: 4.1
+### Description: Add lighting to the scene for proper 3D object visibility and depth perception
+### Details:
+Add TresAmbientLight with low intensity (0.5) for base illumination and TresDirectionalLight positioned at [5, 5, 5] with higher intensity for shadows and highlights. Configure light colors as needed.
+
+## 4. Create rotating 3D cube mesh with material [pending]
+### Dependencies: 4.1
+### Description: Build the 3D cube geometry with material and implement rotation animation using composables
+### Details:
+Create TresMesh with TresBoxGeometry (size 1x1x1) and TresMeshStandardMaterial with a color. Use useRenderLoop composable from @tresjs/core to animate rotation on X and Y axes. Store mesh reference using template refs.
+
+## 5. Integrate 3D scene component into main application [pending]
+### Dependencies: 4.1, 4.2, 4.3, 4.4
+### Description: Import and properly mount the 3D scene component in the main App.vue with appropriate styling
+### Details:
+Import the created 3D scene component into App.vue, add it to the template with a proper container div, and style it to take appropriate space (e.g., height: 400px, width: 100%). Ensure the scene renders correctly alongside existing content.
+

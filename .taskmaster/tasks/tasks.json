@@ -93,7 +93,7 @@
               1
             ],
             "details": "Install Tailwind CSS v4.1 beta using 'npm install tailwindcss@next @tailwindcss/postcss@next'. Create tailwind.config.ts with TypeScript support. Set up CSS entry file with Tailwind directives. Configure PostCSS with autoprefixer. Update vite.config.ts to ensure proper CSS processing.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -160,6 +160,15 @@
             "details": "Run type checking with 'vue-tsc --noEmit'. Verify build process with 'npm run build'. Create a demo component that uses Shadcn/vue UI components, Tailwind CSS styling, and TresJS 3D graphics. Test hot module replacement (HMR) functionality. Document any version conflicts or workarounds needed. Set up basic error boundary for 3D content.",
             "status": "pending",
             "testStrategy": ""
+          },
+          {
+            "id": 8,
+            "title": "Fix SCSS migration and Tailwind upgrade issues",
+            "description": "Convert CSS files to SCSS, fix import references, and resolve Tailwind upgrade compatibility issues",
+            "details": "Rename CSS files to SCSS extensions and update all import statements. Fix Tailwind CSS upgrade error by running 'pnpm upgrade -D @tailwindcss/postcss tailwindcss' and 'pnpm up --latest' to resolve missing field negated on ScannerOptions.sources issue. Install sass-embedded for SCSS processing.",
+            "status": "done",
+            "dependencies": [],
+            "parentTaskId": 2
           }
         ]
       },
@@ -372,7 +381,7 @@
     ],
     "metadata": {
       "created": "2025-07-11T19:14:02.076Z",
-      "updated": "2025-07-11T19:45:37.352Z",
+      "updated": "2025-07-11T19:49:41.196Z",
       "description": "Tasks for master context"
     }
   }
