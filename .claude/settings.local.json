@@ -23,7 +23,8 @@
       "mcp__task-master-ai__get_tasks",
       "mcp__task-master-ai__update_task",
       "mcp__task-master-ai__update_subtask",
-      "Bash(mv:*)"
+      "Bash(mv:*)",
+      "Bash(pnpm install:*)"
     ],
     "deny": []
   }

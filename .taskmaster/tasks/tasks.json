@@ -270,7 +270,7 @@
         "id": 4,
         "title": "Create Three.js Scene with TresJS Components",
         "description": "Implement a 3D scene using TresJS components with a rotating cube and OrbitControls from @tresjs/cientos",
-        "status": "pending",
+        "status": "in-progress",
         "dependencies": [
           2
         ],
@@ -284,7 +284,7 @@
             "description": "Set up TresJS core packages and create the initial Vue component file with proper imports",
             "dependencies": [],
             "details": "Install @tresjs/core and @tresjs/cientos packages. Create a new Vue component file for the 3D scene with basic template structure and script setup. Import necessary TresJS components like TresCanvas, TresMesh, and other primitives.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -395,7 +395,7 @@
     ],
     "metadata": {
       "created": "2025-07-11T19:14:02.076Z",
-      "updated": "2025-07-11T20:40:14.060Z",
+      "updated": "2025-07-11T20:47:36.950Z",
       "description": "Tasks for master context"
     }
   }
