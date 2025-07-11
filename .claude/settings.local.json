@@ -15,7 +15,8 @@
       "Bash(pnpm init:*)",
       "Bash(ls:*)",
       "Bash(pnpm add:*)",
-      "Bash(pnpm run:*)"
+      "Bash(pnpm run:*)",
+      "Bash(pnpm create:*)"
     ],
     "deny": []
   }
