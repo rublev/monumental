@@ -342,11 +342,196 @@
             "parentTaskId": 4
           }
         ]
+      },
+      {
+        "id": 5,
+        "title": "Research and Setup 3D Framework Architecture",
+        "description": "Research current Three.js ecosystem, TresJS best practices, and establish optimal project structure for 4-DOF crane visualization",
+        "details": "Research latest Three.js r158+, TresJS 4.x composition API patterns, CCDIKSolver implementation, and uWebSockets.js 20.x for high-performance WebSocket communication. Evaluate Rapier.js 0.11+ for physics integration. Establish project structure with composables for 3D scene management, WebSocket state, and IK calculations. Create TypeScript interfaces for crane state, joint constraints, and WebSocket message protocols.",
+        "testStrategy": "Verify Three.js and TresJS compatibility, test WebSocket connection establishment, validate TypeScript type definitions compile without errors",
+        "priority": "high",
+        "dependencies": [],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 6,
+        "title": "Backend Mock Crane State Management System",
+        "description": "Implement backend state storage and motion planning for 4-DOF crane actuators with realistic movement constraints",
+        "details": "Create Node.js backend with TypeScript using state management for swing (0-360deg), lift (0-2000mm), elbow (-45 to 90deg), wrist (-180 to 180deg), and gripper (0-100mm). Implement motion planning with configurable speeds: swing 30deg/s, lift 200mm/s, elbow 45deg/s, wrist 90deg/s, gripper 50mm/s. Add acceleration/deceleration curves and position validation. Use class-based architecture with CraneState, MotionPlanner, and StateValidator components.",
+        "testStrategy": "Unit tests for state validation, motion planning algorithms, constraint enforcement, and position interpolation calculations",
+        "priority": "high",
+        "dependencies": [
+          5
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 7,
+        "title": "WebSocket Communication Infrastructure",
+        "description": "Establish high-performance bidirectional WebSocket communication between frontend and backend for real-time crane control",
+        "details": "Implement uWebSockets.js server with 60fps state broadcasting, command reception, and connection management. Create message protocols for state updates, manual commands, IK coordinate inputs, and emergency stop. Frontend WebSocket client with Vue 3 composable for connection state, automatic reconnection, and message queuing. Use structured message format with timestamp, message type, and payload validation.",
+        "testStrategy": "Test WebSocket connection stability, message throughput at 60fps, reconnection handling, and concurrent client support",
+        "priority": "high",
+        "dependencies": [
+          6
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 8,
+        "title": "3D Crane Model and Bone Hierarchy",
+        "description": "Create detailed 3D crane model with proper bone structure for inverse kinematics and realistic joint visualization",
+        "details": "Design crane geometry using Three.js primitives: cylindrical base, prismatic lift mechanism, boom arm segments, wrist assembly, and gripper components. Create SkinnedMesh with bone hierarchy: root → swing → lift → elbow → wrist → gripper → target. Implement proper bone transforms, joint limits, and visual materials using MeshStandardMaterial with metallic/roughness properties. Scale model appropriately for workspace visualization.",
+        "testStrategy": "Verify bone hierarchy structure, test joint rotation limits, validate mesh deformation, and confirm proper scaling in 3D viewport",
+        "priority": "high",
+        "dependencies": [
+          5
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 9,
+        "title": "Real-time 3D Visualization System",
+        "description": "Implement TresJS-based 3D scene with real-time crane state rendering and smooth animation interpolation",
+        "details": "Replace rotating cube with crane model in ThreeScene.vue using TresJS reactive components. Implement state interpolation for smooth 60fps animation between WebSocket updates. Add OrbitControls for camera manipulation, proper lighting setup with DirectionalLight and AmbientLight, and visual feedback for joint positions. Use Vue 3 reactive refs for crane state and computed properties for bone transforms.",
+        "testStrategy": "Test real-time state updates, animation smoothness at 60fps, camera controls responsiveness, and visual accuracy of joint positions",
+        "priority": "high",
+        "dependencies": [
+          7,
+          8
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 10,
+        "title": "Manual Joint Control Interface",
+        "description": "Create intuitive UI controls for individual actuator manipulation with real-time visual feedback",
+        "details": "Design control panel using Tailwind CSS with range sliders for each joint: swing (0-360°), lift (0-2000mm), elbow (-45° to 90°), wrist (-180° to 180°), gripper (0-100mm). Implement Vue 3 composable for control state management, debounced command sending, and visual feedback indicators. Add numeric input fields for precise positioning, reset buttons, and emergency stop functionality.",
+        "testStrategy": "Test slider responsiveness, command transmission, value validation, and synchronization with 3D visualization",
+        "priority": "medium",
+        "dependencies": [
+          9
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 11,
+        "title": "CCDIKSolver Integration and Configuration",
+        "description": "Integrate Three.js CCDIKSolver with proper joint constraints and target-based positioning for inverse kinematics",
+        "details": "Import CCDIKSolver from three/addons/animation/CCDIKSolver.js and configure with crane bone chain. Set rotation constraints: swing unlimited Y-axis, lift converted to rotation, elbow -45° to 90° X-axis, wrist ±180° Y-axis. Create target bone for end effector positioning and implement iterative solving with 10-20 iterations. Add CCDIKHelper for development visualization and constraint validation.",
+        "testStrategy": "Verify IK solver convergence, test joint constraint enforcement, validate target positioning accuracy, and performance at 60fps",
+        "priority": "high",
+        "dependencies": [
+          8
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 12,
+        "title": "Backend Inverse Kinematics Solver",
+        "description": "Implement analytical IK solver on backend to calculate joint positions from 3D coordinates",
+        "details": "Create analytical IK solver for 4-DOF crane using geometric approach: calculate swing from XY coordinates, determine reach distance for elbow angle, solve lift height, and apply wrist orientation. Handle unreachable positions with closest valid solution and workspace boundary checking. Integrate with motion planning for smooth transitions to calculated poses.",
+        "testStrategy": "Test IK calculations against known positions, validate workspace boundaries, verify smooth motion planning integration",
+        "priority": "medium",
+        "dependencies": [
+          6,
+          11
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 13,
+        "title": "Coordinate Input and Click-to-Position System",
+        "description": "Implement 3D coordinate input interface with raycasting for intuitive click-to-move functionality",
+        "details": "Create UI with X, Y, Z numeric inputs and 'Go to Position' button. Implement Three.js Raycaster for click-to-position functionality with ground plane intersection. Add visual target sphere at destination coordinates and coordinate display overlay. Handle coordinate validation, workspace boundaries, and unreachable position feedback.",
+        "testStrategy": "Test raycasting accuracy, coordinate input validation, target visualization, and IK solver integration",
+        "priority": "medium",
+        "dependencies": [
+          11,
+          12
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 14,
+        "title": "Rapier.js Physics Engine Integration",
+        "description": "Integrate Rapier.js WebAssembly physics engine for realistic object interactions and collision detection",
+        "details": "Install @dimforge/rapier3d-compat 0.11+ and initialize physics world with gravity. Create simple API wrapper: addMesh(geometry, mass, restitution) for easy object physics. Implement ground plane collision, rigid body creation from Three.js geometry, and physics step integration with render loop. Optimize for 60fps performance with appropriate world step size.",
+        "testStrategy": "Test physics initialization, object creation, collision detection, gravity simulation, and performance at 60fps",
+        "priority": "medium",
+        "dependencies": [
+          9
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 15,
+        "title": "Interactive Brick Spawning System",
+        "description": "Create UI controls for spawning physics-enabled rectangular objects with configurable properties",
+        "details": "Design brick spawning interface with size controls (width, height, depth), material properties (mass, bounce, friction), and spawn position. Create brick geometry using BoxGeometry with random colors, physics rigid body integration, and object management system. Add UI for spawning multiple bricks and clearing objects from scene.",
+        "testStrategy": "Test brick creation, physics properties application, multiple object handling, and scene cleanup functionality",
+        "priority": "low",
+        "dependencies": [
+          14
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 16,
+        "title": "Gripper Proximity Detection and Visual Feedback",
+        "description": "Implement proximity-based detection system for gripper-object interactions with visual indicators",
+        "details": "Create proximity detection using distance calculations between gripper position and brick objects. Implement visual feedback system: highlight grabbable objects within range, show pickup/attached states, and gripper state indicators. Add object selection logic and visual connection between gripper and attached objects.",
+        "testStrategy": "Test proximity detection accuracy, visual feedback responsiveness, object highlighting, and state management",
+        "priority": "low",
+        "dependencies": [
+          15
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 17,
+        "title": "Pick and Place Functionality",
+        "description": "Complete pick-and-place system with gripper control, object attachment, and stable stacking behavior",
+        "details": "Implement pickup commands via WebSocket, object attachment to gripper with physics constraints, and release functionality. Create stable stacking behavior using physics joints and collision detection. Add backend awareness of object states and positions for synchronized pick-and-place operations across multiple clients.",
+        "testStrategy": "Test pickup/release operations, object attachment stability, stacking behavior, and multi-client synchronization",
+        "priority": "low",
+        "dependencies": [
+          16
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 18,
+        "title": "System Integration and Performance Optimization",
+        "description": "Final integration testing, performance optimization, and documentation for complete crane visualization system",
+        "details": "Conduct end-to-end testing of all crane control methods, optimize rendering performance for complex scenes, implement error handling and recovery mechanisms. Add system status indicators, connection state management, and user feedback for all operations. Create comprehensive documentation and deployment guide.",
+        "testStrategy": "Performance testing under load, stress testing with multiple objects, error condition handling, and user acceptance testing",
+        "priority": "medium",
+        "dependencies": [
+          10,
+          13,
+          17
+        ],
+        "status": "pending",
+        "subtasks": []
       }
     ],
     "metadata": {
       "created": "2025-07-11T19:14:02.076Z",
-      "updated": "2025-07-11T21:24:13.058Z",
+      "updated": "2025-07-11T22:55:22.274Z",
       "description": "Tasks for master context"
     }
   }
