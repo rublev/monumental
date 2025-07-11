@@ -70,7 +70,7 @@
         "id": 2,
         "title": "Initialize Vue 3 Frontend with Composition API, TypeScript, and Core Dependencies",
         "description": "Create Vue 3 project with Composition API (<script setup>), TypeScript support, and install TresJS, Tailwind CSS v4.1, and shadcn-vue with minimal SCSS usage",
-        "status": "pending",
+        "status": "done",
         "dependencies": [],
         "priority": "high",
         "details": "Use pnpm create vue@latest to scaffold a new Vue 3 project with TypeScript and Composition API support. Ensure project uses <script setup> syntax throughout. Install and configure Tailwind CSS v4.1: pnpm install tailwindcss@next @tailwindcss/postcss@next postcss autoprefixer. Create tailwind.config.js and configure content paths for Vue files. Add Tailwind directives (@tailwind base; @tailwind components; @tailwind utilities;) to main.scss file. Keep only main.scss and base.scss files for essential styling - rely on Tailwind CSS utility classes and shadcn-vue components for all other styling needs. Install TresJS packages: pnpm install @tresjs/core @tresjs/cientos three @types/three for Three.js Vue integration. Install and configure shadcn-vue following their Vue setup guide - install dependencies (radix-vue, clsx, tailwind-merge, class-variance-authority) and set up components.json. Create project structure with components/, views/, composables/, and types/ directories. Update App.vue to use <script setup lang=\"ts\"> with a clean starting template using Tailwind classes.",
@@ -395,7 +395,7 @@
     ],
     "metadata": {
       "created": "2025-07-11T19:14:02.076Z",
-      "updated": "2025-07-11T20:22:35.048Z",
+      "updated": "2025-07-11T20:32:49.129Z",
       "description": "Tasks for master context"
     }
   }
