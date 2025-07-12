@@ -2,6 +2,7 @@
 import { onMounted, onUnmounted, ref } from 'vue'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
+import { CustomAxesHelper } from '@/utils/CustomAxesHelper'
 
 const container = ref<HTMLDivElement>()
 
@@ -10,6 +11,7 @@ let camera: THREE.PerspectiveCamera
 let renderer: THREE.WebGLRenderer
 let controls: OrbitControls
 let animationId: number
+let keydownHandler: (event: KeyboardEvent) => void
 
 const initScene = () => {
   if (!container.value) return
@@ -21,8 +23,8 @@ const initScene = () => {
   // Camera setup
   const aspect = container.value.clientWidth / container.value.clientHeight
   camera = new THREE.PerspectiveCamera(50, aspect, 0.1, 2000)
-  camera.position.set(400, 300, 400)
-  camera.lookAt(0, 150, 0)
+  camera.position.set(467.1499989026993, 203.9949611629354, -104.71262486187706)
+  camera.lookAt(0, 100, 0)
 
   // Renderer setup
   renderer = new THREE.WebGLRenderer({ antialias: true })
@@ -36,7 +38,7 @@ const initScene = () => {
   controls = new OrbitControls(camera, renderer.domElement)
   controls.enableDamping = true
   controls.dampingFactor = 0.05
-  controls.target.set(0, 150, 0)
+  controls.target.set(-4.393079717245485, 149.78045123816514, -78.00307962265074)
   controls.update()
 
   // Lighting
@@ -72,7 +74,37 @@ const initScene = () => {
   const gridHelper = new THREE.GridHelper(1000, 50, 0x666666, 0x444444)
   scene.add(gridHelper)
 
+  // Custom axes helper with thicker lines and labels
+  const axesHelper = new CustomAxesHelper(400)
+  scene.add(axesHelper)
+
   createCrane()
+
+  // Add keyboard listener for camera debugging
+  keydownHandler = (event: KeyboardEvent) => {
+    if (event.key === 'c' || event.key === 'C') {
+      console.log('=== Camera Values ===')
+      console.log('Position:', {
+        x: camera.position.x,
+        y: camera.position.y,
+        z: camera.position.z
+      })
+      console.log('Rotation:', {
+        x: camera.rotation.x,
+        y: camera.rotation.y,
+        z: camera.rotation.z
+      })
+      console.log('Controls Target:', {
+        x: controls.target.x,
+        y: controls.target.y,
+        z: controls.target.z
+      })
+      console.log('--- Copy-paste ready ---')
+      console.log(`camera.position.set(${camera.position.x}, ${camera.position.y}, ${camera.position.z})`)
+      console.log(`controls.target.set(${controls.target.x}, ${controls.target.y}, ${controls.target.z})`)
+    }
+  }
+  window.addEventListener('keydown', keydownHandler)
 
   window.addEventListener('resize', handleResize)
 }
@@ -233,11 +265,154 @@ const createCrane = () => {
     emissiveIntensity: 0.1
   })
   const lift = new THREE.Mesh(liftGeometry, liftMaterial)
-  lift.position.y = baseHeight + 50 // Position inside column, near bottom
+  lift.position.y = baseHeight + columnHeight * 0.75 // Position at 75% of column height
   lift.castShadow = true
   lift.receiveShadow = true
   craneGroup.add(lift)
 
+  // 4. Hierarchical crane arm structure for IK
+  // Shoulder group (attached to lift)
+  const shoulderGroup = new THREE.Group()
+  shoulderGroup.position.set(0, 0, -(liftDepth/2 + 10))
+  lift.add(shoulderGroup)
+  
+  // First arm
+  const armBlock1 = new THREE.Mesh(
+    new THREE.BoxGeometry(20, 20, 100),
+    new THREE.MeshStandardMaterial({
+      color: 0x808080,
+      roughness: 0.6,
+      metalness: 0.4
+    })
+  )
+  armBlock1.position.set(0, 0, -50) // Center at -50 (half length)
+  armBlock1.castShadow = true
+  armBlock1.receiveShadow = true
+  shoulderGroup.add(armBlock1)
+  
+  // Elbow group (pivot point for second arm)
+  const elbowGroup = new THREE.Group()
+  elbowGroup.position.set(0, 0, -100) // At end of first arm
+  shoulderGroup.add(elbowGroup)
+  
+  // Elbow joint visual (pulled back to hide under arm)
+  const elbowJoint = new THREE.Mesh(
+    new THREE.CylinderGeometry(10, 10, 10, 32),
+    new THREE.MeshStandardMaterial({
+      color: 0xff0000,
+      roughness: 0.5,
+      metalness: 0.6
+    })
+  )
+  elbowJoint.position.set(0, -15, 10) // Below arm and pulled back
+  elbowJoint.castShadow = true
+  elbowJoint.receiveShadow = true
+  elbowGroup.add(elbowJoint)
+  
+  // Second arm
+  const armBlock2 = new THREE.Mesh(
+    new THREE.BoxGeometry(20, 20, 100),
+    new THREE.MeshStandardMaterial({
+      color: 0x808080,
+      roughness: 0.6,
+      metalness: 0.4
+    })
+  )
+  armBlock2.position.set(0, -15, -40) // Below joint, centered at -40
+  armBlock2.castShadow = true
+  armBlock2.receiveShadow = true
+  elbowJoint.add(armBlock2)
+  
+  // Wrist group (pivot point for third arm)
+  // const wristGroup = new THREE.Group()
+  // wristGroup.position.set(0, -25, -80) // At end of second arm
+  // armBlock2.add(wristGroup)
+  
+  // Wrist joint visual (pulled back to hide under arm)
+  const wristJoint = new THREE.Mesh(
+    new THREE.CylinderGeometry(10, 10, 10, 32),
+    new THREE.MeshStandardMaterial({
+      color: 0xff0000,
+      roughness: 0.5,
+      metalness: 0.6
+    })
+  )
+  wristJoint.position.set(0, -15, -40) // Below arm and pulled back
+  wristJoint.castShadow = true
+  wristJoint.receiveShadow = true
+  armBlock2.add(wristJoint)
+  
+  // // Third arm (vertical)
+  // const armBlock3 = new THREE.Mesh(
+  //   new THREE.BoxGeometry(20, 60, 20),
+  //   new THREE.MeshStandardMaterial({
+  //     color: 0x808080,
+  //     roughness: 0.6,
+  //     metalness: 0.4
+  //   })
+  // )
+  // armBlock3.position.set(0, -55, 10) // Below joint, extends down
+  // armBlock3.castShadow = true
+  // armBlock3.receiveShadow = true
+  // wristGroup.add(armBlock3)
+  
+  // // Gripper mount group
+  // const gripperMountGroup = new THREE.Group()
+  // // gripperMountGroup.position.set(0, -72.5, 0) // At end of third arm
+  // wristGroup.add(gripperMountGroup)
+  
+  // // Gripper extension arm
+  // const gripperArm = new THREE.Mesh(
+  //   new THREE.BoxGeometry(20, 10, 60),
+  //   new THREE.MeshStandardMaterial({
+  //     color: 0x808080,
+  //     roughness: 0.6,
+  //     metalness: 0.4
+  //   })
+  // )
+  // gripperArm.position.set(0, 0, 0)
+  // gripperArm.castShadow = true
+  // gripperArm.receiveShadow = true
+  // gripperMountGroup.add(gripperArm)
+  
+  // // Gripper
+  // const gripperGroup = new THREE.Group()
+  // gripperGroup.position.set(0, -15, -30)
+  // gripperGroup.rotation.y = Math.PI / 2
+  // gripperMountGroup.add(gripperGroup)
+  
+  // const gripperBase = new THREE.Mesh(
+  //   new THREE.BoxGeometry(25, 10, 25),
+  //   new THREE.MeshStandardMaterial({
+  //     color: 0x444444,
+  //     roughness: 0.6,
+  //     metalness: 0.4
+  //   })
+  // )
+  // gripperGroup.add(gripperBase)
+  
+  // const fixedJaw = new THREE.Mesh(
+  //   new THREE.BoxGeometry(5, 15, 20),
+  //   new THREE.MeshStandardMaterial({
+  //     color: 0x333333,
+  //     roughness: 0.7,
+  //     metalness: 0.3
+  //   })
+  // )
+  // fixedJaw.position.set(-10, -10, 0)
+  // gripperGroup.add(fixedJaw)
+  
+  // const movableJaw = new THREE.Mesh(
+  //   new THREE.BoxGeometry(5, 15, 20),
+  //   new THREE.MeshStandardMaterial({
+  //     color: 0x333333,
+  //     roughness: 0.7,
+  //     metalness: 0.3
+  //   })
+  // )
+  // movableJaw.position.set(10, -10, 0)
+  // gripperGroup.add(movableJaw)
+  
   // Add crane to scene
   scene.add(craneGroup)
 }
@@ -265,6 +440,9 @@ onMounted(() => {
 onUnmounted(() => {
   cancelAnimationFrame(animationId)
   window.removeEventListener('resize', handleResize)
+  if (keydownHandler) {
+    window.removeEventListener('keydown', keydownHandler)
+  }
   
   if (renderer) {
     renderer.dispose()
@@ -274,5 +452,9 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div ref="container" class="w-full h-full min-h-[600px] bg-gray-900"></div>
+  <div ref="container" class="w-full h-full min-h-[600px] bg-gray-900 relative">
+    <div class="absolute top-4 left-4 text-white bg-black/50 p-2 rounded text-sm">
+      Press 'C' to log camera values to console
+    </div>
+  </div>
 </template>
