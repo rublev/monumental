@@ -5,19 +5,23 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "run-p type-check \"build-only {@}\" --",
+    "build": "run-p typecheck \"build-only {@}\" --",
     "preview": "vite preview",
     "build-only": "vite build",
-    "type-check": "vue-tsc --build",
+    "typecheck": "vue-tsc --build",
+    "test": "echo \"No tests yet\"",
     "lint": "eslint . --fix",
-    "format": "prettier --write src/"
+    "format": "prettier --write src/",
+    "clean": "rm -rf dist node_modules"
   },
   "dependencies": {
+    "@dimforge/rapier3d-compat": "^0.14.0",
+    "@monumental/shared": "workspace:*",
     "@tresjs/cientos": "^4.3.1",
     "@tresjs/core": "^4.3.6",
-    "@types/three": "^0.178.1",
+    "@types/three": "^0.168.0",
     "pinia": "^3.0.3",
-    "three": "^0.178.0",
+    "three": "^0.168.0",
     "tw-animate-css": "^1.3.5",
     "vue": "^3.5.17",
     "vue-router": "^4.5.1"

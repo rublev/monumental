@@ -1,0 +1,8 @@
+packages:
+  - 'frontend'
+  - 'backend'
+  - 'packages/*'
+
+onlyBuiltDependencies:
+  - '@tailwindcss/oxide'
+  - 'esbuild'

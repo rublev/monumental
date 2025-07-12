@@ -1,3 +1,5 @@
+import type { Ref } from 'vue'
+
 // WebSocket connection states
 export type ConnectionState = 'disconnected' | 'connecting' | 'connected' | 'reconnecting' | 'error'
 

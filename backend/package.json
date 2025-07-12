@@ -8,13 +8,18 @@
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
-    "clean": "rm -rf dist"
+    "test": "echo \"No tests yet\"",
+    "lint": "echo \"No linting configured yet\"",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist",
+    "poc:websocket": "tsx src/run-poc.ts websocket-echo"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "packageManager": "pnpm@10.13.1",
   "dependencies": {
+    "@monumental/shared": "workspace:*",
     "uWebSockets.js": "github:uNetworking/uWebSockets.js#v20.52.0"
   },
   "devDependencies": {

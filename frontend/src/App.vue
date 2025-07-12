@@ -25,6 +25,13 @@ import { RouterView } from 'vue-router'
             >
               About
             </RouterLink>
+            <RouterLink 
+              to="/demo" 
+              class="text-gray-500 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+              active-class="text-blue-600 bg-blue-50"
+            >
+              Demo
+            </RouterLink>
           </nav>
         </div>
       </div>
