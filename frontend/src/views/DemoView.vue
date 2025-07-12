@@ -1,20 +1,16 @@
 <template>
-  <div class="demo-view">
-    <h1>Integration Proof of Concepts</h1>
-    
-    <div class="tabs">
-      <button 
-        v-for="tab in tabs" 
-        :key="tab.id"
-        @click="activeTab = tab.id"
-        :class="{ active: activeTab === tab.id }"
-        class="tab-button"
-      >
+  <div class="h-full flex flex-col">
+    <h1 class="m-5 text-2xl font-semibold">Integration Proof of Concepts</h1>
+
+    <div class="flex gap-2.5 px-5 mb-5">
+      <button v-for="tab in tabs" :key="tab.id" @click="activeTab = tab.id"
+        :class="{ 'bg-orange-600 text-white': activeTab === tab.id, 'bg-gray-200 hover:bg-gray-300': activeTab !== tab.id }"
+        class="py-2.5 px-5 border-none rounded cursor-pointer text-sm transition-all duration-300">
         {{ tab.label }}
       </button>
     </div>
-    
-    <div class="tab-content">
+
+    <div class="flex-1 overflow-hidden">
       <keep-alive>
         <component :is="activeComponent" />
       </keep-alive>
@@ -49,47 +45,3 @@ const activeComponent = computed(() => {
   return tab?.component
 })
 </script>
-
-<style scoped>
-.demo-view {
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
-
-h1 {
-  margin: 20px;
-  font-size: 24px;
-}
-
-.tabs {
-  display: flex;
-  gap: 10px;
-  padding: 0 20px;
-  margin-bottom: 20px;
-}
-
-.tab-button {
-  padding: 10px 20px;
-  border: none;
-  background: #e0e0e0;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  transition: all 0.3s;
-}
-
-.tab-button:hover {
-  background: #d0d0d0;
-}
-
-.tab-button.active {
-  background: #ff6600;
-  color: white;
-}
-
-.tab-content {
-  flex: 1;
-  overflow: hidden;
-}
-</style>

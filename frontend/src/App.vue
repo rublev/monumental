@@ -3,7 +3,7 @@ import { RouterView } from 'vue-router'
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-50">
+  <div class="h-full bg-gray-50 flex flex-col">
     <header class="bg-white shadow-sm border-b border-gray-200">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between items-center h-16">
@@ -31,7 +31,7 @@ import { RouterView } from 'vue-router'
       </div>
     </header>
 
-    <main class="mx-auto py-6 sm:px-6 lg:px-8">
+    <main class="flex-1 flex flex-col">
       <RouterView />
     </main>
   </div>
