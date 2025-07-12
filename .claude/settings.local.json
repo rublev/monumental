@@ -41,7 +41,12 @@
       "mcp__playwright__browser_wait_for",
       "mcp__playwright__browser_type",
       "mcp__playwright__browser_drag",
-      "Bash(true)"
+      "Bash(true)",
+      "mcp__task-master-ai__add_task",
+      "mcp__task-master-ai__expand_task",
+      "mcp__task-master-ai__clear_subtasks",
+      "Bash(pnpm remove:*)",
+      "mcp__task-master-ai__remove_task"
     ],
     "deny": []
   }

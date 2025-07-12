@@ -1,0 +1,11 @@
+# Task ID: 6
+# Title: Static Frontend Crane Visualization
+# Status: pending
+# Dependencies: 2, 4
+# Priority: medium
+# Description: Implement a simple static 3D visualization of the crane using vanilla Three.js, including a circular base, rectangular rotating column, and lift block inside the column.
+# Details:
+Create CraneVisualization.vue component in components directory using <script setup lang="ts"> syntax. Import necessary Three.js types and TresJS components from @tresjs/core. Build crane geometry using: 1) Circular base - TresMesh with TresCylinderGeometry args=[baseRadius, baseRadius, baseHeight, 32] and TresMeshStandardMaterial with appropriate color. 2) Rectangular hollow column - Create outer TresBoxGeometry for column structure and inner geometry to create hollow effect, position above base. 3) Lift block - Small TresBoxGeometry positioned inside the column interior. Use TresGroup to organize crane components hierarchically. Set up appropriate lighting with TresAmbientLight and TresDirectionalLight. Position TresPerspectiveCamera to show full crane structure. Use ref() for component references and ensure proper TypeScript typing throughout. Focus on simple static geometry without physics or animations - purely for visual testing and reference.
+
+# Test Strategy:
+Verify CraneVisualization.vue component renders without WebGL errors. Check that circular base appears as expected cylinder geometry. Confirm rectangular column is visible with hollow interior space. Validate lift block is positioned correctly inside column. Test component integration by importing into main Vue app and verifying crane structure matches reference images. Ensure proper TypeScript compilation with no type errors. Test camera positioning shows complete crane structure clearly. Verify lighting illuminates all crane components appropriately.

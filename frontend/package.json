@@ -17,8 +17,6 @@
   "dependencies": {
     "@dimforge/rapier3d-compat": "^0.14.0",
     "@monumental/shared": "workspace:*",
-    "@tresjs/cientos": "^4.3.1",
-    "@tresjs/core": "^4.3.6",
     "@types/three": "^0.168.0",
     "pinia": "^3.0.3",
     "three": "^0.168.0",

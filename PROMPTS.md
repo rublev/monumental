@@ -6,7 +6,7 @@ I need you to scaffold a basic frontend, and a basic backend. At a high level, f
 
 On the frontend:
 
-- vue3 + TresJS for vue+threejs integration
+- vue3 + native threejs for vue+threejs integration
 - tailwind v4.1
 - shadcn for components
 
@@ -24,7 +24,7 @@ I need you to scaffold a basic frontend, and a basic backend. At a high level, f
 
 On the frontend:
 
-- vue3 + TresJS for vue+threejs integration
+- vue3 + native threejs for vue+threejs integration
 - tailwind v4.1
 - shadcn for components
 
