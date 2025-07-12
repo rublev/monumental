@@ -435,8 +435,7 @@
             "title": "Define Coding Standards and Development Guidelines",
             "description": "Establish comprehensive coding standards, Git workflow, and contribution guidelines for the project",
             "dependencies": [
-              5,
-              7
+              5
             ],
             "details": "Create ESLint/Prettier configurations, commit message conventions, PR templates, code review checklists, performance budgets, and testing strategies. Document architectural decision records (ADRs) for key technology choices.\n<info added on 2025-07-11T23:34:34.468Z>\nSuccessfully established comprehensive coding standards and development guidelines:\n\n1. **Main Development Guide** (DEVELOPMENT_GUIDE.md):\n   - Project overview and tech stack\n   - Getting started instructions\n   - Detailed coding standards for TypeScript, Vue, Three.js\n   - Architecture guidelines and coordinate system\n   - Git workflow with conventional commits\n   - Testing strategy (unit, integration, E2E)\n   - Performance guidelines and targets\n   - Documentation standards\n\n2. **Code Quality Tools**:\n   - ESLint configuration (.eslintrc.base.json) with TypeScript rules\n   - Prettier configuration (.prettierrc.json) for consistent formatting\n   - Strict TypeScript rules enforcing type safety\n\n3. **GitHub Templates**:\n   - Pull Request template with comprehensive checklist\n   - Type of change classification\n   - Testing requirements\n   - Performance impact section\n\n4. **Architecture Decision Records**:\n   - ADR-001: Choose Three.js over Babylon.js\n   - ADR-002: Select Rapier.js for physics\n   - ADR-003: Use vanilla Three.js instead of TresJS\n   - ADR-004: Implement binary WebSocket protocol (proposed)\n\n5. **Review and Monitoring Docs**:\n   - CODE_REVIEW_CHECKLIST.md with detailed review criteria\n   - PERFORMANCE_MONITORING.md with metrics, budgets, and profiling guides\n\nAll standards align with industry best practices and project-specific requirements.\n</info added on 2025-07-11T23:34:34.468Z>",
             "status": "done",
@@ -523,19 +522,65 @@
       },
       {
         "id": 7,
-        "title": "Implement inverse kinematics for lift-arm-elbow-wrist-gripper crane structure",
-        "description": "Analyze the CRANE-EXAMPLE repository, understand the kinematics library implementation, and adapt it for the new crane structure with lift, arm with elbow, another arm with wrist, and gripper. Implement position targeting using x/y/z coordinates and 3D space clicking",
-        "details": "1. Study the CRANE-EXAMPLE crane structure and kinematics implementation that uses the 'kinematics' npm library (version 1.0.2)\n2. Understand how the current crane's robotGeometry array [V0, V1, V2, V3, V4] is defined with 5 vectors representing the joint connections\n3. Analyze the setRobotAngles function that maps calculated angles to Three.js object rotations\n4. Determine the geometry vectors for the new crane structure: lift → arm → elbow → wrist → gripper\n5. Adapt the robotGeometry array to represent the new kinematic chain with appropriate link vectors\n6. Modify the setRobotAngles function to control the new crane's joints (lift, arm rotation, elbow rotation, wrist rotation, gripper rotation)\n7. Implement position targeting that accepts x/y/z coordinates and uses RobotKin.inverse() to calculate required joint angles\n8. Add 3D space click interaction to move the crane to clicked positions\n9. Test inverse kinematics calculations to ensure the crane can reach specified coordinates\n10. Verify that the kinematics library works with the new crane structure or implement alternative solution if needed",
-        "testStrategy": "Create test scenarios with known x/y/z coordinates and verify that the crane moves to correct positions. Test edge cases like unreachable positions (should return NaN angles). Implement visual feedback showing target positions and actual end-effector positions. Test 3D click interaction in various areas of the workspace to ensure accurate positioning.",
-        "priority": "high",
-        "dependencies": [],
+        "title": "Implement Inverse Kinematics for Crane Arm using Kinematics Library",
+        "description": "Implement inverse kinematics for the complete crane structure using Three.js CCDIKSolver instead of the kinematics library, converting the crane to a bone/skeleton system while maintaining visual meshes, and enabling x/y/z coordinate input or 3D click interactions to control the crane position through its 6-DOF kinematic chain.",
         "status": "pending",
-        "subtasks": []
+        "dependencies": [],
+        "priority": "medium",
+        "details": "1. Convert crane from mesh/group hierarchy to bone/skeleton system while keeping visual meshes: Create skeleton with bones for Base (rotation), Lift (translation), Arm1, Arm2, Vertical column, and Gripper. Attach existing visual meshes as non-skinned children of bones to maintain appearance. 2. Set up CCDIKSolver with proper IK chains and joint constraints: Configure Base for Y-axis rotation only, set up rotation constraints for Arms, and handle Lift Y-axis translation separately since CCDIKSolver only handles rotations. 3. Implement custom logic for lift height based on target position: Solve lift position before applying rotational IK since CCDIKSolver cannot handle translational joints. 4. Add interaction system with click-to-position and coordinate input interface to test the complete IK system. 5. Connect bone movements to visual meshes and handle unreachable positions appropriately. The implementation should be frontend-only within CraneVisualization.vue component using Three.js CCDIKSolver.",
+        "testStrategy": "Test by: 1. Verifying successful conversion from mesh hierarchy to bone/skeleton system while maintaining visual appearance. 2. Confirming CCDIKSolver setup with proper joint constraints (base Y-rotation, arm rotations, lift translation handling). 3. Testing that bone movements correctly drive visual mesh positions in the 3D scene. 4. Validating inverse kinematics calculations reach target coordinates accurately through the complete kinematic chain using CCDIKSolver. 5. Testing coordinate input or click interactions move the crane to expected positions with proper joint coordination. 6. Checking custom lift height logic works correctly in combination with rotational IK. 7. Verifying unreachable positions are handled gracefully without breaking the solver. 8. Testing smooth motion coordination between all 6 degrees of freedom.",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Convert crane mesh hierarchy to bone/skeleton system",
+            "description": "Transform the existing Three.js mesh/group hierarchy into a bone-based skeleton while preserving visual meshes",
+            "status": "pending",
+            "dependencies": [],
+            "details": "Create Three.js Skeleton with bones for: Base (Y-axis rotation), Lift (Y-axis translation), Arm1 (rotation at shoulder), Arm2 (rotation at elbow), Vertical column (rotation at wrist), and Gripper (end effector). Attach existing visual meshes as non-skinned children of their corresponding bones to maintain visual appearance while enabling bone-driven movement.",
+            "testStrategy": "Verify skeleton creation with correct bone hierarchy. Test that visual meshes remain attached to bones and move correctly when bones are manipulated. Ensure no visual degradation from the conversion."
+          },
+          {
+            "id": 2,
+            "title": "Set up CCDIKSolver with joint constraints",
+            "description": "Configure Three.js CCDIKSolver with proper IK chains and joint constraints for the crane structure",
+            "status": "pending",
+            "dependencies": [],
+            "details": "Import and configure CCDIKSolver from Three.js. Set up IK chains for the rotational joints (Base, Arm1, Arm2, Vertical column). Configure joint constraints: Base limited to Y-axis rotation only, Arms with appropriate rotation limits to prevent unrealistic poses. Note that Lift translation will be handled separately as CCDIKSolver only processes rotational joints.",
+            "testStrategy": "Verify CCDIKSolver initializes without errors. Test that joint constraints are properly applied and prevent invalid rotations. Confirm IK solver can reach target positions within the rotational joint space."
+          },
+          {
+            "id": 3,
+            "title": "Implement custom lift height logic",
+            "description": "Create custom logic to handle lift Y-axis translation separately from CCDIKSolver",
+            "status": "pending",
+            "dependencies": [],
+            "details": "Since CCDIKSolver only handles rotations, implement separate logic for lift height calculation. Analyze target position to determine required lift height, then solve lift position before applying rotational IK to remaining joints. Ensure lift movement is coordinated with the rotational IK solution.\n<info added on 2025-07-12T23:36:36.328Z>\nThe lift height calculation is the first step in the IK solving process. The approach is: 1) Calculate the vertical offset from the gripper's underside to the lift's top face (this is a fixed distance based on the arm geometry). 2) When given a target XYZ position, first calculate the required lift height by subtracting this offset from the target Y coordinate. 3) Move the lift to this calculated height. 4) Then apply CCDIKSolver for the rotational joints to reach the XY position at the correct height. This ensures the lift is at the correct height before the rotational IK tries to reach the target position.\n</info added on 2025-07-12T23:36:36.328Z>",
+            "testStrategy": "Test lift height calculation accuracy for various target positions. Verify lift movement occurs before rotational IK application. Confirm combined lift + rotational movement reaches target coordinates correctly."
+          },
+          {
+            "id": 4,
+            "title": "Add interaction system for coordinate input and click positioning",
+            "description": "Implement user interface for testing IK system with coordinate input and 3D click interactions",
+            "status": "pending",
+            "dependencies": [],
+            "details": "Create input controls for manual X/Y/Z coordinate entry. Implement 3D click interaction system using Three.js raycasting to detect clicked positions in 3D space. Connect both input methods to trigger IK calculations and crane movement to target positions.",
+            "testStrategy": "Test coordinate input interface accepts valid numeric values. Verify 3D click detection accurately captures clicked positions. Confirm both input methods successfully trigger crane movement to target locations."
+          },
+          {
+            "id": 5,
+            "title": "Connect bone movements to visual meshes and handle edge cases",
+            "description": "Ensure bone movements properly drive visual mesh positions and handle unreachable positions gracefully",
+            "status": "pending",
+            "dependencies": [],
+            "details": "Verify that bone transformations correctly update visual mesh positions and orientations. Implement error handling for unreachable positions that return NaN or invalid solutions. Add visual feedback for successful vs. failed IK attempts.",
+            "testStrategy": "Test visual mesh movement matches bone transformations. Verify unreachable positions are detected and handled without breaking the system. Test edge cases like positions outside workspace boundaries."
+          }
+        ]
       }
     ],
     "metadata": {
       "created": "2025-07-11T19:14:02.076Z",
-      "updated": "2025-07-12T21:44:35.846Z",
+      "updated": "2025-07-12T21:49:26.449Z",
       "description": "Tasks for master context"
     }
   }

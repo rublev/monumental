@@ -41,7 +41,7 @@ Create a box geometry for the crane's vertical column/mast. Position it correctl
 ### Details:
 Create a smaller box geometry representing the lift block/elevator car. Position it inside the column structure with appropriate materials and sizing. Ensure proper visibility and positioning within the column bounds.
 
-## 6. Add remaining crane components [pending]
+## 6. Add remaining crane components [done]
 ### Dependencies: None
 ### Description: Add the horizontal arm attached to lift block, elbow joint, wrist joint, wrist extension, and gripper components to complete the crane visualization
 ### Details:
