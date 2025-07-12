@@ -520,11 +520,22 @@
             "parentTaskId": 6
           }
         ]
+      },
+      {
+        "id": 7,
+        "title": "Implement inverse kinematics for lift-arm-elbow-wrist-gripper crane structure",
+        "description": "Analyze the CRANE-EXAMPLE repository, understand the kinematics library implementation, and adapt it for the new crane structure with lift, arm with elbow, another arm with wrist, and gripper. Implement position targeting using x/y/z coordinates and 3D space clicking",
+        "details": "1. Study the CRANE-EXAMPLE crane structure and kinematics implementation that uses the 'kinematics' npm library (version 1.0.2)\n2. Understand how the current crane's robotGeometry array [V0, V1, V2, V3, V4] is defined with 5 vectors representing the joint connections\n3. Analyze the setRobotAngles function that maps calculated angles to Three.js object rotations\n4. Determine the geometry vectors for the new crane structure: lift → arm → elbow → wrist → gripper\n5. Adapt the robotGeometry array to represent the new kinematic chain with appropriate link vectors\n6. Modify the setRobotAngles function to control the new crane's joints (lift, arm rotation, elbow rotation, wrist rotation, gripper rotation)\n7. Implement position targeting that accepts x/y/z coordinates and uses RobotKin.inverse() to calculate required joint angles\n8. Add 3D space click interaction to move the crane to clicked positions\n9. Test inverse kinematics calculations to ensure the crane can reach specified coordinates\n10. Verify that the kinematics library works with the new crane structure or implement alternative solution if needed",
+        "testStrategy": "Create test scenarios with known x/y/z coordinates and verify that the crane moves to correct positions. Test edge cases like unreachable positions (should return NaN angles). Implement visual feedback showing target positions and actual end-effector positions. Test 3D click interaction in various areas of the workspace to ensure accurate positioning.",
+        "priority": "high",
+        "dependencies": [],
+        "status": "pending",
+        "subtasks": []
       }
     ],
     "metadata": {
       "created": "2025-07-11T19:14:02.076Z",
-      "updated": "2025-07-12T01:36:58.621Z",
+      "updated": "2025-07-12T21:44:35.846Z",
       "description": "Tasks for master context"
     }
   }
