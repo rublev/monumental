@@ -24,6 +24,7 @@ import CraneIKDemo from '@/components/CraneIKDemo.vue'
 import WebSocketDemo from '@/components/WebSocketDemo.vue'
 import PhysicsDemo from '@/components/PhysicsDemo.vue'
 import CraneVisualization from '@/components/CraneVisualization.vue'
+import SimpleCraneIK from '@/components/SimpleCraneIK.vue'
 
 interface Tab {
   id: string
@@ -33,6 +34,7 @@ interface Tab {
 
 const tabs: Tab[] = [
   { id: 'crane', label: 'Crane Visualization', component: CraneVisualization },
+  { id: 'simple-ik', label: 'Simple IK', component: SimpleCraneIK },
   { id: 'ik', label: 'CCDIKSolver Demo', component: CraneIKDemo },
   { id: 'websocket', label: 'WebSocket Demo', component: WebSocketDemo },
   { id: 'physics', label: 'Physics Demo', component: PhysicsDemo }
