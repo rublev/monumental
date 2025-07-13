@@ -634,16 +634,38 @@
             "title": "Fix second arm rotation for close targets",
             "description": "The second arm (elbow bone) is not rotating correctly to reach targets close to the crane column. When the target is near the base, the second arm should be able to rotate/fold back towards the crane to bring the gripper to the target position, but currently it's not finding this configuration.",
             "details": "",
-            "status": "in-progress",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 7
+          },
+          {
+            "id": 13,
+            "title": "Replace CCD with FABRIK for inverse kinematics",
+            "description": "Current CCDIKSolver cannot handle targets close to the crane base where the elbow needs to fold backwards. Replace it with a simple FABRIK implementation based on the example in @FABRIK/ folder. Keep it simple and readable.",
+            "details": "",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 7
           }
         ]
+      },
+      {
+        "id": 8,
+        "title": "Integrate THREE.IK library to replace custom FABRIK implementation for more stable inverse kinematics",
+        "description": "Replace the current custom FABRIK implementation with the THREE.IK library to improve stability and performance of inverse kinematics calculations for the crane arm control system.",
+        "details": "1. Install THREE.IK library via npm and configure TypeScript types. 2. Remove existing FABRIK implementation from the codebase and replace with THREE.IK's IKSolver. 3. Convert current bone/skeleton system to be compatible with THREE.IK's chain structure, maintaining the 6-DOF kinematic chain (Base rotation, Lift translation, Arm1, Arm2, Vertical column, Gripper). 4. Configure IK chain with proper joint constraints using THREE.IK's constraint system: Base Y-axis rotation, Arm rotation limits, and Lift Y-axis translation handling. 5. Update the inverse kinematics solver calls to use THREE.IK's solver methods instead of custom FABRIK calculations. 6. Ensure target position handling and constraint enforcement work correctly with the new library. 7. Test integration with existing CCDIKSolver fallback if needed, or fully migrate to THREE.IK for consistency. 8. Update any UI controls or input handling to work with the new IK system. 9. Optimize performance and ensure smooth real-time manipulation of crane position through x/y/z coordinates or 3D click interactions.",
+        "testStrategy": "1. Verify THREE.IK library installation and import without TypeScript errors. 2. Test that existing crane visual appearance is maintained after library integration. 3. Confirm inverse kinematics calculations produce stable and accurate results for various target positions. 4. Test joint constraint enforcement (base rotation limits, arm angle restrictions, lift translation bounds). 5. Verify smooth real-time crane manipulation through coordinate input and 3D click interactions. 6. Compare performance metrics between old FABRIK implementation and new THREE.IK system. 7. Test edge cases like unreachable positions and constraint violations. 8. Ensure WebSocket communication still works correctly with the new IK system. 9. Validate that the crane reaches target positions accurately and maintains proper joint relationships.",
+        "status": "done",
+        "dependencies": [
+          7
+        ],
+        "priority": "medium",
+        "subtasks": []
       }
     ],
     "metadata": {
       "created": "2025-07-11T19:14:02.076Z",
-      "updated": "2025-07-13T00:27:17.694Z",
+      "updated": "2025-07-13T01:04:27.455Z",
       "description": "Tasks for master context"
     }
   }

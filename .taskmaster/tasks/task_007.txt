@@ -80,9 +80,15 @@ Currently the base bone rotates in all axes like a buoy, which is incorrect. The
 ### Details:
 
 
-## 12. Fix second arm rotation for close targets [pending]
+## 12. Fix second arm rotation for close targets [in-progress]
 ### Dependencies: None
 ### Description: The second arm (elbow bone) is not rotating correctly to reach targets close to the crane column. When the target is near the base, the second arm should be able to rotate/fold back towards the crane to bring the gripper to the target position, but currently it's not finding this configuration.
+### Details:
+
+
+## 13. Replace CCD with FABRIK for inverse kinematics [pending]
+### Dependencies: None
+### Description: Current CCDIKSolver cannot handle targets close to the crane base where the elbow needs to fold backwards. Replace it with a simple FABRIK implementation based on the example in @FABRIK/ folder. Keep it simple and readable.
 ### Details:
 
 

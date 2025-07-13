@@ -2,8 +2,8 @@
 import { onMounted, onUnmounted, ref, reactive, watch } from 'vue'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
-import { CCDIKSolver } from 'three/addons/animation/CCDIKSolver.js'
 import { CustomAxesHelper } from '@/utils/CustomAxesHelper'
+import { IK, IKChain, IKJoint, IKBallConstraint, IKHelper } from '@/lib/three-ik.module.js'
 
 const container = ref<HTMLDivElement>()
 
@@ -20,11 +20,12 @@ let renderer: THREE.WebGLRenderer
 let controls: OrbitControls
 let animationId: number
 let keydownHandler: (event: KeyboardEvent) => void
-let ikSolver: CCDIKSolver
 let targetMesh: THREE.Mesh
 let raycaster: THREE.Raycaster
 let mouse: THREE.Vector2
 let clickPlane: THREE.Mesh
+let ik: any
+let ikHelper: any
 
 const initScene = () => {
   if (!container.value) return
@@ -98,7 +99,9 @@ const initScene = () => {
   ;(window as any).craneData = craneData
   
   // Set up IK solver
-  setupIKSolver(craneData)
+  const ikData = setupIKSolver(craneData)
+  ik = ikData.ik
+  ikHelper = ikData.helper
   
   // Set up raycaster for 3D clicking
   raycaster = new THREE.Raycaster()
@@ -142,6 +145,9 @@ const initScene = () => {
     if (event.key === 'b' || event.key === 'B') {
       const { helper } = (window as any).craneData
       helper.visible = !helper.visible
+      if (ikHelper) {
+        ikHelper.visible = !ikHelper.visible
+      }
       console.log('Skeleton helper:', helper.visible ? 'Visible' : 'Hidden')
     }
   }
@@ -182,7 +188,7 @@ const initScene = () => {
   window.addEventListener('resize', handleResize)
 }
 
-const createCraneWithBones = (): { bones: THREE.Bone[], skeleton: THREE.Skeleton, helper: THREE.SkeletonHelper, craneGroup: THREE.Group } => {
+const createCraneWithBones = (): { bones: THREE.Bone[], skeleton: THREE.Skeleton, helper: THREE.SkeletonHelper, craneGroup: THREE.Group, rootBone: THREE.Bone } => {
   // Create root group for the entire crane
   const craneGroup = new THREE.Group()
   
@@ -511,7 +517,7 @@ const createCraneWithBones = (): { bones: THREE.Bone[], skeleton: THREE.Skeleton
   helper.visible = true
   
   // Return bones and skeleton for IK solver setup
-  return { bones, skeleton, helper, craneGroup }
+  return { bones, skeleton, helper, craneGroup, rootBone }
 }
 
 // Calculate the vertical offset from gripper to lift top
@@ -543,94 +549,8 @@ const calculateLiftHeight = (targetY: number, bones: THREE.Bone[]) => {
   return liftHeight
 }
 
-const setupIKSolver = (craneData: { bones: THREE.Bone[], skeleton: THREE.Skeleton }) => {
-  const { bones } = craneData
-  
-  // Create IK chains
-  // Note: We'll create multiple chains since CCDIKSolver doesn't handle prismatic joints
-  // We'll handle the lift separately and use IK for the rotational joints
-  
-  const ikChains = []
-  
-  // Create the IK target bone that will be controlled
-  const targetBone = new THREE.Bone()
-  targetBone.name = 'ikTarget'
-  bones[5].add(targetBone) // Add as child of gripper
-  targetBone.position.set(0, -15, 0) // Position at gripper tip
-  bones.push(targetBone) // Add to bones array
-  
-  // Update skeleton with new bone
-  craneData.skeleton.bones = bones
-  craneData.skeleton.boneInverses.push(new THREE.Matrix4())
-  
-  // Chain 1: Base to gripper (excluding lift bone since it only translates)
-  // This chain will handle all rotational joints
-  const chain1 = {
-    target: 6, // Target bone we just created
-    effector: 5, // Gripper bone is the effector
-    iteration: 200, // Higher iterations for difficult configurations
-    minDistance: 0.1, // Minimum distance to consider solved
-    links: [
-      {
-        index: 4, // Wrist bone
-        rotationMin: new THREE.Vector3(0, -Math.PI, 0),
-        rotationMax: new THREE.Vector3(0, Math.PI, 0),
-        // Constrain wrist to Y-axis rotation only (like base)
-        enabled: [false, true, false]
-      },
-      {
-        index: 3, // Elbow bone  
-        rotationMin: new THREE.Vector3(0, -Math.PI, 0),
-        rotationMax: new THREE.Vector3(0, Math.PI, 0),
-        // Constrain elbow to Y-axis rotation
-        enabled: [false, true, false]
-      },
-      {
-        index: 0, // Base bone - CRITICAL: Only Y-axis rotation allowed
-        rotationMin: new THREE.Vector3(0, -Math.PI, 0),
-        rotationMax: new THREE.Vector3(0, Math.PI, 0),
-        // Constrain base to Y-axis rotation only - no pitch or roll
-        enabled: [false, true, false]
-      }
-    ]
-  }
-  
-  ikChains.push(chain1)
-  
-  // Create a simple mesh to use with the IK solver
-  // CCDIKSolver requires a SkinnedMesh
-  const geometry = new THREE.BoxGeometry(1, 1, 1)
-  const positionAttribute = geometry.attributes.position
-  const vertex = new THREE.Vector3()
-  
-  const skinIndices = []
-  const skinWeights = []
-  
-  // Set all vertices to be influenced by the first bone
-  for (let i = 0; i < positionAttribute.count; i++) {
-    skinIndices.push(0, 0, 0, 0)
-    skinWeights.push(1, 0, 0, 0)
-  }
-  
-  geometry.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(skinIndices, 4))
-  geometry.setAttribute('skinWeight', new THREE.Float32BufferAttribute(skinWeights, 4))
-  
-  const material = new THREE.MeshBasicMaterial({ visible: false })
-  const mesh = new THREE.SkinnedMesh(geometry, material)
-  
-  // Add the root bone to the mesh
-  const rootBone = bones[0]
-  mesh.add(rootBone)
-  
-  // Bind the skeleton
-  mesh.bind(craneData.skeleton)
-  
-  // Add to scene
-  scene.add(mesh)
-  
-  // Create IK solver
-  ikSolver = new CCDIKSolver(mesh, ikChains)
-  
+
+const setupIKSolver = (craneData: { bones: THREE.Bone[], skeleton: THREE.Skeleton, rootBone: THREE.Bone }) => {
   // Create target sphere for visualization
   const targetGeometry = new THREE.SphereGeometry(10)
   const targetMaterial = new THREE.MeshBasicMaterial({ 
@@ -639,10 +559,45 @@ const setupIKSolver = (craneData: { bones: THREE.Bone[], skeleton: THREE.Skeleto
     opacity: 0.5
   })
   targetMesh = new THREE.Mesh(targetGeometry, targetMaterial)
-  targetMesh.position.set(targetPosition.x, targetPosition.y, targetPosition.z) // Initial target position
+  targetMesh.position.set(targetPosition.x, targetPosition.y, targetPosition.z)
   scene.add(targetMesh)
   
-  return ikSolver
+  // Create IK system
+  const ikSystem = new IK()
+  const chain = new IKChain()
+  
+  // Only add the arm bones to the chain (elbow, wrist, gripper)
+  // Skip base (0), lift (1), and shoulder (2) as they're handled manually
+  const armBones = [craneData.bones[3], craneData.bones[4], craneData.bones[5]]
+  
+  for (let i = 0; i < armBones.length; i++) {
+    const bone = armBones[i]
+    const joint = new IKJoint(bone)
+    
+    // Add target to the last joint (gripper)
+    if (i === armBones.length - 1) {
+      chain.add(joint, { target: targetMesh })
+    } else {
+      chain.add(joint)
+    }
+  }
+  
+  // Add chain to IK system
+  ikSystem.add(chain)
+  
+  // Create helper (optional visualization)
+  const helper = new IKHelper(ikSystem, {
+    showBones: true,
+    showAxes: false,
+    wireframe: true,
+    boneSize: 0.1,
+    axesSize: 0.2,
+    color: 0xff0077
+  })
+  helper.visible = false
+  scene.add(helper)
+  
+  return { ik: ikSystem, helper }
 }
 
 const animate = () => {
@@ -650,64 +605,49 @@ const animate = () => {
   
   controls.update()
   
-  // Update IK solver
-  if (ikSolver && targetMesh) {
+  // Update crane kinematics
+  if (ik && targetMesh && (window as any).craneData) {
     const { bones } = (window as any).craneData
     
-    // Get the target bone (last one we added)
-    const targetBone = bones[6]
+    // 1. Calculate base rotation to face target
+    const baseAngle = Math.atan2(targetMesh.position.z, targetMesh.position.x)
+    bones[0].rotation.y = baseAngle
     
-    // Update world matrices before IK
+    // 2. Calculate and set lift height
+    const newLiftHeight = calculateLiftHeight(targetMesh.position.y, bones)
+    bones[1].position.y = newLiftHeight
+    
+    // 3. Keep shoulder rigid
+    bones[2].rotation.set(0, 0, 0)
+    
+    // Update world matrices before IK solve
     scene.updateMatrixWorld(true)
     
-    // Convert target position to world space for the target bone
-    const targetWorldPos = targetMesh.position.clone()
+    // 4. Solve IK for the arm chain
+    ik.solve()
     
-    // Convert to target bone's parent (gripper) local space
-    const gripperWorldMatrix = new THREE.Matrix4()
-    bones[5].updateWorldMatrix(true, false)
-    gripperWorldMatrix.copy(bones[5].matrixWorld)
-    
-    const invGripperMatrix = gripperWorldMatrix.clone().invert()
-    const localTargetPos = targetWorldPos.clone().applyMatrix4(invGripperMatrix)
-    
-    // Set target bone to this position
-    targetBone.position.copy(localTargetPos)
-    targetBone.updateMatrixWorld(true)
-    
-    // Check if target is close to column
-    const columnDist = Math.sqrt(targetWorldPos.x * targetWorldPos.x + targetWorldPos.z * targetWorldPos.z)
-    
-    if (columnDist < 180) {
-      // For close targets, bypass CCD solver's limitations
-      // by giving it a better starting configuration
-      
-      // 1. Point base towards target
-      const baseAngle = Math.atan2(targetWorldPos.z, targetWorldPos.x)
-      bones[0].rotation.y = baseAngle
-      
-      // 2. Fold elbow back significantly
-      // Since elbow rotation is relative to shoulder (which points forward)
-      // we need to rotate it back by more than 90 degrees
-      bones[3].rotation.y = Math.PI * 0.7
-      
-      // 3. Run IK solver from this configuration
-      ikSolver.update()
-    } else {
-      // For far targets, use normal IK solver
-      ikSolver.update()
-    }
-    
-    // Simple constraints after IK update:
-    // 1. Base can only rotate around Y-axis
+    // 5. Post-solve constraints to maintain crane structure
+    // Base can only rotate around Y-axis
     bones[0].rotation.x = 0
     bones[0].rotation.z = 0
     
-    // 2. Lift can only translate (no rotation)
+    // Lift can only translate (no rotation)
     bones[1].rotation.set(0, 0, 0)
     
-    // 3. Shoulder is rigid with lift (no rotation)
+    // Shoulder is rigid with lift (no rotation)
     bones[2].rotation.set(0, 0, 0)
+    
+    // Constrain rotations to Y-axis only for proper crane mechanics
+    bones[3].rotation.x = 0
+    bones[3].rotation.z = 0
+    
+    bones[4].rotation.x = 0
+    bones[4].rotation.z = 0
+    
+    // Update helper if visible
+    if (ikHelper && ikHelper.visible) {
+      ikHelper.updateMatrixWorld(true)
+    }
   }
   
   // Test bone animation (disabled for now)
