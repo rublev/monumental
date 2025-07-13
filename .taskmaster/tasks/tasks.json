@@ -610,13 +610,31 @@
             "status": "done",
             "dependencies": [],
             "parentTaskId": 7
+          },
+          {
+            "id": 10,
+            "title": "Constrain vertical arm to Y-axis rotation only",
+            "description": "The vertical arm (wrist bone) should only be able to rotate/yaw around the Y-axis, similar to the base. It should not be able to tilt or roll.",
+            "details": "",
+            "status": "done",
+            "dependencies": [],
+            "parentTaskId": 7
+          },
+          {
+            "id": 11,
+            "title": "Remove rotation limits on second arm",
+            "description": "The second arm (elbow bone) should have no rotation limits and be able to rotate a full 360 degrees",
+            "details": "",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 7
           }
         ]
       }
     ],
     "metadata": {
       "created": "2025-07-11T19:14:02.076Z",
-      "updated": "2025-07-13T00:14:33.021Z",
+      "updated": "2025-07-13T00:17:02.752Z",
       "description": "Tasks for master context"
     }
   }

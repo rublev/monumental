@@ -62,9 +62,21 @@ Currently the base bone rotates in all axes like a buoy, which is incorrect. The
 ### Details:
 
 
-## 9. Fix shoulder bone to be rigid with lift [pending]
+## 9. Fix shoulder bone to be rigid with lift [done]
 ### Dependencies: None
 ### Description: The shoulder bone (first arm attachment) should not rotate independently. It should be rigidly attached to the lift face, moving only when the lift moves. The arm and lift should act as one entity.
+### Details:
+
+
+## 10. Constrain vertical arm to Y-axis rotation only [done]
+### Dependencies: None
+### Description: The vertical arm (wrist bone) should only be able to rotate/yaw around the Y-axis, similar to the base. It should not be able to tilt or roll.
+### Details:
+
+
+## 11. Remove rotation limits on second arm [pending]
+### Dependencies: None
+### Description: The second arm (elbow bone) should have no rotation limits and be able to rotate a full 360 degrees
 ### Details:
 
 

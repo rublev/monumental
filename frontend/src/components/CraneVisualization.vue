@@ -572,10 +572,10 @@ const setupIKSolver = (craneData: { bones: THREE.Bone[], skeleton: THREE.Skeleto
     links: [
       {
         index: 4, // Wrist bone
-        rotationMin: new THREE.Vector3(-Math.PI * 0.8, 0, 0),
-        rotationMax: new THREE.Vector3(Math.PI * 0.8, 0, 0),
-        // Constrain wrist to X-axis rotation for vertical column
-        enabled: [true, false, false]
+        rotationMin: new THREE.Vector3(0, -Math.PI * 0.8, 0),
+        rotationMax: new THREE.Vector3(0, Math.PI * 0.8, 0),
+        // Constrain wrist to Y-axis rotation only (like base)
+        enabled: [false, true, false]
       },
       {
         index: 3, // Elbow bone  
