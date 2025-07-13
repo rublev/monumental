@@ -2,7 +2,6 @@
 import { onMounted, onUnmounted, ref, reactive, watch } from 'vue'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
-import { CCDIKSolver } from 'three/addons/animation/CCDIKSolver.js'
 import { CustomAxesHelper } from '@/utils/CustomAxesHelper'
 
 const container = ref<HTMLDivElement>()
@@ -20,7 +19,6 @@ let renderer: THREE.WebGLRenderer
 let controls: OrbitControls
 let animationId: number
 let keydownHandler: (event: KeyboardEvent) => void
-let ikSolver: CCDIKSolver
 let targetMesh: THREE.Mesh
 let raycaster: THREE.Raycaster
 let mouse: THREE.Vector2
@@ -91,14 +89,22 @@ const initScene = () => {
   const axesHelper = new CustomAxesHelper(400)
   scene.add(axesHelper)
 
-  // Create the bone-based crane
-  const craneData = createCraneWithBones()
+  // Create the FABRIK-based crane
+  const craneData = createCraneWithFABRIK()
   
   // Store crane data for later use
   ;(window as any).craneData = craneData
   
-  // Set up IK solver
-  setupIKSolver(craneData)
+  // Create target sphere for visualization
+  const targetGeometry = new THREE.SphereGeometry(10)
+  const targetMaterial = new THREE.MeshBasicMaterial({ 
+    color: 0x00ff00,
+    transparent: true,
+    opacity: 0.5
+  })
+  targetMesh = new THREE.Mesh(targetGeometry, targetMaterial)
+  targetMesh.position.set(targetPosition.x, targetPosition.y, targetPosition.z)
+  scene.add(targetMesh)
   
   // Set up raycaster for 3D clicking
   raycaster = new THREE.Raycaster()
@@ -138,11 +144,11 @@ const initScene = () => {
       console.log(`controls.target.set(${controls.target.x}, ${controls.target.y}, ${controls.target.z})`)
     }
     
-    // Toggle skeleton helper visibility
+    // Toggle crane visibility
     if (event.key === 'b' || event.key === 'B') {
-      const { helper } = (window as any).craneData
-      helper.visible = !helper.visible
-      console.log('Skeleton helper:', helper.visible ? 'Visible' : 'Hidden')
+      const { craneGroup } = (window as any).craneData
+      craneGroup.visible = !craneGroup.visible
+      console.log('Crane:', craneGroup.visible ? 'Visible' : 'Hidden')
     }
   }
   window.addEventListener('keydown', keydownHandler)
@@ -182,79 +188,77 @@ const initScene = () => {
   window.addEventListener('resize', handleResize)
 }
 
-const createCraneWithBones = (): { bones: THREE.Bone[], skeleton: THREE.Skeleton, helper: THREE.SkeletonHelper, craneGroup: THREE.Group } => {
+const createCraneWithFABRIK = (): { crane: any, craneGroup: THREE.Group } => {
   // Create root group for the entire crane
   const craneGroup = new THREE.Group()
   
-  // Create bones for the kinematic chain
-  const bones: THREE.Bone[] = []
+  // Create crane using FABRIK-style structure
+  const crane = {
+    // Crane parameters - scaled up from FABRIK version
+    liftHeight: 250,
+    liftMin: 70,  // Base height + clearance
+    liftMax: 300, // Near top of column
+    upperArmLength: 100, // Length of first arm
+    lowerArmLength: 80,  // Length of second arm
+    wristExtLength: 60,  // Vertical drop
+    
+    // Object3D hierarchy - same as FABRIK but scaled up
+    base: new THREE.Object3D(),
+    swingJoint: new THREE.Object3D(), // Main column (rotates entire tower)
+    liftJoint: new THREE.Object3D(),  // Vertical slide
+    shoulderJoint: new THREE.Object3D(), // First arm attachment (no rotation)
+    elbowJoint: new THREE.Object3D(),    // Second arm articulation
+    wristJoint: new THREE.Object3D(),    // End of horizontal arm
+    endEffector: new THREE.Object3D()    // Gripper tip
+  }
   
-  // Root bone (for base rotation)
-  const rootBone = new THREE.Bone()
-  rootBone.name = 'base'
-  bones.push(rootBone)
+  // Build the crane hierarchy
+  crane.base.add(crane.swingJoint)
+  crane.swingJoint.add(crane.liftJoint)
+  crane.liftJoint.add(crane.shoulderJoint)
+  crane.shoulderJoint.add(crane.elbowJoint)
+  crane.elbowJoint.add(crane.wristJoint)
+  crane.wristJoint.add(crane.endEffector)
   
-  // Lift bone (for vertical translation)
-  const liftBone = new THREE.Bone()
-  liftBone.name = 'lift'
-  liftBone.position.y = 250 // Initial lift height (75% of 300 column height + base)
-  rootBone.add(liftBone)
-  bones.push(liftBone)
+  // Set initial positions
+  crane.liftJoint.position.y = crane.liftHeight
+  crane.elbowJoint.position.z = -crane.upperArmLength
+  crane.wristJoint.position.z = -crane.lowerArmLength
+  crane.endEffector.position.y = -crane.wristExtLength
   
-  // Shoulder bone (first arm attachment point)
-  const shoulderBone = new THREE.Bone()
-  shoulderBone.name = 'shoulder'
-  shoulderBone.position.z = -35 // Forward from lift
-  liftBone.add(shoulderBone)
-  bones.push(shoulderBone)
-  
-  // Elbow bone (between first and second arm)
-  const elbowBone = new THREE.Bone()
-  elbowBone.name = 'elbow'
-  elbowBone.position.z = -100 // Length of first arm
-  shoulderBone.add(elbowBone)
-  bones.push(elbowBone)
-  
-  // Wrist bone (between second arm and vertical column)
-  const wristBone = new THREE.Bone()
-  wristBone.name = 'wrist'
-  wristBone.position.set(0, -25, -80) // End of second arm
-  elbowBone.add(wristBone)
-  bones.push(wristBone)
-  
-  // Gripper bone (end effector)
-  const gripperBone = new THREE.Bone()
-  gripperBone.name = 'gripper'
-  gripperBone.position.y = -60 // Length of vertical column
-  wristBone.add(gripperBone)
-  bones.push(gripperBone)
-  
-  // Create skeleton
-  const skeleton = new THREE.Skeleton(bones)
-  
-  // Helper to visualize bones
-  const helper = new THREE.SkeletonHelper(rootBone)
-  helper.material.linewidth = 3
-  scene.add(helper)
-  
-  // Now create visual meshes and attach them to bones
-  
-  // 1. Base (attached to root bone)
-  const baseRadius = 60
-  const baseHeight = 20
-  const baseGeometry = new THREE.CylinderGeometry(baseRadius, baseRadius, baseHeight, 32)
+  // Create materials
   const baseMaterial = new THREE.MeshStandardMaterial({ 
     color: 0xcccccc,
     roughness: 0.7,
     metalness: 0.3
   })
+  const armMaterial = new THREE.MeshStandardMaterial({
+    color: 0x808080,
+    roughness: 0.6,
+    metalness: 0.4
+  })
+  const jointMaterial = new THREE.MeshStandardMaterial({
+    color: 0xff0000,
+    roughness: 0.5,
+    metalness: 0.6
+  })
+  const gripperMaterial = new THREE.MeshStandardMaterial({
+    color: 0x444444,
+    roughness: 0.6,
+    metalness: 0.4
+  })
+  
+  // 1. Base (attached to base object)
+  const baseRadius = 60
+  const baseHeight = 20
+  const baseGeometry = new THREE.CylinderGeometry(baseRadius, baseRadius, baseHeight, 32)
   const base = new THREE.Mesh(baseGeometry, baseMaterial)
   base.position.y = baseHeight / 2
   base.castShadow = true
   base.receiveShadow = true
-  rootBone.add(base)
+  crane.base.add(base)
   
-  // 2. Tower/Column (static, attached to root)
+  // 2. Tower/Column (static, attached to swingJoint so it rotates with base)
   const columnWidth = 50
   const columnDepth = 50
   const columnHeight = 300
@@ -361,7 +365,9 @@ const createCraneWithBones = (): { bones: THREE.Bone[], skeleton: THREE.Skeleton
     })
   }
   
-  rootBone.add(towerGroup)
+  // Rotate tower so open face aligns with arm direction (arm extends in -Z)
+  towerGroup.rotation.y = 0 // No rotation needed - arm extends in -Z, open face is at -Z
+  crane.swingJoint.add(towerGroup)
   
   // Column top cap
   const capGeometry = new THREE.BoxGeometry(columnWidth + 10, 10, columnDepth + 10)
@@ -374,13 +380,13 @@ const createCraneWithBones = (): { bones: THREE.Bone[], skeleton: THREE.Skeleton
   cap.position.y = baseHeight + columnHeight + 5
   cap.castShadow = true
   cap.receiveShadow = true
-  rootBone.add(cap)
+  crane.swingJoint.add(cap)
   
-  // 3. Lift (attached to lift bone)
+  // 3. Lift (attached to lift joint)
   const liftWidth = columnWidth - beamThickness * 2 - 10
   const liftDepth = columnDepth - beamThickness * 2 - 10
-  const liftHeight = 25
-  const liftGeometry = new THREE.BoxGeometry(liftWidth, liftHeight, liftDepth)
+  const liftHeightMesh = 25
+  const liftGeometry = new THREE.BoxGeometry(liftWidth, liftHeightMesh, liftDepth)
   const liftMaterial = new THREE.MeshStandardMaterial({ 
     color: 0xffcc00,
     roughness: 0.5,
@@ -391,88 +397,64 @@ const createCraneWithBones = (): { bones: THREE.Bone[], skeleton: THREE.Skeleton
   const lift = new THREE.Mesh(liftGeometry, liftMaterial)
   lift.castShadow = true
   lift.receiveShadow = true
-  liftBone.add(lift)
+  crane.liftJoint.add(lift)
   
-  // 4. First arm (attached to shoulder bone)
+  // 4. First arm (attached to shoulder joint)
   const armBlock1 = new THREE.Mesh(
     new THREE.BoxGeometry(20, 20, 100),
-    new THREE.MeshStandardMaterial({
-      color: 0x808080,
-      roughness: 0.6,
-      metalness: 0.4
-    })
+    armMaterial
   )
   armBlock1.position.z = -50 // Center of arm
   armBlock1.castShadow = true
   armBlock1.receiveShadow = true
-  shoulderBone.add(armBlock1)
+  crane.shoulderJoint.add(armBlock1)
   
-  // 5. Elbow joint visual (attached to elbow bone)
-  const elbowJoint = new THREE.Mesh(
+  // 5. Elbow joint visual (attached to elbow joint)
+  const elbowJointVisual = new THREE.Mesh(
     new THREE.CylinderGeometry(8, 8, 5, 32),
-    new THREE.MeshStandardMaterial({
-      color: 0xff0000,
-      roughness: 0.5,
-      metalness: 0.6
-    })
+    jointMaterial
   )
-  elbowJoint.position.set(0, -12.5, 5)
-  elbowJoint.castShadow = true
-  elbowJoint.receiveShadow = true
-  elbowBone.add(elbowJoint)
+  elbowJointVisual.position.set(0, -12.5, 5)
+  elbowJointVisual.castShadow = true
+  elbowJointVisual.receiveShadow = true
+  crane.elbowJoint.add(elbowJointVisual)
   
-  // 6. Second arm (attached to elbow bone)
+  // 6. Second arm (attached to elbow joint)
   const armBlock2 = new THREE.Mesh(
     new THREE.BoxGeometry(20, 20, 80),
-    new THREE.MeshStandardMaterial({
-      color: 0x808080,
-      roughness: 0.6,
-      metalness: 0.4
-    })
+    armMaterial
   )
   armBlock2.position.set(0, -25, -40)
   armBlock2.castShadow = true
   armBlock2.receiveShadow = true
-  elbowBone.add(armBlock2)
+  crane.elbowJoint.add(armBlock2)
   
-  // 7. Wrist joint visual (attached to wrist bone)
-  const wristJoint = new THREE.Mesh(
+  // 7. Wrist joint visual (attached to wrist joint)
+  const wristJointVisual = new THREE.Mesh(
     new THREE.CylinderGeometry(8, 8, 5, 32),
-    new THREE.MeshStandardMaterial({
-      color: 0xff0000,
-      roughness: 0.5,
-      metalness: 0.6
-    })
+    jointMaterial
   )
-  wristJoint.position.set(0, -12.5, 5)
-  wristJoint.castShadow = true
-  wristJoint.receiveShadow = true
-  wristBone.add(wristJoint)
+  wristJointVisual.position.set(0, -12.5, 5)
+  wristJointVisual.castShadow = true
+  wristJointVisual.receiveShadow = true
+  crane.wristJoint.add(wristJointVisual)
   
-  // 8. Third arm/vertical column (attached to wrist bone)
+  // 8. Third arm/vertical column (attached to wrist joint)
   const armBlock3 = new THREE.Mesh(
     new THREE.BoxGeometry(20, 60, 20),
-    new THREE.MeshStandardMaterial({
-      color: 0x808080,
-      roughness: 0.6,
-      metalness: 0.4
-    })
+    armMaterial
   )
   armBlock3.position.y = -30
   armBlock3.castShadow = true
   armBlock3.receiveShadow = true
-  wristBone.add(armBlock3)
+  crane.wristJoint.add(armBlock3)
   
-  // 9. Gripper (attached to gripper bone)
+  // 9. Gripper (attached to end effector)
   const gripperGroup = new THREE.Group()
   
   const gripperBase = new THREE.Mesh(
     new THREE.BoxGeometry(25, 10, 25),
-    new THREE.MeshStandardMaterial({
-      color: 0x444444,
-      roughness: 0.6,
-      metalness: 0.4
-    })
+    gripperMaterial
   )
   gripperGroup.add(gripperBase)
   
@@ -498,216 +480,84 @@ const createCraneWithBones = (): { bones: THREE.Bone[], skeleton: THREE.Skeleton
   movableJaw.position.set(10, -10, 0)
   gripperGroup.add(movableJaw)
   
-  gripperBone.add(gripperGroup)
+  crane.endEffector.add(gripperGroup)
   
-  // Add root bone to crane group
-  craneGroup.add(rootBone)
+  // Add FABRIK solve function to crane
+  crane.solveIK = (targetPosition: any) => {
+    // 1. Determine required lift height
+    let liftY = targetPosition.y + crane.wristExtLength
+    liftY = Math.max(crane.liftMin, Math.min(crane.liftMax, liftY))
+    crane.liftJoint.position.y = liftY
+
+    // 2. Solve the 2D planar problem for the horizontal arms
+    const l1 = crane.upperArmLength
+    const l2 = crane.lowerArmLength
+    const targetX = targetPosition.x
+    const targetZ = targetPosition.z
+
+    const distSq = targetX * targetX + targetZ * targetZ
+    const dist = Math.sqrt(distSq)
+
+    // Angle for the elbow joint using Law of Cosines
+    let elbowAngle = Math.acos(
+      (distSq - l1 * l1 - l2 * l2) / (2 * l1 * l2)
+    )
+
+    // Angle for the shoulder joint
+    const angleToTarget = Math.atan2(targetZ, targetX)
+    const angleFromTarget = Math.atan2(
+      l2 * Math.sin(elbowAngle),
+      l1 + l2 * Math.cos(elbowAngle)
+    )
+    let shoulderAngle = angleToTarget - angleFromTarget
+
+    // Handle unreachable targets
+    if (dist > l1 + l2) {
+      shoulderAngle = angleToTarget
+      elbowAngle = 0
+    }
+
+    // Handle targets too close to the base
+    if (dist < Math.abs(l1 - l2)) {
+      shoulderAngle = angleToTarget
+      elbowAngle = Math.PI
+    }
+
+    if (isNaN(elbowAngle)) elbowAngle = 0
+    if (isNaN(shoulderAngle)) shoulderAngle = 0
+
+    // Apply rotations using FABRIK approach
+    // The base (swingJoint) rotates to face the target - this rotates the entire tower
+    crane.swingJoint.rotation.y = -shoulderAngle
+    
+    // The shoulder is fixed to the lift - no rotation relative to the tower
+    crane.shoulderJoint.rotation.y = 0
+    
+    // The elbow still rotates to reach the target
+    crane.elbowJoint.rotation.y = -elbowAngle
+  }
   
-  // Add crane to scene (visible by default now)
+  // Add crane to scene
+  craneGroup.add(crane.base)
   craneGroup.visible = true
   scene.add(craneGroup)
   
-  // Show the skeleton helper
-  helper.visible = true
-  
-  // Return bones and skeleton for IK solver setup
-  return { bones, skeleton, helper, craneGroup }
+  // Return crane for use
+  return { crane, craneGroup }
 }
 
-// Calculate the vertical offset from gripper to lift top
-const calculateGripperToLiftOffset = (bones: THREE.Bone[]) => {
-  // Calculate total vertical distance from lift to gripper
-  // This includes: shoulder offset + arm lengths + joint offsets
-  const shoulderOffset = bones[2].position.y // Should be 0
-  const elbowOffset = bones[3].position.y // Should be 0
-  const wristOffset = bones[4].position.y // -25 (arm2 drops down)
-  const gripperOffset = bones[5].position.y // -60 (vertical column length)
-  
-  // Total offset from lift position to gripper
-  return shoulderOffset + elbowOffset + wristOffset + gripperOffset // = -85
-}
-
-// Calculate required lift height for target position
-const calculateLiftHeight = (targetY: number, bones: THREE.Bone[]) => {
-  const offset = calculateGripperToLiftOffset(bones)
-  const baseHeight = 20 // Base height constant
-  const minLiftHeight = baseHeight + 50 // Minimum to clear base
-  const maxLiftHeight = baseHeight + 280 // Maximum (near top of column)
-  
-  // Required lift height = target Y - offset
-  let liftHeight = targetY - offset
-  
-  // Clamp to valid range
-  liftHeight = Math.max(minLiftHeight, Math.min(maxLiftHeight, liftHeight))
-  
-  return liftHeight
-}
-
-const setupIKSolver = (craneData: { bones: THREE.Bone[], skeleton: THREE.Skeleton }) => {
-  const { bones } = craneData
-  
-  // Create IK chains
-  // Note: We'll create multiple chains since CCDIKSolver doesn't handle prismatic joints
-  // We'll handle the lift separately and use IK for the rotational joints
-  
-  const ikChains = []
-  
-  // Create the IK target bone that will be controlled
-  const targetBone = new THREE.Bone()
-  targetBone.name = 'ikTarget'
-  bones[5].add(targetBone) // Add as child of gripper
-  targetBone.position.set(0, -15, 0) // Position at gripper tip
-  bones.push(targetBone) // Add to bones array
-  
-  // Update skeleton with new bone
-  craneData.skeleton.bones = bones
-  craneData.skeleton.boneInverses.push(new THREE.Matrix4())
-  
-  // Chain 1: Base to gripper (excluding lift bone since it only translates)
-  // This chain will handle all rotational joints
-  const chain1 = {
-    target: 6, // Target bone we just created
-    effector: 5, // Gripper bone is the effector
-    iteration: 40, // Increase iterations for better convergence
-    links: [
-      {
-        index: 4, // Wrist bone
-        rotationMin: new THREE.Vector3(0, -Math.PI * 0.8, 0),
-        rotationMax: new THREE.Vector3(0, Math.PI * 0.8, 0),
-        // Constrain wrist to Y-axis rotation only (like base)
-        enabled: [false, true, false]
-      },
-      {
-        index: 3, // Elbow bone  
-        rotationMin: new THREE.Vector3(0, -Math.PI * 0.6, 0),
-        rotationMax: new THREE.Vector3(0, Math.PI * 0.6, 0),
-        // Constrain elbow to Y-axis rotation
-        enabled: [false, true, false]
-      },
-      {
-        index: 0, // Base bone - CRITICAL: Only Y-axis rotation allowed
-        rotationMin: new THREE.Vector3(0, -Math.PI, 0),
-        rotationMax: new THREE.Vector3(0, Math.PI, 0),
-        // Constrain base to Y-axis rotation only - no pitch or roll
-        enabled: [false, true, false]
-      }
-    ]
-  }
-  
-  ikChains.push(chain1)
-  
-  // Create a simple mesh to use with the IK solver
-  // CCDIKSolver requires a SkinnedMesh
-  const geometry = new THREE.BoxGeometry(1, 1, 1)
-  const positionAttribute = geometry.attributes.position
-  const vertex = new THREE.Vector3()
-  
-  const skinIndices = []
-  const skinWeights = []
-  
-  // Set all vertices to be influenced by the first bone
-  for (let i = 0; i < positionAttribute.count; i++) {
-    skinIndices.push(0, 0, 0, 0)
-    skinWeights.push(1, 0, 0, 0)
-  }
-  
-  geometry.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(skinIndices, 4))
-  geometry.setAttribute('skinWeight', new THREE.Float32BufferAttribute(skinWeights, 4))
-  
-  const material = new THREE.MeshBasicMaterial({ visible: false })
-  const mesh = new THREE.SkinnedMesh(geometry, material)
-  
-  // Add the root bone to the mesh
-  const rootBone = bones[0]
-  mesh.add(rootBone)
-  
-  // Bind the skeleton
-  mesh.bind(craneData.skeleton)
-  
-  // Add to scene
-  scene.add(mesh)
-  
-  // Create IK solver
-  ikSolver = new CCDIKSolver(mesh, ikChains)
-  
-  // Create target sphere for visualization
-  const targetGeometry = new THREE.SphereGeometry(10)
-  const targetMaterial = new THREE.MeshBasicMaterial({ 
-    color: 0x00ff00,
-    transparent: true,
-    opacity: 0.5
-  })
-  targetMesh = new THREE.Mesh(targetGeometry, targetMaterial)
-  targetMesh.position.set(targetPosition.x, targetPosition.y, targetPosition.z) // Initial target position
-  scene.add(targetMesh)
-  
-  return ikSolver
-}
 
 const animate = () => {
   animationId = requestAnimationFrame(animate)
   
   controls.update()
   
-  // Update IK solver
-  if (ikSolver && targetMesh) {
-    const { bones } = (window as any).craneData
+  // Update FABRIK solver
+  if (targetMesh) {
+    const { crane } = (window as any).craneData
     
-    // Get the target bone (last one we added)
-    const targetBone = bones[6]
-    
-    // Update world matrices before IK
-    scene.updateMatrixWorld(true)
-    
-    // Convert target position to world space for the target bone
-    const targetWorldPos = targetMesh.position.clone()
-    
-    // Convert to target bone's parent (gripper) local space
-    const gripperWorldMatrix = new THREE.Matrix4()
-    bones[5].updateWorldMatrix(true, false)
-    gripperWorldMatrix.copy(bones[5].matrixWorld)
-    
-    const invGripperMatrix = gripperWorldMatrix.clone().invert()
-    const localTargetPos = targetWorldPos.clone().applyMatrix4(invGripperMatrix)
-    
-    // Set target bone to this position
-    targetBone.position.copy(localTargetPos)
-    targetBone.updateMatrixWorld(true)
-    
-    // Update IK solver
-    ikSolver.update()
-    
-    // Simple constraints after IK update:
-    // 1. Base can only rotate around Y-axis
-    bones[0].rotation.x = 0
-    bones[0].rotation.z = 0
-    
-    // 2. Lift can only translate (no rotation)
-    bones[1].rotation.set(0, 0, 0)
-    
-    // 3. Shoulder is rigid with lift (no rotation)
-    bones[2].rotation.set(0, 0, 0)
-  }
-  
-  // Test bone animation (disabled for now)
-  if ((window as any).craneData && false) {
-    const { bones } = (window as any).craneData
-    const time = Date.now() * 0.001
-    
-    // Animate base rotation (Y axis - correct)
-    bones[0].rotation.y = Math.sin(time * 0.5) * 0.3
-    
-    // Animate lift height (Y position - correct)
-    bones[1].position.y = 200 + Math.sin(time * 0.7) * 50
-    
-    // Animate shoulder (should rotate around Y axis for horizontal swing)
-    bones[2].rotation.y = Math.sin(time * 0.8) * 0.2
-    
-    // Animate elbow (should rotate around Y axis for horizontal swing)
-    bones[3].rotation.y = Math.sin(time * 0.9) * 0.3
-    
-    // Animate wrist (should rotate around X axis for vertical column rotation)
-    bones[4].rotation.x = Math.sin(time * 1.0) * 0.2
+    // Call the FABRIK solve function
+    crane.solveIK(targetMesh.position)
   }
   
   renderer.render(scene, camera)
@@ -725,14 +575,6 @@ const handleResize = () => {
 watch(targetPosition, (newPos) => {
   if (targetMesh) {
     targetMesh.position.set(newPos.x, newPos.y, newPos.z)
-    
-    // Update lift height when Y changes
-    const craneData = (window as any).craneData
-    if (craneData) {
-      const { bones } = craneData
-      const newLiftHeight = calculateLiftHeight(newPos.y, bones)
-      bones[1].position.y = newLiftHeight
-    }
   }
 })
 
