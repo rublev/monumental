@@ -50,9 +50,21 @@ Verify that bone transformations correctly update visual mesh positions and orie
 ### Details:
 Add a control panel similar to the CCDIKSolver Demo with X, Y, Z sliders to control the target position. This provides more precise control than clicking in 3D space. Include range limits based on crane's reach and a reset button to return to default position.
 
-## 7. Fix base rotation to only allow Y-axis (yaw) movement [pending]
+## 7. Fix base rotation to only allow Y-axis (yaw) movement [done]
 ### Dependencies: None
 ### Description: Restrict the base bone to only rotate around the Y-axis, preventing unwanted roll and pitch movements
 ### Details:
 Currently the base bone rotates in all axes like a buoy, which is incorrect. The base, yellow crane column, and crane column cap should all be part of one bone that only rotates around the Y-axis (yaw). This requires: 1) Properly configuring the IK chain constraints to restrict base rotation to Y-axis only, 2) Ensuring the constraint is actually being applied by CCDIKSolver, 3) Potentially modifying the bone setup if the constraint system isn't working as expected. The base should act like a turntable - only spinning horizontally, never tilting.
+
+## 8. Simplify base rotation constraints [done]
+### Dependencies: None
+### Description: Remove the overcomplicated constraint enforcement code and implement the simplest solution that works - just reset X and Z rotations to 0 after IK solver update
+### Details:
+
+
+## 9. Fix shoulder bone to be rigid with lift [pending]
+### Dependencies: None
+### Description: The shoulder bone (first arm attachment) should not rotate independently. It should be rigidly attached to the lift face, moving only when the lift moves. The arm and lift should act as one entity.
+### Details:
+
 

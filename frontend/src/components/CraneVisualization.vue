@@ -182,316 +182,6 @@ const initScene = () => {
   window.addEventListener('resize', handleResize)
 }
 
-// Original crane function removed - using bone-based crane only
-const createCrane_OLD = () => {
-  // Crane group
-  const craneGroup = new THREE.Group()
-  craneGroup.name = 'craneGroup'
-  
-  // 1. Circular base (from reference images)
-  const baseRadius = 60
-  const baseHeight = 20
-  const baseGeometry = new THREE.CylinderGeometry(baseRadius, baseRadius, baseHeight, 32)
-  const baseMaterial = new THREE.MeshStandardMaterial({ 
-    color: 0xcccccc,
-    roughness: 0.7,
-    metalness: 0.3
-  })
-  const base = new THREE.Mesh(baseGeometry, baseMaterial)
-  base.position.y = baseHeight / 2
-  base.castShadow = true
-  base.receiveShadow = true
-  craneGroup.add(base)
-
-  // 2. Tower crane mast with lattice structure
-  const columnWidth = 50
-  const columnDepth = 50
-  const columnHeight = 300
-  const beamThickness = 3
-  const segmentHeight = 30 // Height of each lattice segment
-  const numSegments = Math.floor(columnHeight / segmentHeight)
-
-  // Material for the tower structure
-  const towerMaterial = new THREE.MeshStandardMaterial({ 
-    color: 0xFFA500, // Orange color like the reference
-    roughness: 0.7,
-    metalness: 0.3
-  })
-
-  // Create tower mast group
-  const towerGroup = new THREE.Group()
-
-  // Corner posts (vertical beams)
-  const cornerPositions = [
-    [-columnWidth/2, 0, -columnDepth/2],
-    [columnWidth/2, 0, -columnDepth/2],
-    [-columnWidth/2, 0, columnDepth/2],
-    [columnWidth/2, 0, columnDepth/2]
-  ]
-
-  cornerPositions.forEach(pos => {
-    const post = new THREE.Mesh(
-      new THREE.BoxGeometry(beamThickness, columnHeight, beamThickness),
-      towerMaterial
-    )
-    post.position.set(pos[0], baseHeight + columnHeight/2, pos[2])
-    post.castShadow = true
-    post.receiveShadow = true
-    towerGroup.add(post)
-  })
-
-  // Create horizontal and diagonal bracing for each segment
-  for (let i = 0; i < numSegments; i++) {
-    const y = baseHeight + i * segmentHeight + segmentHeight / 2
-
-    // Horizontal braces (3 per segment - front face left open)
-    const horizontalBraces = [
-      // Back
-      { pos: [0, y, columnDepth/2], rot: [0, 0, 0], size: [columnWidth, beamThickness, beamThickness] },
-      // Left
-      { pos: [-columnWidth/2, y, 0], rot: [0, Math.PI/2, 0], size: [columnDepth, beamThickness, beamThickness] },
-      // Right
-      { pos: [columnWidth/2, y, 0], rot: [0, Math.PI/2, 0], size: [columnDepth, beamThickness, beamThickness] }
-    ]
-
-    horizontalBraces.forEach(brace => {
-      const mesh = new THREE.Mesh(
-        new THREE.BoxGeometry(brace.size[0], brace.size[1], brace.size[2]),
-        towerMaterial
-      )
-      mesh.position.set(brace.pos[0], brace.pos[1], brace.pos[2])
-      mesh.rotation.set(brace.rot[0], brace.rot[1], brace.rot[2])
-      mesh.castShadow = true
-      mesh.receiveShadow = true
-      towerGroup.add(mesh)
-    })
-
-    // Diagonal braces (X pattern on each face)
-    const diagonalLength = Math.sqrt(columnWidth * columnWidth + segmentHeight * segmentHeight)
-    const diagonalAngle = Math.atan2(segmentHeight, columnWidth)
-
-    // X-braces on back face only (front face left open for lift arm)
-    const faceDiagonals = [
-      // Back face diagonals only
-      { pos: [0, y, columnDepth/2 - beamThickness/2], rotY: 0, rotZ: diagonalAngle },
-      { pos: [0, y, columnDepth/2 - beamThickness/2], rotY: 0, rotZ: -diagonalAngle }
-    ]
-
-    faceDiagonals.forEach(diag => {
-      const mesh = new THREE.Mesh(
-        new THREE.BoxGeometry(diagonalLength, beamThickness, beamThickness),
-        towerMaterial
-      )
-      mesh.position.set(diag.pos[0], diag.pos[1], diag.pos[2])
-      mesh.rotation.set(0, diag.rotY, diag.rotZ)
-      mesh.castShadow = true
-      mesh.receiveShadow = true
-      towerGroup.add(mesh)
-    })
-
-    // X-braces on left and right faces
-    const sideDiagonals = [
-      // Left face diagonals
-      { pos: [-columnWidth/2 + beamThickness/2, y, 0], rotY: Math.PI/2, rotZ: diagonalAngle },
-      { pos: [-columnWidth/2 + beamThickness/2, y, 0], rotY: Math.PI/2, rotZ: -diagonalAngle },
-      // Right face diagonals
-      { pos: [columnWidth/2 - beamThickness/2, y, 0], rotY: Math.PI/2, rotZ: diagonalAngle },
-      { pos: [columnWidth/2 - beamThickness/2, y, 0], rotY: Math.PI/2, rotZ: -diagonalAngle }
-    ]
-
-    sideDiagonals.forEach(diag => {
-      const mesh = new THREE.Mesh(
-        new THREE.BoxGeometry(diagonalLength, beamThickness, beamThickness),
-        towerMaterial
-      )
-      mesh.position.set(diag.pos[0], diag.pos[1], diag.pos[2])
-      mesh.rotation.set(0, diag.rotY, diag.rotZ)
-      mesh.castShadow = true
-      mesh.receiveShadow = true
-      towerGroup.add(mesh)
-    })
-  }
-
-  craneGroup.add(towerGroup)
-
-  // Column top cap
-  const capGeometry = new THREE.BoxGeometry(columnWidth + 10, 10, columnDepth + 10)
-  const capMaterial = new THREE.MeshStandardMaterial({ 
-    color: 0x777777,
-    roughness: 0.6,
-    metalness: 0.4
-  })
-  const cap = new THREE.Mesh(capGeometry, capMaterial)
-  cap.position.y = baseHeight + columnHeight + 5
-  cap.castShadow = true
-  cap.receiveShadow = true
-  craneGroup.add(cap)
-
-  // 3. Lift block inside column
-  const liftWidth = columnWidth - beamThickness * 2 - 10 // Leave some clearance
-  const liftDepth = columnDepth - beamThickness * 2 - 10
-  const liftHeight = 25
-  const liftGeometry = new THREE.BoxGeometry(liftWidth, liftHeight, liftDepth)
-  const liftMaterial = new THREE.MeshStandardMaterial({ 
-    color: 0xffcc00,
-    roughness: 0.5,
-    metalness: 0.5,
-    emissive: 0xffcc00,
-    emissiveIntensity: 0.1
-  })
-  const lift = new THREE.Mesh(liftGeometry, liftMaterial)
-  lift.position.y = baseHeight + columnHeight * 0.75 // Position at 75% of column height
-  lift.castShadow = true
-  lift.receiveShadow = true
-  craneGroup.add(lift)
-
-  // 4. Hierarchical crane arm structure for IK
-  // Shoulder group (attached to lift)
-  const shoulderGroup = new THREE.Group()
-  shoulderGroup.position.set(0, 0, -(liftDepth/2 + 10))
-  lift.add(shoulderGroup)
-  
-  // First arm
-  const armBlock1 = new THREE.Mesh(
-    new THREE.BoxGeometry(20, 20, 100),
-    new THREE.MeshStandardMaterial({
-      color: 0x808080,
-      roughness: 0.6,
-      metalness: 0.4
-    })
-  )
-  armBlock1.position.set(0, 0, -50) // Center at -50 (half length)
-  armBlock1.castShadow = true
-  armBlock1.receiveShadow = true
-  shoulderGroup.add(armBlock1)
-  
-  // Elbow group (pivot point for second arm)
-  const elbowGroup = new THREE.Group()
-  elbowGroup.position.set(0, 0, -100) // At end of first arm
-  shoulderGroup.add(elbowGroup)
-  
-  // Elbow joint visual (pulled back to hide under arm)
-  const elbowJoint = new THREE.Mesh(
-    new THREE.CylinderGeometry(10, 10, 10, 32),
-    new THREE.MeshStandardMaterial({
-      color: 0xff0000,
-      roughness: 0.5,
-      metalness: 0.6
-    })
-  )
-  elbowJoint.position.set(0, -15, 10) // Below arm and pulled back
-  elbowJoint.castShadow = true
-  elbowJoint.receiveShadow = true
-  elbowGroup.add(elbowJoint)
-  
-  // Second arm
-  const armBlock2 = new THREE.Mesh(
-    new THREE.BoxGeometry(20, 20, 100),
-    new THREE.MeshStandardMaterial({
-      color: 0x808080,
-      roughness: 0.6,
-      metalness: 0.4
-    })
-  )
-  armBlock2.position.set(0, -15, -40) // Below joint, centered at -40
-  armBlock2.castShadow = true
-  armBlock2.receiveShadow = true
-  elbowJoint.add(armBlock2)
-  
-  // Wrist group (pivot point for third arm)
-  // const wristGroup = new THREE.Group()
-  // wristGroup.position.set(0, -25, -80) // At end of second arm
-  // armBlock2.add(wristGroup)
-  
-  // Wrist joint visual (pulled back to hide under arm)
-  const wristJoint = new THREE.Mesh(
-    new THREE.CylinderGeometry(10, 10, 10, 32),
-    new THREE.MeshStandardMaterial({
-      color: 0xff0000,
-      roughness: 0.5,
-      metalness: 0.6
-    })
-  )
-  wristJoint.position.set(0, -15, -40) // Below arm and pulled back
-  wristJoint.castShadow = true
-  wristJoint.receiveShadow = true
-  armBlock2.add(wristJoint)
-  
-  // // Third arm (vertical)
-  // const armBlock3 = new THREE.Mesh(
-  //   new THREE.BoxGeometry(20, 60, 20),
-  //   new THREE.MeshStandardMaterial({
-  //     color: 0x808080,
-  //     roughness: 0.6,
-  //     metalness: 0.4
-  //   })
-  // )
-  // armBlock3.position.set(0, -55, 10) // Below joint, extends down
-  // armBlock3.castShadow = true
-  // armBlock3.receiveShadow = true
-  // wristGroup.add(armBlock3)
-  
-  // // Gripper mount group
-  // const gripperMountGroup = new THREE.Group()
-  // // gripperMountGroup.position.set(0, -72.5, 0) // At end of third arm
-  // wristGroup.add(gripperMountGroup)
-  
-  // // Gripper extension arm
-  // const gripperArm = new THREE.Mesh(
-  //   new THREE.BoxGeometry(20, 10, 60),
-  //   new THREE.MeshStandardMaterial({
-  //     color: 0x808080,
-  //     roughness: 0.6,
-  //     metalness: 0.4
-  //   })
-  // )
-  // gripperArm.position.set(0, 0, 0)
-  // gripperArm.castShadow = true
-  // gripperArm.receiveShadow = true
-  // gripperMountGroup.add(gripperArm)
-  
-  // // Gripper
-  // const gripperGroup = new THREE.Group()
-  // gripperGroup.position.set(0, -15, -30)
-  // gripperGroup.rotation.y = Math.PI / 2
-  // gripperMountGroup.add(gripperGroup)
-  
-  // const gripperBase = new THREE.Mesh(
-  //   new THREE.BoxGeometry(25, 10, 25),
-  //   new THREE.MeshStandardMaterial({
-  //     color: 0x444444,
-  //     roughness: 0.6,
-  //     metalness: 0.4
-  //   })
-  // )
-  // gripperGroup.add(gripperBase)
-  
-  // const fixedJaw = new THREE.Mesh(
-  //   new THREE.BoxGeometry(5, 15, 20),
-  //   new THREE.MeshStandardMaterial({
-  //     color: 0x333333,
-  //     roughness: 0.7,
-  //     metalness: 0.3
-  //   })
-  // )
-  // fixedJaw.position.set(-10, -10, 0)
-  // gripperGroup.add(fixedJaw)
-  
-  // const movableJaw = new THREE.Mesh(
-  //   new THREE.BoxGeometry(5, 15, 20),
-  //   new THREE.MeshStandardMaterial({
-  //     color: 0x333333,
-  //     roughness: 0.7,
-  //     metalness: 0.3
-  //   })
-  // )
-  // movableJaw.position.set(10, -10, 0)
-  // gripperGroup.add(movableJaw)
-  
-  // Add crane to scene
-  scene.add(craneGroup)
-}
-
 const createCraneWithBones = (): { bones: THREE.Bone[], skeleton: THREE.Skeleton, helper: THREE.SkeletonHelper, craneGroup: THREE.Group } => {
   // Create root group for the entire crane
   const craneGroup = new THREE.Group()
@@ -873,38 +563,39 @@ const setupIKSolver = (craneData: { bones: THREE.Bone[], skeleton: THREE.Skeleto
   craneData.skeleton.bones = bones
   craneData.skeleton.boneInverses.push(new THREE.Matrix4())
   
-  // Chain 1: Base to gripper (excluding lift translation)
+  // Chain 1: Base to gripper (excluding lift bone since it only translates)
   // This chain will handle all rotational joints
   const chain1 = {
     target: 6, // Target bone we just created
     effector: 5, // Gripper bone is the effector
+    iteration: 40, // Increase iterations for better convergence
     links: [
       {
         index: 4, // Wrist bone
-        rotationMin: new THREE.Vector3(-Math.PI, -Math.PI, -Math.PI),
-        rotationMax: new THREE.Vector3(Math.PI, Math.PI, Math.PI),
+        rotationMin: new THREE.Vector3(-Math.PI * 0.8, 0, 0),
+        rotationMax: new THREE.Vector3(Math.PI * 0.8, 0, 0),
         // Constrain wrist to X-axis rotation for vertical column
         enabled: [true, false, false]
       },
       {
         index: 3, // Elbow bone  
-        rotationMin: new THREE.Vector3(-Math.PI, -Math.PI/2, -Math.PI),
-        rotationMax: new THREE.Vector3(Math.PI, Math.PI/2, Math.PI),
+        rotationMin: new THREE.Vector3(0, -Math.PI * 0.6, 0),
+        rotationMax: new THREE.Vector3(0, Math.PI * 0.6, 0),
         // Constrain elbow to Y-axis rotation
         enabled: [false, true, false]
       },
       {
         index: 2, // Shoulder bone
-        rotationMin: new THREE.Vector3(-Math.PI, -Math.PI/2, -Math.PI),
-        rotationMax: new THREE.Vector3(Math.PI, Math.PI/2, Math.PI),
+        rotationMin: new THREE.Vector3(0, -Math.PI * 0.7, 0),
+        rotationMax: new THREE.Vector3(0, Math.PI * 0.7, 0),
         // Constrain shoulder to Y-axis rotation
         enabled: [false, true, false]
       },
       {
-        index: 0, // Base bone
-        rotationMin: new THREE.Vector3(-Math.PI, -Math.PI, -Math.PI),
-        rotationMax: new THREE.Vector3(Math.PI, Math.PI, Math.PI),
-        // Constrain base to Y-axis rotation
+        index: 0, // Base bone - CRITICAL: Only Y-axis rotation allowed
+        rotationMin: new THREE.Vector3(0, -Math.PI, 0),
+        rotationMax: new THREE.Vector3(0, Math.PI, 0),
+        // Constrain base to Y-axis rotation only - no pitch or roll
         enabled: [false, true, false]
       }
     ]
@@ -976,7 +667,6 @@ const animate = () => {
     scene.updateMatrixWorld(true)
     
     // Convert target position to world space for the target bone
-    // The target bone needs to reach the target mesh position
     const targetWorldPos = targetMesh.position.clone()
     
     // Convert to target bone's parent (gripper) local space
@@ -994,8 +684,13 @@ const animate = () => {
     // Update IK solver
     ikSolver.update()
     
-    // Force update all bone matrices after IK solve
-    bones.forEach(bone => bone.updateMatrixWorld(true))
+    // Simple constraints after IK update:
+    // 1. Base can only rotate around Y-axis
+    bones[0].rotation.x = 0
+    bones[0].rotation.z = 0
+    
+    // 2. Lift can only translate (no rotation)
+    bones[1].rotation.set(0, 0, 0)
   }
   
   // Test bone animation (disabled for now)
@@ -1078,61 +773,44 @@ onUnmounted(() => {
       <div>Press 'C' to log camera values to console</div>
       <div>Press 'B' to toggle skeleton helper</div>
     </div>
-    
+
     <!-- Control Panel -->
     <div class="absolute top-4 right-4 bg-white/90 p-4 rounded-lg shadow-lg">
       <h3 class="text-lg font-bold mb-4">Target Position</h3>
-      
+
       <!-- X Slider -->
       <div class="mb-3">
         <label class="flex items-center justify-between mb-1">
           <span class="text-sm font-medium">X:</span>
           <span class="text-sm font-mono">{{ targetPosition.x.toFixed(0) }}mm</span>
         </label>
-        <input 
-          type="range" 
-          v-model.number="targetPosition.x" 
-          min="-400" 
-          max="400" 
-          class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-        />
+        <input type="range" v-model.number="targetPosition.x" min="-400" max="400"
+          class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer" />
       </div>
-      
+
       <!-- Y Slider -->
       <div class="mb-3">
         <label class="flex items-center justify-between mb-1">
           <span class="text-sm font-medium">Y:</span>
           <span class="text-sm font-mono">{{ targetPosition.y.toFixed(0) }}mm</span>
         </label>
-        <input 
-          type="range" 
-          v-model.number="targetPosition.y" 
-          min="0" 
-          max="300" 
-          class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-        />
+        <input type="range" v-model.number="targetPosition.y" min="0" max="300"
+          class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer" />
       </div>
-      
+
       <!-- Z Slider -->
       <div class="mb-3">
         <label class="flex items-center justify-between mb-1">
           <span class="text-sm font-medium">Z:</span>
           <span class="text-sm font-mono">{{ targetPosition.z.toFixed(0) }}mm</span>
         </label>
-        <input 
-          type="range" 
-          v-model.number="targetPosition.z" 
-          min="-400" 
-          max="400" 
-          class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-        />
+        <input type="range" v-model.number="targetPosition.z" min="-400" max="400"
+          class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer" />
       </div>
-      
+
       <!-- Reset Button -->
-      <button 
-        @click="resetTarget"
-        class="w-full mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
-      >
+      <button @click="resetTarget"
+        class="w-full mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors">
         Reset Position
       </button>
     </div>

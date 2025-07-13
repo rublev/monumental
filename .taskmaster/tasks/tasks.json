@@ -589,7 +589,25 @@
             "title": "Fix base rotation to only allow Y-axis (yaw) movement",
             "description": "Restrict the base bone to only rotate around the Y-axis, preventing unwanted roll and pitch movements",
             "details": "Currently the base bone rotates in all axes like a buoy, which is incorrect. The base, yellow crane column, and crane column cap should all be part of one bone that only rotates around the Y-axis (yaw). This requires: 1) Properly configuring the IK chain constraints to restrict base rotation to Y-axis only, 2) Ensuring the constraint is actually being applied by CCDIKSolver, 3) Potentially modifying the bone setup if the constraint system isn't working as expected. The base should act like a turntable - only spinning horizontally, never tilting.",
-            "status": "pending",
+            "status": "done",
+            "dependencies": [],
+            "parentTaskId": 7
+          },
+          {
+            "id": 8,
+            "title": "Simplify base rotation constraints",
+            "description": "Remove the overcomplicated constraint enforcement code and implement the simplest solution that works - just reset X and Z rotations to 0 after IK solver update",
+            "details": "",
+            "status": "done",
+            "dependencies": [],
+            "parentTaskId": 7
+          },
+          {
+            "id": 9,
+            "title": "Fix shoulder bone to be rigid with lift",
+            "description": "The shoulder bone (first arm attachment) should not rotate independently. It should be rigidly attached to the lift face, moving only when the lift moves. The arm and lift should act as one entity.",
+            "details": "",
+            "status": "in-progress",
             "dependencies": [],
             "parentTaskId": 7
           }
@@ -598,7 +616,7 @@
     ],
     "metadata": {
       "created": "2025-07-11T19:14:02.076Z",
-      "updated": "2025-07-12T23:58:43.427Z",
+      "updated": "2025-07-13T00:14:03.854Z",
       "description": "Tasks for master context"
     }
   }
