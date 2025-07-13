@@ -568,19 +568,20 @@ const setupIKSolver = (craneData: { bones: THREE.Bone[], skeleton: THREE.Skeleto
   const chain1 = {
     target: 6, // Target bone we just created
     effector: 5, // Gripper bone is the effector
-    iteration: 40, // Increase iterations for better convergence
+    iteration: 200, // Higher iterations for difficult configurations
+    minDistance: 0.1, // Minimum distance to consider solved
     links: [
       {
         index: 4, // Wrist bone
-        rotationMin: new THREE.Vector3(0, -Math.PI * 0.8, 0),
-        rotationMax: new THREE.Vector3(0, Math.PI * 0.8, 0),
+        rotationMin: new THREE.Vector3(0, -Math.PI, 0),
+        rotationMax: new THREE.Vector3(0, Math.PI, 0),
         // Constrain wrist to Y-axis rotation only (like base)
         enabled: [false, true, false]
       },
       {
         index: 3, // Elbow bone  
-        rotationMin: new THREE.Vector3(0, -Math.PI * 0.6, 0),
-        rotationMax: new THREE.Vector3(0, Math.PI * 0.6, 0),
+        rotationMin: new THREE.Vector3(0, -Math.PI, 0),
+        rotationMax: new THREE.Vector3(0, Math.PI, 0),
         // Constrain elbow to Y-axis rotation
         enabled: [false, true, false]
       },
@@ -674,8 +675,28 @@ const animate = () => {
     targetBone.position.copy(localTargetPos)
     targetBone.updateMatrixWorld(true)
     
-    // Update IK solver
-    ikSolver.update()
+    // Check if target is close to column
+    const columnDist = Math.sqrt(targetWorldPos.x * targetWorldPos.x + targetWorldPos.z * targetWorldPos.z)
+    
+    if (columnDist < 180) {
+      // For close targets, bypass CCD solver's limitations
+      // by giving it a better starting configuration
+      
+      // 1. Point base towards target
+      const baseAngle = Math.atan2(targetWorldPos.z, targetWorldPos.x)
+      bones[0].rotation.y = baseAngle
+      
+      // 2. Fold elbow back significantly
+      // Since elbow rotation is relative to shoulder (which points forward)
+      // we need to rotate it back by more than 90 degrees
+      bones[3].rotation.y = Math.PI * 0.7
+      
+      // 3. Run IK solver from this configuration
+      ikSolver.update()
+    } else {
+      // For far targets, use normal IK solver
+      ikSolver.update()
+    }
     
     // Simple constraints after IK update:
     // 1. Base can only rotate around Y-axis
