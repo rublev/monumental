@@ -585,13 +585,6 @@ const setupIKSolver = (craneData: { bones: THREE.Bone[], skeleton: THREE.Skeleto
         enabled: [false, true, false]
       },
       {
-        index: 2, // Shoulder bone
-        rotationMin: new THREE.Vector3(0, -Math.PI * 0.7, 0),
-        rotationMax: new THREE.Vector3(0, Math.PI * 0.7, 0),
-        // Constrain shoulder to Y-axis rotation
-        enabled: [false, true, false]
-      },
-      {
         index: 0, // Base bone - CRITICAL: Only Y-axis rotation allowed
         rotationMin: new THREE.Vector3(0, -Math.PI, 0),
         rotationMax: new THREE.Vector3(0, Math.PI, 0),
@@ -691,6 +684,9 @@ const animate = () => {
     
     // 2. Lift can only translate (no rotation)
     bones[1].rotation.set(0, 0, 0)
+    
+    // 3. Shoulder is rigid with lift (no rotation)
+    bones[2].rotation.set(0, 0, 0)
   }
   
   // Test bone animation (disabled for now)

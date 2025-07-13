@@ -607,7 +607,7 @@
             "title": "Fix shoulder bone to be rigid with lift",
             "description": "The shoulder bone (first arm attachment) should not rotate independently. It should be rigidly attached to the lift face, moving only when the lift moves. The arm and lift should act as one entity.",
             "details": "",
-            "status": "in-progress",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 7
           }
@@ -616,7 +616,7 @@
     ],
     "metadata": {
       "created": "2025-07-11T19:14:02.076Z",
-      "updated": "2025-07-13T00:14:03.854Z",
+      "updated": "2025-07-13T00:14:33.021Z",
       "description": "Tasks for master context"
     }
   }
