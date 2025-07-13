@@ -583,6 +583,15 @@
             "status": "done",
             "dependencies": [],
             "parentTaskId": 7
+          },
+          {
+            "id": 7,
+            "title": "Fix base rotation to only allow Y-axis (yaw) movement",
+            "description": "Restrict the base bone to only rotate around the Y-axis, preventing unwanted roll and pitch movements",
+            "details": "Currently the base bone rotates in all axes like a buoy, which is incorrect. The base, yellow crane column, and crane column cap should all be part of one bone that only rotates around the Y-axis (yaw). This requires: 1) Properly configuring the IK chain constraints to restrict base rotation to Y-axis only, 2) Ensuring the constraint is actually being applied by CCDIKSolver, 3) Potentially modifying the bone setup if the constraint system isn't working as expected. The base should act like a turntable - only spinning horizontally, never tilting.",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 7
           }
         ]
       }
