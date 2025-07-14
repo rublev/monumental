@@ -76,7 +76,7 @@ export const SCENE_CONFIG = {
     RADIUS: 0.5,
     COLOR: 0xef4444,
     SEGMENTS: { width: 16, height: 8 },
-    OPACITY: 0.7,
+    OPACITY: 1,
   },
 };
 
