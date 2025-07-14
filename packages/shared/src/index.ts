@@ -144,5 +144,6 @@ export interface UseCraneReturn {
   disconnect: () => void;
 }
 
-// Export constants
+// Export constants and types
 export * from './constants';
+export * from './types';

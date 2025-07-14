@@ -1,47 +1,23 @@
 import * as THREE from 'three'
-
-// Crane configuration constants
-export const CRANE_CONFIG = {
-  LIFT: {
-    HEIGHT: 8,
-    MIN: 2,
-    MAX: 14
-  },
-  ARM: {
-    UPPER_LENGTH: 6,
-    LOWER_LENGTH: 5,
-    WRIST_EXT_LENGTH: 3
-  },
-  BASE: {
-    RADIUS: 4.0,
-    HEIGHT: 1,
-    SEGMENTS: 32
-  },
-  TOWER: {
-    WIDTH: 3,
-    DEPTH: 3,
-    HEIGHT: 15,
-    BEAM_THICKNESS: 0.3,
-    SEGMENT_HEIGHT: 3
-  },
-  MATERIALS: {
-    BASE: { color: 0xcccccc, roughness: 0.7, metalness: 0.3 },
-    ARM: { color: 0xfacc15, roughness: 0.4 },
-    JOINT: { color: 0x4f46e5, roughness: 0.5 },
-    GRIPPER: { color: 0x374151, roughness: 0.6 },
-    TOWER: { color: 0xffa500, roughness: 0.7, metalness: 0.3 },
-    LIFT: { 
-      color: 0xffcc00, 
-      roughness: 0.5, 
-      metalness: 0.5, 
-      emissive: 0xffcc00, 
-      emissiveIntensity: 0.1 
-    },
-    CAP: { color: 0x777777, roughness: 0.6, metalness: 0.4 }
-  }
-}
+import { CRANE_CONFIG } from '@monumental/shared'
+import type { CraneStats, TargetPosition } from '@monumental/shared'
 
 export class Crane {
+  private liftHeight: number
+  private liftMin: number
+  private liftMax: number
+  private upperArmLength: number
+  private lowerArmLength: number
+  private wristExtLength: number
+
+  public base: THREE.Object3D
+  public swingJoint: THREE.Object3D
+  public liftJoint: THREE.Object3D
+  public shoulderJoint: THREE.Object3D
+  public elbowJoint: THREE.Object3D
+  public wristJoint: THREE.Object3D
+  public endEffector: THREE.Object3D
+
   constructor() {
     this.liftHeight = CRANE_CONFIG.LIFT.HEIGHT
     this.liftMin = CRANE_CONFIG.LIFT.MIN
@@ -49,7 +25,6 @@ export class Crane {
     this.upperArmLength = CRANE_CONFIG.ARM.UPPER_LENGTH
     this.lowerArmLength = CRANE_CONFIG.ARM.LOWER_LENGTH
     this.wristExtLength = CRANE_CONFIG.ARM.WRIST_EXT_LENGTH
-    this.baseRadius = CRANE_CONFIG.BASE.RADIUS
 
     this.base = new THREE.Object3D()
     this.swingJoint = new THREE.Object3D()
@@ -62,7 +37,7 @@ export class Crane {
     this.build()
   }
 
-  build() {
+  private build(): void {
     const materials = this.createMaterials()
     
     this.buildBase(materials)
@@ -74,7 +49,7 @@ export class Crane {
     this.setupHierarchy()
   }
 
-  createMaterials() {
+  private createMaterials() {
     return {
       base: new THREE.MeshStandardMaterial(CRANE_CONFIG.MATERIALS.BASE),
       arm: new THREE.MeshStandardMaterial(CRANE_CONFIG.MATERIALS.ARM),
@@ -86,7 +61,7 @@ export class Crane {
     }
   }
 
-  buildBase(materials) {
+  private buildBase(materials: ReturnType<typeof this.createMaterials>): void {
     const basePlate = new THREE.Mesh(
       new THREE.CylinderGeometry(
         CRANE_CONFIG.BASE.RADIUS,
@@ -100,7 +75,7 @@ export class Crane {
     this.base.add(basePlate)
   }
 
-  buildTower(materials) {
+  private buildTower(materials: ReturnType<typeof this.createMaterials>): void {
     const { WIDTH, DEPTH, HEIGHT, BEAM_THICKNESS, SEGMENT_HEIGHT } = CRANE_CONFIG.TOWER
     const numSegments = Math.floor(HEIGHT / SEGMENT_HEIGHT)
     const towerGroup = new THREE.Group()
@@ -113,7 +88,7 @@ export class Crane {
     this.swingJoint.add(towerGroup)
   }
 
-  buildCornerPosts(towerGroup, material, width, depth, height, beamThickness) {
+  private buildCornerPosts(towerGroup: THREE.Group, material: THREE.MeshStandardMaterial, width: number, depth: number, height: number, beamThickness: number): void {
     const cornerPositions = [
       [-width / 2, 0, -depth / 2],
       [width / 2, 0, -depth / 2],
@@ -133,7 +108,7 @@ export class Crane {
     })
   }
 
-  buildHorizontalBracing(towerGroup, material, width, depth, beamThickness, segmentHeight, numSegments) {
+  private buildHorizontalBracing(towerGroup: THREE.Group, material: THREE.MeshStandardMaterial, width: number, depth: number, beamThickness: number, segmentHeight: number, numSegments: number): void {
     for (let i = 0; i < numSegments; i++) {
       const y = 1 + i * segmentHeight + segmentHeight / 2
 
@@ -169,7 +144,7 @@ export class Crane {
     }
   }
 
-  buildTowerCap(material, width, depth, height) {
+  private buildTowerCap(material: THREE.MeshStandardMaterial, width: number, depth: number, height: number): void {
     const cap = new THREE.Mesh(
       new THREE.BoxGeometry(width + 1, 0.5, depth + 1),
       material
@@ -180,7 +155,7 @@ export class Crane {
     this.swingJoint.add(cap)
   }
 
-  buildLift(materials) {
+  private buildLift(materials: ReturnType<typeof this.createMaterials>): void {
     const { WIDTH, DEPTH, BEAM_THICKNESS } = CRANE_CONFIG.TOWER
     const liftWidth = WIDTH - BEAM_THICKNESS * 2 - 1
     const liftDepth = DEPTH - BEAM_THICKNESS * 2 - 1
@@ -196,13 +171,13 @@ export class Crane {
     this.liftJoint.position.y = this.liftHeight
   }
 
-  buildArms(materials) {
+  private buildArms(materials: ReturnType<typeof this.createMaterials>): void {
     this.buildShoulder(materials)
     this.buildElbow(materials)
     this.buildWrist(materials)
   }
 
-  buildShoulder(materials) {
+  private buildShoulder(materials: ReturnType<typeof this.createMaterials>): void {
     const shoulderCyl = new THREE.Mesh(
       new THREE.CylinderGeometry(0.8, 0.8, 0.5, 32),
       materials.joint
@@ -217,7 +192,7 @@ export class Crane {
     this.shoulderJoint.add(upperArm)
   }
 
-  buildElbow(materials) {
+  private buildElbow(materials: ReturnType<typeof this.createMaterials>): void {
     const elbowCyl = new THREE.Mesh(
       new THREE.CylinderGeometry(0.8, 0.8, 0.5, 32),
       materials.joint
@@ -232,7 +207,7 @@ export class Crane {
     this.elbowJoint.add(lowerArm)
   }
 
-  buildWrist(materials) {
+  private buildWrist(materials: ReturnType<typeof this.createMaterials>): void {
     const wristCyl = new THREE.Mesh(
       new THREE.CylinderGeometry(0.8, 0.8, 0.5, 32),
       materials.joint
@@ -247,7 +222,7 @@ export class Crane {
     this.wristJoint.add(wristExt)
   }
 
-  buildGripper(materials) {
+  private buildGripper(materials: ReturnType<typeof this.createMaterials>): void {
     const gripperBase = new THREE.Mesh(
       new THREE.BoxGeometry(1, 0.5, 1),
       materials.gripper
@@ -273,7 +248,7 @@ export class Crane {
     this.wristJoint.add(this.endEffector)
   }
 
-  setupHierarchy() {
+  private setupHierarchy(): void {
     this.base.add(this.swingJoint)
     this.swingJoint.add(this.liftJoint)
     this.liftJoint.add(this.shoulderJoint)
@@ -283,18 +258,18 @@ export class Crane {
     this.wristJoint.position.x = this.lowerArmLength
   }
 
-  solveIK(targetPosition) {
+  public solveIK(targetPosition: TargetPosition): void {
     this.updateLiftPosition(targetPosition)
     this.solvePlanarIK(targetPosition)
   }
 
-  updateLiftPosition(targetPosition) {
+  private updateLiftPosition(targetPosition: TargetPosition): void {
     let liftY = targetPosition.y + this.wristExtLength + 1
     liftY = Math.max(this.liftMin, Math.min(this.liftMax, liftY))
     this.liftJoint.position.y = liftY
   }
 
-  solvePlanarIK(targetPosition) {
+  private solvePlanarIK(targetPosition: TargetPosition): void {
     const l1 = this.upperArmLength
     const l2 = this.lowerArmLength
     const targetX = targetPosition.x
@@ -303,12 +278,12 @@ export class Crane {
     const distSq = targetX * targetX + targetZ * targetZ
     const dist = Math.sqrt(distSq)
 
-    let { elbowAngle, shoulderAngle } = this.calculateJointAngles(distSq, dist, l1, l2, targetX, targetZ)
+    const { elbowAngle, shoulderAngle } = this.calculateJointAngles(distSq, dist, l1, l2, targetX, targetZ)
 
     this.applyJointRotations(shoulderAngle, elbowAngle)
   }
 
-  calculateJointAngles(distSq, dist, l1, l2, targetX, targetZ) {
+  private calculateJointAngles(distSq: number, dist: number, l1: number, l2: number, targetX: number, targetZ: number): { elbowAngle: number; shoulderAngle: number } {
     let elbowAngle = Math.acos((distSq - l1 * l1 - l2 * l2) / (2 * l1 * l2))
 
     const angleToTarget = Math.atan2(targetZ, targetX)
@@ -335,13 +310,13 @@ export class Crane {
     return { elbowAngle, shoulderAngle }
   }
 
-  applyJointRotations(shoulderAngle, elbowAngle) {
+  private applyJointRotations(shoulderAngle: number, elbowAngle: number): void {
     this.swingJoint.rotation.y = -shoulderAngle
     this.shoulderJoint.rotation.y = 0
     this.elbowJoint.rotation.y = -elbowAngle
   }
 
-  getStats() {
+  public getStats(): CraneStats {
     return {
       liftHeight: this.liftJoint.position.y.toFixed(2),
       shoulderAngle: ((this.shoulderJoint.rotation.y * 180) / Math.PI).toFixed(1),
@@ -351,7 +326,7 @@ export class Crane {
 }
 
 export function useCrane() {
-  const createCrane = () => new Crane()
+  const createCrane = (): Crane => new Crane()
   
   return {
     createCrane,

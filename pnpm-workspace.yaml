@@ -1,8 +1,9 @@
 packages:
-  - 'frontend'
-  - 'backend'
-  - 'packages/*'
+  - frontend
+  - backend
+  - packages/*
 
 onlyBuiltDependencies:
   - '@tailwindcss/oxide'
-  - 'esbuild'
+  - esbuild
+  - vue-demi

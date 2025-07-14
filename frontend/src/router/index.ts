@@ -25,7 +25,7 @@ const router = createRouter({
     {
       path: '/crane-simulation',
       name: 'crane-simulation',
-      component: () => import('../components/CraneSimulation.vue'),
+      component: () => import('@/components/CraneSimulation.vue'),
     },
   ],
 })

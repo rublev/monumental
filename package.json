@@ -7,17 +7,21 @@
     "dev": "pnpm --parallel dev",
     "dev:frontend": "pnpm --filter frontend dev",
     "dev:backend": "pnpm --filter backend dev",
+    "dev:shared": "pnpm --filter @monumental/shared dev",
     "build": "pnpm run -r build",
     "build:frontend": "pnpm --filter frontend build",
     "build:backend": "pnpm --filter backend build",
+    "build:shared": "pnpm --filter @monumental/shared build",
     "test": "pnpm run -r test",
     "lint": "pnpm run -r lint",
+    "format": "prettier --write \"**/*.{js,ts,vue,json,md,css,scss,html}\"",
     "typecheck": "pnpm run -r typecheck",
     "clean": "pnpm run -r clean && rm -rf node_modules",
     "install:all": "pnpm install"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
+    "prettier": "^3.6.2",
     "typescript": "^5.0.0"
   }
 }

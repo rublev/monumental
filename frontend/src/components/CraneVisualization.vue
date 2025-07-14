@@ -482,60 +482,6 @@ const createCraneWithFABRIK = (): { crane: any, craneGroup: THREE.Group } => {
   
   crane.endEffector.add(gripperGroup)
   
-  // Add FABRIK solve function to crane
-  crane.solveIK = (targetPosition: any) => {
-    // 1. Determine required lift height
-    let liftY = targetPosition.y + crane.wristExtLength
-    liftY = Math.max(crane.liftMin, Math.min(crane.liftMax, liftY))
-    crane.liftJoint.position.y = liftY
-
-    // 2. Solve the 2D planar problem for the horizontal arms
-    const l1 = crane.upperArmLength
-    const l2 = crane.lowerArmLength
-    const targetX = targetPosition.x
-    const targetZ = targetPosition.z
-
-    const distSq = targetX * targetX + targetZ * targetZ
-    const dist = Math.sqrt(distSq)
-
-    // Angle for the elbow joint using Law of Cosines
-    let elbowAngle = Math.acos(
-      (distSq - l1 * l1 - l2 * l2) / (2 * l1 * l2)
-    )
-
-    // Angle for the shoulder joint
-    const angleToTarget = Math.atan2(targetZ, targetX)
-    const angleFromTarget = Math.atan2(
-      l2 * Math.sin(elbowAngle),
-      l1 + l2 * Math.cos(elbowAngle)
-    )
-    let shoulderAngle = angleToTarget - angleFromTarget
-
-    // Handle unreachable targets
-    if (dist > l1 + l2) {
-      shoulderAngle = angleToTarget
-      elbowAngle = 0
-    }
-
-    // Handle targets too close to the base
-    if (dist < Math.abs(l1 - l2)) {
-      shoulderAngle = angleToTarget
-      elbowAngle = Math.PI
-    }
-
-    if (isNaN(elbowAngle)) elbowAngle = 0
-    if (isNaN(shoulderAngle)) shoulderAngle = 0
-
-    // Apply rotations using FABRIK approach
-    // The base (swingJoint) rotates to face the target - this rotates the entire tower
-    crane.swingJoint.rotation.y = -shoulderAngle
-    
-    // The shoulder is fixed to the lift - no rotation relative to the tower
-    crane.shoulderJoint.rotation.y = 0
-    
-    // The elbow still rotates to reach the target
-    crane.elbowJoint.rotation.y = -elbowAngle
-  }
   
   // Add crane to scene
   craneGroup.add(crane.base)

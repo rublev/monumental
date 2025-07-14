@@ -48,50 +48,15 @@
 import { ref, reactive, onMounted, onUnmounted, watch } from 'vue'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
-import { useCrane } from '../composables/useCrane.js'
+import { useCrane } from '@/composables/useCrane'
+import { SCENE_CONFIG } from '@monumental/shared'
 
-// Constants
-const SIMULATION_BOUNDS = {
-  X_MIN: -13,
-  X_MAX: 13,
-  Y_MIN: 0,
-  Y_MAX: 10,
-  Z_MIN: -13,
-  Z_MAX: 13,
-  STEP: 0.1
-}
-
-const CAMERA_CONFIG = {
-  FOV: 60,
-  NEAR: 0.1,
-  FAR: 1000,
-  POSITION: { x: 20, y: 15, z: 20 },
-  LOOK_AT: { x: 0, y: 5, z: 0 }
-}
-
-const LIGHTING_CONFIG = {
-  AMBIENT: { color: 0xffffff, intensity: 0.7 },
-  DIRECTIONAL: {
-    color: 0xffffff,
-    intensity: 1.5,
-    position: { x: 10, y: 20, z: 5 }
-  }
-}
-
-const SCENE_CONFIG = {
-  BACKGROUND_COLOR: 0x111827,
-  GROUND_SIZE: 50,
-  GROUND_COLOR: 0x1f2937,
-  GRID_SIZE: 50,
-  GRID_COLOR: 0x444444
-}
-
-const TARGET_CONFIG = {
-  RADIUS: 0.5,
-  COLOR: 0xef4444,
-  SEGMENTS: { width: 16, height: 8 },
-  OPACITY: 0.7
-}
+// Use constants from shared package
+const SIMULATION_BOUNDS = SCENE_CONFIG.SIMULATION_BOUNDS
+const CAMERA_CONFIG = SCENE_CONFIG.CAMERA
+const LIGHTING_CONFIG = SCENE_CONFIG.LIGHTING
+const ENVIRONMENT_CONFIG = SCENE_CONFIG.ENVIRONMENT
+const TARGET_CONFIG = SCENE_CONFIG.TARGET
 
 // Composables
 const { createCrane } = useCrane()
@@ -121,7 +86,7 @@ const initThree = () => {
   if (!canvasContainer.value) return
 
   scene = new THREE.Scene()
-  scene.background = new THREE.Color(SCENE_CONFIG.BACKGROUND_COLOR)
+  scene.background = new THREE.Color(ENVIRONMENT_CONFIG.BACKGROUND_COLOR)
 
   camera = new THREE.PerspectiveCamera(
     CAMERA_CONFIG.FOV,
@@ -151,13 +116,13 @@ const initThree = () => {
 
   // Ground and grid
   const ground = new THREE.Mesh(
-    new THREE.PlaneGeometry(SCENE_CONFIG.GROUND_SIZE, SCENE_CONFIG.GROUND_SIZE),
-    new THREE.MeshStandardMaterial({ color: SCENE_CONFIG.GROUND_COLOR })
+    new THREE.PlaneGeometry(ENVIRONMENT_CONFIG.GROUND_SIZE, ENVIRONMENT_CONFIG.GROUND_SIZE),
+    new THREE.MeshStandardMaterial({ color: ENVIRONMENT_CONFIG.GROUND_COLOR })
   )
   ground.rotation.x = -Math.PI / 2
   scene.add(ground)
 
-  const grid = new THREE.GridHelper(SCENE_CONFIG.GRID_SIZE, SCENE_CONFIG.GRID_SIZE, SCENE_CONFIG.GRID_COLOR, SCENE_CONFIG.GRID_COLOR)
+  const grid = new THREE.GridHelper(ENVIRONMENT_CONFIG.GRID_SIZE, ENVIRONMENT_CONFIG.GRID_SIZE, ENVIRONMENT_CONFIG.GRID_COLOR, ENVIRONMENT_CONFIG.GRID_COLOR)
   scene.add(grid)
 
   // Crane
