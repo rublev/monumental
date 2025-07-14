@@ -16,8 +16,10 @@ app.ws<WebSocketData>('/ws', {
     try {
       // Convert ArrayBuffer to string
       const messageStr = Buffer.from(message).toString();
-      console.log(`[WS] Received message from ${ws.getUserData().id}: ${messageStr}`);
-      
+      console.log(
+        `[WS] Received message from ${ws.getUserData().id}: ${messageStr}`
+      );
+
       // Parse JSON message
       let parsedMessage;
       try {
@@ -27,53 +29,61 @@ app.ws<WebSocketData>('/ws', {
         ws.send(message, isBinary);
         return;
       }
-      
+
       // Echo the message back as JSON
       const response = {
         type: 'echo',
         data: parsedMessage,
         timestamp: new Date().toISOString(),
-        clientId: ws.getUserData().id
+        clientId: ws.getUserData().id,
       };
-      
+
       ws.send(JSON.stringify(response), false);
     } catch (error) {
       console.error('[WS] Error handling message:', error);
-      ws.send(JSON.stringify({ 
-        type: 'error', 
-        message: 'Failed to process message' 
-      }), false);
+      ws.send(
+        JSON.stringify({
+          type: 'error',
+          message: 'Failed to process message',
+        }),
+        false
+      );
     }
   },
-  
+
   // Handle new connections
   open: (ws) => {
     const clientId = `client_${Date.now()}_${Math.random().toString(36).substring(7)}`;
     const userData: WebSocketData = {
       id: clientId,
-      connectedAt: new Date()
+      connectedAt: new Date(),
     };
-    
+
     ws.getUserData().id = clientId;
     ws.getUserData().connectedAt = userData.connectedAt;
-    
+
     console.log(`[WS] Client connected: ${clientId}`);
-    
+
     // Send welcome message
-    ws.send(JSON.stringify({
-      type: 'welcome',
-      clientId,
-      message: 'Connected to WebSocket server',
-      timestamp: new Date().toISOString()
-    }), false);
+    ws.send(
+      JSON.stringify({
+        type: 'welcome',
+        clientId,
+        message: 'Connected to WebSocket server',
+        timestamp: new Date().toISOString(),
+      }),
+      false
+    );
   },
-  
+
   // Handle disconnections
   close: (ws, code, message) => {
     const clientId = ws.getUserData().id;
-    console.log(`[WS] Client disconnected: ${clientId}, code: ${code}, message: ${Buffer.from(message).toString()}`);
+    console.log(
+      `[WS] Client disconnected: ${clientId}, code: ${code}, message: ${Buffer.from(message).toString()}`
+    );
   },
-  
+
   // Configuration
   compression: uWS.DEDICATED_COMPRESSOR_3KB,
   maxPayloadLength: 16 * 1024 * 1024, // 16MB
@@ -82,12 +92,15 @@ app.ws<WebSocketData>('/ws', {
 
 // HTTP endpoint for health check
 app.get('/health', (res, req) => {
-  res.writeStatus('200 OK')
-     .writeHeader('Content-Type', 'application/json')
-     .end(JSON.stringify({ 
-       status: 'ok', 
-       timestamp: new Date().toISOString() 
-     }));
+  res
+    .writeStatus('200 OK')
+    .writeHeader('Content-Type', 'application/json')
+    .end(
+      JSON.stringify({
+        status: 'ok',
+        timestamp: new Date().toISOString(),
+      })
+    );
 });
 
 // Start the server

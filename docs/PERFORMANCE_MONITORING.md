@@ -3,16 +3,19 @@
 ## Key Metrics
 
 ### Frame Rate
+
 - **Target**: 60 FPS
 - **Minimum**: 30 FPS
 - **Measurement**: `stats.js` or Chrome DevTools
 
 ### Latency
+
 - **WebSocket RTT**: < 50ms
 - **IK Solve Time**: < 16ms
 - **Physics Step**: < 8ms
 
 ### Memory Usage
+
 - **Baseline**: < 100MB
 - **With Physics**: < 200MB
 - **Monitor for leaks**: Chrome Memory Profiler
@@ -30,9 +33,9 @@ document.body.appendChild(stats.dom);
 
 function animate() {
   stats.begin();
-  
+
   // ... render code
-  
+
   stats.end();
   requestAnimationFrame(animate);
 }
@@ -48,7 +51,7 @@ const observer = new PerformanceObserver((list) => {
     analytics.track('performance', {
       name: entry.name,
       duration: entry.duration,
-      startTime: entry.startTime
+      startTime: entry.startTime,
     });
   }
 });
@@ -58,24 +61,26 @@ observer.observe({ entryTypes: ['measure'] });
 
 ## Performance Budgets
 
-| Metric | Budget | Alert Threshold |
-|--------|--------|-----------------|
-| Initial Load | < 3s | > 5s |
-| Time to Interactive | < 5s | > 8s |
-| Bundle Size | < 500KB | > 750KB |
-| Memory Usage | < 200MB | > 300MB |
-| CPU Usage | < 50% | > 80% |
+| Metric              | Budget  | Alert Threshold |
+| ------------------- | ------- | --------------- |
+| Initial Load        | < 3s    | > 5s            |
+| Time to Interactive | < 5s    | > 8s            |
+| Bundle Size         | < 500KB | > 750KB         |
+| Memory Usage        | < 200MB | > 300MB         |
+| CPU Usage           | < 50%   | > 80%           |
 
 ## Optimization Techniques
 
 ### Rendering
 
 1. **Frustum Culling**
+
 ```typescript
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 ```
 
 2. **Level of Detail (LOD)**
+
 ```typescript
 const lod = new THREE.LOD();
 lod.addLevel(highDetailMesh, 0);
@@ -84,6 +89,7 @@ lod.addLevel(lowDetailMesh, 100);
 ```
 
 3. **Instanced Rendering**
+
 ```typescript
 const mesh = new THREE.InstancedMesh(geometry, material, count);
 ```

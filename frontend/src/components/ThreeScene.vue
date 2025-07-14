@@ -81,7 +81,7 @@ onUnmounted(() => {
   // Cleanup
   cancelAnimationFrame(animationId)
   window.removeEventListener('resize', handleResize)
-  
+
   if (renderer) {
     renderer.dispose()
     container.value?.removeChild(renderer.domElement)

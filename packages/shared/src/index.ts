@@ -6,11 +6,11 @@ export interface Vector3Like {
 }
 
 export interface CraneActuators {
-  swing: number;      // Base rotation in degrees
-  lift: number;       // Lift mechanism height in mm
-  elbow: number;      // Elbow joint angle in degrees
-  wrist: number;      // Wrist joint angle in degrees
-  gripper: number;    // Gripper opening in mm
+  swing: number; // Base rotation in degrees
+  lift: number; // Lift mechanism height in mm
+  elbow: number; // Elbow joint angle in degrees
+  wrist: number; // Wrist joint angle in degrees
+  gripper: number; // Gripper opening in mm
 }
 
 export interface CraneState extends CraneActuators {
@@ -31,8 +31,8 @@ export interface PhysicsObject {
 }
 
 export interface IKChainConfig {
-  target: number;     // Target bone index
-  effector: number;   // End effector bone index
+  target: number; // Target bone index
+  effector: number; // End effector bone index
   links: Array<{
     index: number;
     rotationMin?: Vector3Like;
@@ -50,13 +50,13 @@ export enum MessageType {
   GRIPPER_COMMAND = 'gripper_command',
   SPAWN_OBJECT = 'spawn_object',
   RESET_SCENE = 'reset_scene',
-  
+
   // Server -> Client
   STATE_UPDATE = 'state_update',
   PHYSICS_UPDATE = 'physics_update',
   IK_SOLUTION = 'ik_solution',
   ERROR = 'error',
-  CONNECTION_ACK = 'connection_ack'
+  CONNECTION_ACK = 'connection_ack',
 }
 
 export interface BaseMessage {
@@ -68,7 +68,7 @@ export interface BaseMessage {
 export interface MoveCommandMessage extends BaseMessage {
   type: MessageType.MOVE_COMMAND;
   actuators: Partial<CraneActuators>;
-  duration?: number;  // Animation duration in ms
+  duration?: number; // Animation duration in ms
 }
 
 export interface IKTargetMessage extends BaseMessage {
@@ -92,7 +92,7 @@ export enum ErrorCode {
   IK_NO_SOLUTION = 'IK_NO_SOLUTION',
   COLLISION_DETECTED = 'COLLISION_DETECTED',
   CONNECTION_FAILED = 'CONNECTION_FAILED',
-  PHYSICS_ERROR = 'PHYSICS_ERROR'
+  PHYSICS_ERROR = 'PHYSICS_ERROR',
 }
 
 export interface ErrorMessage extends BaseMessage {

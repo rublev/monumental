@@ -41,15 +41,15 @@ class BinaryProtocol {
   encode(msg: StateUpdateMessage): ArrayBuffer {
     const buffer = new ArrayBuffer(41);
     const view = new DataView(buffer);
-    
+
     view.setUint8(0, MessageType.STATE_UPDATE);
     view.setFloat64(1, msg.timestamp);
     view.setFloat32(9, msg.state.swing);
     // ... etc
-    
+
     return buffer;
   }
-  
+
   decode(buffer: ArrayBuffer): BaseMessage {
     const view = new DataView(buffer);
     const type = view.getUint8(0);

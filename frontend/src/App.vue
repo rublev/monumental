@@ -11,24 +11,32 @@ import { RouterView } from 'vue-router'
             <h1 class="text-xl font-semibold text-gray-900">Demo App</h1>
           </div>
           <nav class="flex space-x-8">
-            <RouterLink to="/"
+            <RouterLink
+              to="/"
               class="text-gray-500 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors"
-              active-class="text-blue-600 bg-blue-50">
+              active-class="text-blue-600 bg-blue-50"
+            >
               Home
             </RouterLink>
-            <RouterLink to="/about"
+            <RouterLink
+              to="/about"
               class="text-gray-500 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors"
-              active-class="text-blue-600 bg-blue-50">
+              active-class="text-blue-600 bg-blue-50"
+            >
               About
             </RouterLink>
-            <RouterLink to="/demo"
+            <RouterLink
+              to="/demo"
               class="text-gray-500 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors"
-              active-class="text-blue-600 bg-blue-50">
+              active-class="text-blue-600 bg-blue-50"
+            >
               Demo
             </RouterLink>
-            <RouterLink to="/crane-simulation"
+            <RouterLink
+              to="/crane-simulation"
               class="text-gray-500 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors"
-              active-class="text-blue-600 bg-blue-50">
+              active-class="text-blue-600 bg-blue-50"
+            >
               Crane Sim
             </RouterLink>
           </nav>

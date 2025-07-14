@@ -1,14 +1,24 @@
-import { AxesHelper, Color, ConeGeometry, MathUtils, Matrix4, Mesh, MeshBasicMaterial, Object3D, Vector3 } from 'three';
+import {
+  AxesHelper,
+  Color,
+  ConeGeometry,
+  MathUtils,
+  Matrix4,
+  Mesh,
+  MeshBasicMaterial,
+  Object3D,
+  Vector3,
+} from 'three'
 
 /**
  * A collection of utilities.
  * @module utils
  */
 
-const t1 = new Vector3();
-const t2 = new Vector3();
-const t3 = new Vector3();
-const m1 = new Matrix4();
+const t1 = new Vector3()
+const t2 = new Vector3()
+const t3 = new Vector3()
+const m1 = new Matrix4()
 
 /**
  * Returns the world position of object and sets
@@ -18,7 +28,7 @@ const m1 = new Matrix4();
  * @param {THREE.Vector3} target
  */
 function getWorldPosition(object, target) {
-  return target.setFromMatrixPosition(object.matrixWorld);
+  return target.setFromMatrixPosition(object.matrixWorld)
 }
 
 /**
@@ -29,7 +39,6 @@ function getWorldPosition(object, target) {
  * @return {number}
  */
 
-
 /**
  * Sets the target to the centroid position between all passed in
  * positions.
@@ -38,13 +47,13 @@ function getWorldPosition(object, target) {
  * @param {THREE.Vector3} target
  */
 function getCentroid(positions, target) {
-  target.set(0, 0, 0);
+  target.set(0, 0, 0)
   for (let position of positions) {
-    target.add(position);
+    target.add(position)
   }
-  target.divideScalar(positions.length);
+  target.divideScalar(positions.length)
 
-  return target;
+  return target
 }
 
 /**
@@ -58,34 +67,40 @@ function getCentroid(positions, target) {
  * @param {THREE.Quaternion} target
  */
 function setQuaternionFromDirection(direction, up, target) {
-  const x = t1;
-  const y = t2;
-  const z = t3;
-  const m = m1;
-  const el = m1.elements;
+  const x = t1
+  const y = t2
+  const z = t3
+  const m = m1
+  const el = m1.elements
 
-  z.copy(direction);
-  x.crossVectors(up, z);
+  z.copy(direction)
+  x.crossVectors(up, z)
 
   if (x.lengthSq() === 0) {
     // parallel
     if (Math.abs(up.z) === 1) {
-      z.x += 0.0001;
+      z.x += 0.0001
     } else {
-      z.z += 0.0001;
+      z.z += 0.0001
     }
-    z.normalize();
-    x.crossVectors(up, z);
+    z.normalize()
+    x.crossVectors(up, z)
   }
 
-  x.normalize();
-  y.crossVectors(z, x);
+  x.normalize()
+  y.crossVectors(z, x)
 
-  el[0] = x.x; el[4] = y.x; el[8] = z.x;
-  el[1] = x.y; el[5] = y.y; el[9] = z.y;
-  el[2] = x.z; el[6] = y.z; el[10] = z.z;
+  el[0] = x.x
+  el[4] = y.x
+  el[8] = z.x
+  el[1] = x.y
+  el[5] = y.y
+  el[9] = z.y
+  el[2] = x.z
+  el[6] = y.z
+  el[10] = z.z
 
-  target.setFromRotationMatrix(m);
+  target.setFromRotationMatrix(m)
 }
 
 /**
@@ -105,17 +120,17 @@ function setQuaternionFromDirection(direction, up, target) {
  * @param {THREE.Vector3} target
  */
 function transformPoint(vector, matrix, target) {
-  const e = matrix.elements;
+  const e = matrix.elements
 
-  const x = (vector.x * e[0]) + (vector.y * e[4]) + (vector.z * e[8]) + e[12];
-  const y = (vector.x * e[1]) + (vector.y * e[5]) + (vector.z * e[9]) + e[13];
-  const z = (vector.x * e[2]) + (vector.y * e[6]) + (vector.z * e[10]) + e[14];
-  const w = (vector.x * e[3]) + (vector.y * e[7]) + (vector.z * e[11]) + e[15];
-  target.set(x / w, y / w, z / w);
+  const x = vector.x * e[0] + vector.y * e[4] + vector.z * e[8] + e[12]
+  const y = vector.x * e[1] + vector.y * e[5] + vector.z * e[9] + e[13]
+  const z = vector.x * e[2] + vector.y * e[6] + vector.z * e[10] + e[14]
+  const w = vector.x * e[3] + vector.y * e[7] + vector.z * e[11] + e[15]
+  target.set(x / w, y / w, z / w)
 }
 
-const Z_AXIS = new Vector3(0, 0, 1);
-const { DEG2RAD, RAD2DEG } = MathUtils;
+const Z_AXIS = new Vector3(0, 0, 1)
+const { DEG2RAD, RAD2DEG } = MathUtils
 
 /**
  * A class for a constraint.
@@ -127,7 +142,7 @@ class IKBallConstraint {
    * @param {number} angle
    */
   constructor(angle) {
-    this.angle = angle;
+    this.angle = angle
   }
 
   /**
@@ -140,30 +155,29 @@ class IKBallConstraint {
    * @return {boolean}
    */
   _apply(joint) {
-
     // Get direction of joint and parent in world space
-    const direction = new Vector3().copy(joint._getDirection());
-    const parentDirection = joint._localToWorldDirection(new Vector3().copy(Z_AXIS)).normalize();
+    const direction = new Vector3().copy(joint._getDirection())
+    const parentDirection = joint._localToWorldDirection(new Vector3().copy(Z_AXIS)).normalize()
 
     // Find the current angle between them
-    const currentAngle = direction.angleTo(parentDirection) * RAD2DEG;
+    const currentAngle = direction.angleTo(parentDirection) * RAD2DEG
 
-    if ((this.angle / 2) < currentAngle) {
-      direction.normalize();
+    if (this.angle / 2 < currentAngle) {
+      direction.normalize()
       // Find the correction axis and rotate around that point to the
       // largest allowed angle
-      const correctionAxis = new Vector3().crossVectors(parentDirection, direction).normalize();
+      const correctionAxis = new Vector3().crossVectors(parentDirection, direction).normalize()
 
-      parentDirection.applyAxisAngle(correctionAxis, this.angle * DEG2RAD * 0.5);
-      joint._setDirection(parentDirection);
-      return true;
+      parentDirection.applyAxisAngle(correctionAxis, this.angle * DEG2RAD * 0.5)
+      joint._setDirection(parentDirection)
+      return true
     }
 
-    return false;
+    return false
   }
 }
 
-const Y_AXIS = new Vector3(0, 1, 0);
+const Y_AXIS = new Vector3(0, 1, 0)
 
 /**
  * A class for a joint.
@@ -175,28 +189,28 @@ class IKJoint {
    * @param {Array<IKConstraint>} [config.constraints]
    */
   constructor(bone, { constraints } = {}) {
-    this.constraints = constraints || [];
+    this.constraints = constraints || []
 
-    this.bone = bone;
+    this.bone = bone
 
-    this.distance = 0;
+    this.distance = 0
 
-    this._originalDirection = new Vector3();
-    this._direction = new Vector3();
-    this._worldPosition = new Vector3();
-    this._isSubBase = false;
-    this._subBasePositions = null;
-    this.isIKJoint = true;
+    this._originalDirection = new Vector3()
+    this._direction = new Vector3()
+    this._worldPosition = new Vector3()
+    this._isSubBase = false
+    this._subBasePositions = null
+    this.isIKJoint = true
 
-    this._updateWorldPosition();
+    this._updateWorldPosition()
   }
 
   /**
    * @private
    */
   _setIsSubBase() {
-    this._isSubBase = true;
-    this._subBasePositions = [];
+    this._isSubBase = true
+    this._subBasePositions = []
   }
 
   /**
@@ -207,10 +221,10 @@ class IKJoint {
    */
   _applySubBasePositions() {
     if (this._subBasePositions.length === 0) {
-      return;
+      return
     }
-    getCentroid(this._subBasePositions, this._worldPosition);
-    this._subBasePositions.length = 0;
+    getCentroid(this._subBasePositions, this._worldPosition)
+    this._subBasePositions.length = 0
   }
 
   /**
@@ -218,17 +232,17 @@ class IKJoint {
    */
   _applyConstraints() {
     if (!this.constraints) {
-      return;
+      return
     }
 
-    let constraintApplied = false;
+    let constraintApplied = false
     for (let constraint of this.constraints) {
       if (constraint && constraint._apply) {
-        let applied = constraint._apply(this);
-        constraintApplied = constraintApplied || applied;
+        let applied = constraint._apply(this)
+        constraintApplied = constraintApplied || applied
       }
     }
-    return constraintApplied;
+    return constraintApplied
   }
 
   /**
@@ -237,21 +251,21 @@ class IKJoint {
    * @param {number} distance
    */
   _setDistance(distance) {
-    this.distance = distance;
+    this.distance = distance
   }
 
   /**
    * @private
    */
   _getDirection() {
-    return this._direction;
+    return this._direction
   }
 
   /**
    * @private
    */
   _setDirection(direction) {
-    this._direction.copy(direction);
+    this._direction.copy(direction)
   }
 
   /**
@@ -260,14 +274,14 @@ class IKJoint {
    * @return {THREE.Vector3}
    */
   _getDistance() {
-    return this.distance;
+    return this.distance
   }
 
   /**
    * @private
    */
   _updateMatrixWorld() {
-    this.bone.updateMatrixWorld(true);
+    this.bone.updateMatrixWorld(true)
   }
 
   /**
@@ -275,28 +289,28 @@ class IKJoint {
    * @return {THREE.Vector3}
    */
   _getWorldPosition() {
-    return this._worldPosition;
+    return this._worldPosition
   }
 
   /**
    * @private
    */
   _getWorldDirection(joint) {
-    return new Vector3().subVectors(this._getWorldPosition(), joint._getWorldPosition()).normalize();
+    return new Vector3().subVectors(this._getWorldPosition(), joint._getWorldPosition()).normalize()
   }
 
   /**
    * @private
    */
   _updateWorldPosition() {
-    getWorldPosition(this.bone, this._worldPosition);
+    getWorldPosition(this.bone, this._worldPosition)
   }
 
   /**
    * @private
    */
   _setWorldPosition(position) {
-    this._worldPosition.copy(position);
+    this._worldPosition.copy(position)
   }
 
   /**
@@ -304,10 +318,10 @@ class IKJoint {
    */
   _localToWorldDirection(direction) {
     if (this.bone.parent) {
-      const parent = this.bone.parent.matrixWorld;
-      direction.transformDirection(parent);
+      const parent = this.bone.parent.matrixWorld
+      direction.transformDirection(parent)
     }
-    return direction;
+    return direction
   }
 
   /**
@@ -315,40 +329,39 @@ class IKJoint {
    */
   _worldToLocalDirection(direction) {
     if (this.bone.parent) {
-      const inverseParent = new Matrix4().copy(this.bone.parent.matrixWorld).invert();
-      direction.transformDirection(inverseParent);
+      const inverseParent = new Matrix4().copy(this.bone.parent.matrixWorld).invert()
+      direction.transformDirection(inverseParent)
     }
-    return direction;
+    return direction
   }
 
   /**
    * @private
    */
   _applyWorldPosition() {
-    let direction = new Vector3().copy(this._direction);
-    let position = new Vector3().copy(this._getWorldPosition());
+    let direction = new Vector3().copy(this._direction)
+    let position = new Vector3().copy(this._getWorldPosition())
 
-    const parent = this.bone.parent;
+    const parent = this.bone.parent
 
     if (parent) {
-      this._updateMatrixWorld();
-      let inverseParent = new Matrix4().copy(this.bone.parent.matrixWorld).invert();
-      transformPoint(position, inverseParent, position);
-      this.bone.position.copy(position);
+      this._updateMatrixWorld()
+      let inverseParent = new Matrix4().copy(this.bone.parent.matrixWorld).invert()
+      transformPoint(position, inverseParent, position)
+      this.bone.position.copy(position)
 
-      this._updateMatrixWorld();
+      this._updateMatrixWorld()
 
-      this._worldToLocalDirection(direction);
-      setQuaternionFromDirection(direction, Y_AXIS, this.bone.quaternion);
-
+      this._worldToLocalDirection(direction)
+      setQuaternionFromDirection(direction, Y_AXIS, this.bone.quaternion)
     } else {
-      this.bone.position.copy(position);
+      this.bone.position.copy(position)
     }
 
     // Update the world matrix so the next joint can properly transform
     // with this world matrix
-    this.bone.updateMatrix();
-    this._updateMatrixWorld();
+    this.bone.updateMatrix()
+    this._updateMatrixWorld()
   }
 
   /**
@@ -357,7 +370,9 @@ class IKJoint {
    * @return {THREE.Vector3}
    */
   _getWorldDistance(joint) {
-    return this._worldPosition.distanceTo(joint.isIKJoint ? joint._getWorldPosition() : getWorldPosition(joint, new Vector3()));
+    return this._worldPosition.distanceTo(
+      joint.isIKJoint ? joint._getWorldPosition() : getWorldPosition(joint, new Vector3()),
+    )
   }
 }
 
@@ -369,21 +384,21 @@ class IKChain {
    * Create an IKChain.
    */
   constructor() {
-    this.isIKChain = true;
-    this.totalLengths = 0;
-    this.base = null;
-    this.effector = null;
-    this.effectorIndex = null;
-    this.chains = new Map();
+    this.isIKChain = true
+    this.totalLengths = 0
+    this.base = null
+    this.effector = null
+    this.effectorIndex = null
+    this.chains = new Map()
 
     /* THREE.Vector3 world position of base node */
-    this.origin = null;
+    this.origin = null
 
-    this.iterations = 100;
-    this.tolerance = 0.01;
+    this.iterations = 100
+    this.tolerance = 0.01
 
-    this._depth = -1;
-    this._targetPosition = new Vector3();
+    this._depth = -1
+    this._targetPosition = new Vector3()
   }
 
   /**
@@ -396,54 +411,54 @@ class IKChain {
 
   add(joint, { target } = {}) {
     if (this.effector) {
-      throw new Error('Cannot add additional joints to a chain with an end effector.');
+      throw new Error('Cannot add additional joints to a chain with an end effector.')
     }
 
     if (!joint.isIKJoint) {
       if (joint.isBone) {
-        joint = new IKJoint(joint);
+        joint = new IKJoint(joint)
       } else {
-        throw new Error('Invalid joint in an IKChain. Must be an IKJoint or a THREE.Bone.');
+        throw new Error('Invalid joint in an IKChain. Must be an IKJoint or a THREE.Bone.')
       }
     }
 
-    this.joints = this.joints || [];
-    this.joints.push(joint);
+    this.joints = this.joints || []
+    this.joints.push(joint)
 
     // If this is the first joint, set as base.
     if (this.joints.length === 1) {
-      this.base = this.joints[0];
-      this.origin = new Vector3().copy(this.base._getWorldPosition());
+      this.base = this.joints[0]
+      this.origin = new Vector3().copy(this.base._getWorldPosition())
     }
     // Otherwise, calculate the distance for the previous joint,
     // and update the total length.
     else {
-      const previousJoint = this.joints[this.joints.length - 2];
-      previousJoint._updateMatrixWorld();
-      previousJoint._updateWorldPosition();
-      joint._updateWorldPosition();
+      const previousJoint = this.joints[this.joints.length - 2]
+      previousJoint._updateMatrixWorld()
+      previousJoint._updateWorldPosition()
+      joint._updateWorldPosition()
 
-      const distance = previousJoint._getWorldDistance(joint);
+      const distance = previousJoint._getWorldDistance(joint)
       if (distance === 0) {
-        throw new Error('bone with 0 distance between adjacent bone found');
+        throw new Error('bone with 0 distance between adjacent bone found')
       }
-      joint._setDistance(distance);
+      joint._setDistance(distance)
 
-      joint._updateWorldPosition();
-      const direction = previousJoint._getWorldDirection(joint);
-      previousJoint._originalDirection = new Vector3().copy(direction);
-      joint._originalDirection = new Vector3().copy(direction);
+      joint._updateWorldPosition()
+      const direction = previousJoint._getWorldDirection(joint)
+      previousJoint._originalDirection = new Vector3().copy(direction)
+      joint._originalDirection = new Vector3().copy(direction)
 
-      this.totalLengths += distance;
+      this.totalLengths += distance
     }
 
     if (target) {
-      this.effector = joint;
-      this.effectorIndex = joint;
-      this.target = target;
+      this.effector = joint
+      this.effectorIndex = joint
+      this.target = target
     }
 
-    return this;
+    return this
   }
 
   /**
@@ -453,7 +468,7 @@ class IKChain {
    * @return {boolean}
    */
   _hasEffector() {
-    return !!this.effector;
+    return !!this.effector
   }
 
   /**
@@ -464,7 +479,7 @@ class IKChain {
    * @return {number}
    */
   _getDistanceFromTarget() {
-    return this._hasEffector() ? this.effector._getWorldDistance(this.target) : -1;
+    return this._hasEffector() ? this.effector._getWorldDistance(this.target) : -1
   }
 
   /**
@@ -475,35 +490,35 @@ class IKChain {
    */
   connect(chain) {
     if (!chain.isIKChain) {
-      throw new Error('Invalid connection in an IKChain. Must be an IKChain.');
+      throw new Error('Invalid connection in an IKChain. Must be an IKChain.')
     }
 
     if (!chain.base.isIKJoint) {
-      throw new Error('Connecting chain does not have a base joint.');
+      throw new Error('Connecting chain does not have a base joint.')
     }
 
-    const index = this.joints.indexOf(chain.base);
+    const index = this.joints.indexOf(chain.base)
 
     // If we're connecting to the last joint in the chain, ensure we don't
     // already have an effector.
     if (this.target && index === this.joints.length - 1) {
-      throw new Error('Cannot append a chain to an end joint in a chain with a target.');
+      throw new Error('Cannot append a chain to an end joint in a chain with a target.')
     }
 
     if (index === -1) {
-      throw new Error('Cannot connect chain that does not have a base joint in parent chain.');
+      throw new Error('Cannot connect chain that does not have a base joint in parent chain.')
     }
 
-    this.joints[index]._setIsSubBase();
+    this.joints[index]._setIsSubBase()
 
-    let chains = this.chains.get(index);
+    let chains = this.chains.get(index)
     if (!chains) {
-      chains = [];
-      this.chains.set(index, chains);
+      chains = []
+      this.chains.set(index, chains)
     }
-    chains.push(chain);
+    chains.push(chain)
 
-    return this;
+    return this
   }
 
   /**
@@ -513,7 +528,7 @@ class IKChain {
    */
   _updateJointWorldPositions() {
     for (let joint of this.joints) {
-      joint._updateWorldPosition();
+      joint._updateWorldPosition()
     }
   }
 
@@ -525,36 +540,35 @@ class IKChain {
   _forward() {
     // Copy the origin so the forward step can use before `_backward()`
     // modifies it.
-    this.origin.copy(this.base._getWorldPosition());
+    this.origin.copy(this.base._getWorldPosition())
 
     // Set the effector's position to the target's position.
 
     if (this.target) {
-      this._targetPosition.setFromMatrixPosition(this.target.matrixWorld);
-      this.effector._setWorldPosition(this._targetPosition);
-    }
-    else if (!this.joints[this.joints.length - 1]._isSubBase) {
+      this._targetPosition.setFromMatrixPosition(this.target.matrixWorld)
+      this.effector._setWorldPosition(this._targetPosition)
+    } else if (!this.joints[this.joints.length - 1]._isSubBase) {
       // If this chain doesn't have additional chains or a target,
       // not much to do here.
-      return;
+      return
     }
 
     // Apply sub base positions for all joints except the base,
     // as we want to possibly write to the base's sub base positions,
     // not read from it.
     for (let i = 1; i < this.joints.length; i++) {
-      const joint = this.joints[i];
+      const joint = this.joints[i]
       if (joint._isSubBase) {
-        joint._applySubBasePositions();
+        joint._applySubBasePositions()
       }
     }
 
     for (let i = this.joints.length - 1; i > 0; i--) {
-      const joint = this.joints[i];
-      const prevJoint = this.joints[i - 1];
-      const direction = prevJoint._getWorldDirection(joint);
+      const joint = this.joints[i]
+      const prevJoint = this.joints[i - 1]
+      const direction = prevJoint._getWorldDirection(joint)
 
-      const worldPosition = direction.multiplyScalar(joint.distance).add(joint._getWorldPosition());
+      const worldPosition = direction.multiplyScalar(joint.distance).add(joint._getWorldPosition())
 
       // If this chain's base is a sub base, set it's position in
       // `_subBaseValues` so that the forward step of the parent chain
@@ -563,9 +577,9 @@ class IKChain {
       // also had its own subchain `y`, rather than subchain `x`'s
       // parent also being subchain `y`'s parent?
       if (prevJoint === this.base && this.base._isSubBase) {
-        this.base._subBasePositions.push(worldPosition);
+        this.base._subBasePositions.push(worldPosition)
       } else {
-        prevJoint._setWorldPosition(worldPosition);
+        prevJoint._setWorldPosition(worldPosition)
       }
     }
   }
@@ -579,43 +593,45 @@ class IKChain {
     // If base joint is a sub base, don't reset it's position back
     // to the origin, but leave it where the parent chain left it.
     if (!this.base._isSubBase) {
-      this.base._setWorldPosition(this.origin);
+      this.base._setWorldPosition(this.origin)
     }
 
     for (let i = 0; i < this.joints.length - 1; i++) {
-      const joint = this.joints[i];
-      const nextJoint = this.joints[i + 1];
-      const jointWorldPosition = joint._getWorldPosition();
+      const joint = this.joints[i]
+      const nextJoint = this.joints[i + 1]
+      const jointWorldPosition = joint._getWorldPosition()
 
-      const direction = nextJoint._getWorldDirection(joint);
-      joint._setDirection(direction);
+      const direction = nextJoint._getWorldDirection(joint)
+      joint._setDirection(direction)
 
-      joint._applyConstraints();
+      joint._applyConstraints()
 
-      direction.copy(joint._direction);
+      direction.copy(joint._direction)
 
       // Now apply the world position to the three.js matrices. We need
       // to do this before the next joint iterates so it can generate rotations
       // in local space from its parent's matrixWorld.
       // If this is a chain sub base, let the parent chain apply the world position
       if (!(this.base === joint && joint._isSubBase)) {
-        joint._applyWorldPosition();
+        joint._applyWorldPosition()
       }
 
-      nextJoint._setWorldPosition(direction.multiplyScalar(nextJoint.distance).add(jointWorldPosition));
+      nextJoint._setWorldPosition(
+        direction.multiplyScalar(nextJoint.distance).add(jointWorldPosition),
+      )
 
       // Since we don't iterate over the last joint, handle the applying of
       // the world position. If it's also a non-effector, then we must orient
       // it to its parent rotation since otherwise it has nowhere to point to.
       if (i === this.joints.length - 2) {
         if (nextJoint !== this.effector) {
-          nextJoint._setDirection(direction);
+          nextJoint._setDirection(direction)
         }
-        nextJoint._applyWorldPosition();
+        nextJoint._applyWorldPosition()
       }
     }
 
-    return this._getDistanceFromTarget();
+    return this._getDistanceFromTarget()
   }
 }
 
@@ -623,16 +639,15 @@ class IKChain {
  * Class representing IK structure.
  */
 class IK {
-
   /**
    * Create an IK structure.
    *
    */
   constructor() {
-    this.chains = [];
-    this._needsRecalculated = true;
+    this.chains = []
+    this._needsRecalculated = true
 
-    this.isIK = true;
+    this.isIK = true
 
     // this.iterations = 1;
     // this.tolerance = 0.05;
@@ -643,7 +658,7 @@ class IK {
      * root chain, in descending-depth order.
      * @private
      */
-    this._orderedChains = null;
+    this._orderedChains = null
   }
 
   /**
@@ -653,10 +668,10 @@ class IK {
    */
   add(chain) {
     if (!chain.isIKChain) {
-      throw new Error('Argument is not an IKChain.');
+      throw new Error('Argument is not an IKChain.')
     }
 
-    this.chains.push(chain);
+    this.chains.push(chain)
   }
 
   /**
@@ -665,22 +680,22 @@ class IK {
    * @private
    */
   recalculate() {
-    this._orderedChains = [];
+    this._orderedChains = []
 
     for (let rootChain of this.chains) {
-      const orderedChains = [];
-      this._orderedChains.push(orderedChains);
+      const orderedChains = []
+      this._orderedChains.push(orderedChains)
 
-      const chainsToSave = [rootChain];
+      const chainsToSave = [rootChain]
       while (chainsToSave.length) {
-        const chain = chainsToSave.shift();
-        orderedChains.push(chain);
+        const chain = chainsToSave.shift()
+        orderedChains.push(chain)
         for (let subChains of chain.chains.values()) {
           for (let subChain of subChains) {
             if (chainsToSave.indexOf(subChain) !== -1) {
-              throw new Error('Recursive chain structure detected.');
+              throw new Error('Recursive chain structure detected.')
             }
-            chainsToSave.push(subChain);
+            chainsToSave.push(subChain)
           }
         }
       }
@@ -694,42 +709,41 @@ class IK {
     // If we don't have a depth-sorted array of chains, generate it.
     // This is from the first `update()` call after creating.
     if (!this._orderedChains) {
-      this.recalculate();
+      this.recalculate()
     }
 
     for (let subChains of this._orderedChains) {
       // Hardcode to one for now
-      let iterations = 1; // this.iterations;
+      let iterations = 1 // this.iterations;
 
       while (iterations > 0) {
         for (let i = subChains.length - 1; i >= 0; i--) {
-          subChains[i]._updateJointWorldPositions();
+          subChains[i]._updateJointWorldPositions()
         }
 
         // Run the chain's forward step starting with the deepest chains.
         for (let i = subChains.length - 1; i >= 0; i--) {
-          subChains[i]._forward();
+          subChains[i]._forward()
         }
 
         // Run the chain's backward step starting with the root chain.
-        let withinTolerance = true;
+        let withinTolerance = true
         for (let i = 0; i < subChains.length; i++) {
-          const distanceFromTarget = subChains[i]._backward();
+          const distanceFromTarget = subChains[i]._backward()
           if (distanceFromTarget > this.tolerance) {
-            withinTolerance = false;
+            withinTolerance = false
           }
         }
 
         if (withinTolerance) {
-          break;
+          break
         }
 
-        iterations--;
+        iterations--
 
         // Get the root chain's base and randomize the rotation, maybe
         // we'll get a better change at reaching our goal
         // @TODO
-
       }
     }
   }
@@ -741,7 +755,7 @@ class IK {
    * @return {THREE.Bone}
    */
   getRootBone() {
-    return this.chains[0].base.bone;
+    return this.chains[0].base.bone
   }
 }
 
@@ -757,30 +771,33 @@ class BoneHelper extends Object3D {
    * @param {number?} axesSize
    */
   constructor(height, boneSize, axesSize) {
-    super();
+    super()
 
     // If our bone has 0 height (like an end effector),
     // use a dummy Object3D instead, otherwise the ConeGeometry
     // will fall back to its default and not use 0 height.
     if (height !== 0) {
-      const geo = new ConeGeometry(boneSize, height, 4);
-      geo.applyMatrix4(new Matrix4().makeRotationAxis(new Vector3(1, 0, 0), Math.PI / 2));
-      this.boneMesh = new Mesh(geo, new MeshBasicMaterial({
-        color: 0xff0000,
-        wireframe: true,
-        depthTest: false,
-        depthWrite: false,
-      }));
+      const geo = new ConeGeometry(boneSize, height, 4)
+      geo.applyMatrix4(new Matrix4().makeRotationAxis(new Vector3(1, 0, 0), Math.PI / 2))
+      this.boneMesh = new Mesh(
+        geo,
+        new MeshBasicMaterial({
+          color: 0xff0000,
+          wireframe: true,
+          depthTest: false,
+          depthWrite: false,
+        }),
+      )
     } else {
-      this.boneMesh = new Object3D();
+      this.boneMesh = new Object3D()
     }
 
     // Offset the bone so that its rotation point is at the base of the bone
-    this.boneMesh.position.z = height / 2;
-    this.add(this.boneMesh);
+    this.boneMesh.position.z = height / 2
+    this.add(this.boneMesh)
 
-    this.axesHelper = new AxesHelper(axesSize);
-    this.add(this.axesHelper);
+    this.axesHelper = new AxesHelper(axesSize)
+    this.add(this.axesHelper)
   }
 }
 
@@ -789,7 +806,6 @@ class BoneHelper extends Object3D {
  * @extends {THREE.Object3d}
  */
 class IKHelper extends Object3D {
-
   /**
    * Creates a visualization for an IK.
    *
@@ -803,40 +819,40 @@ class IKHelper extends Object3D {
    * @param {number} [config.boneSize]
    */
   constructor(ik, { color, showBones, boneSize, showAxes, axesSize, wireframe } = {}) {
-    super();
+    super()
 
-    boneSize = boneSize || 0.1;
-    axesSize = axesSize || 0.2;
+    boneSize = boneSize || 0.1
+    axesSize = axesSize || 0.2
 
     if (!ik.isIK) {
-      throw new Error('IKHelper must receive an IK instance.');
+      throw new Error('IKHelper must receive an IK instance.')
     }
 
-    this.ik = ik;
+    this.ik = ik
 
-    this._meshes = new Map();
+    this._meshes = new Map()
 
     for (let rootChain of this.ik.chains) {
-      const chainsToMeshify = [rootChain];
+      const chainsToMeshify = [rootChain]
       while (chainsToMeshify.length) {
-        const chain = chainsToMeshify.shift();
+        const chain = chainsToMeshify.shift()
         for (let i = 0; i < chain.joints.length; i++) {
-          const joint = chain.joints[i];
-          const nextJoint = chain.joints[i + 1];
-          const distance = nextJoint ? nextJoint.distance : 0;
+          const joint = chain.joints[i]
+          const nextJoint = chain.joints[i + 1]
+          const distance = nextJoint ? nextJoint.distance : 0
 
           // If a sub base, don't make another bone
           if (chain.base === joint && chain !== rootChain) {
-            continue;
+            continue
           }
-          const mesh = new BoneHelper(distance, boneSize, axesSize);
-          mesh.matrixAutoUpdate = false;
-          this._meshes.set(joint, mesh);
-          this.add(mesh);
+          const mesh = new BoneHelper(distance, boneSize, axesSize)
+          mesh.matrixAutoUpdate = false
+          this._meshes.set(joint, mesh)
+          this.add(mesh)
         }
         for (let subChains of chain.chains.values()) {
           for (let subChain of subChains) {
-            chainsToMeshify.push(subChain);
+            chainsToMeshify.push(subChain)
           }
         }
       }
@@ -849,7 +865,7 @@ class IKHelper extends Object3D {
      * @type boolean
      * @default true
      */
-    this.showBones = showBones !== undefined ? showBones : true;
+    this.showBones = showBones !== undefined ? showBones : true
 
     /**
      * Whether this IKHelper's axes are visible or not.
@@ -858,7 +874,7 @@ class IKHelper extends Object3D {
      * @type boolean
      * @default true
      */
-    this.showAxes = showAxes !== undefined ? showAxes : true;
+    this.showAxes = showAxes !== undefined ? showAxes : true
 
     /**
      * Whether this IKHelper should be rendered as wireframes or not.
@@ -867,7 +883,7 @@ class IKHelper extends Object3D {
      * @type boolean
      * @default true
      */
-    this.wireframe = wireframe !== undefined ? wireframe : true;
+    this.wireframe = wireframe !== undefined ? wireframe : true
 
     /**
      * The color of this IKHelper's bones.
@@ -876,82 +892,90 @@ class IKHelper extends Object3D {
      * @type THREE.Color
      * @default new THREE.Color(0xff0077)
      */
-    this.color = color || new Color(0xff0077);
+    this.color = color || new Color(0xff0077)
   }
 
-  get showBones() { return this._showBones; }
+  get showBones() {
+    return this._showBones
+  }
   set showBones(showBones) {
     if (showBones === this._showBones) {
-      return;
+      return
     }
     for (let [joint, mesh] of this._meshes) {
       if (showBones) {
-        mesh.add(mesh.boneMesh);
+        mesh.add(mesh.boneMesh)
       } else {
-        mesh.remove(mesh.boneMesh);
+        mesh.remove(mesh.boneMesh)
       }
     }
-    this._showBones = showBones;
+    this._showBones = showBones
   }
 
-  get showAxes() { return this._showAxes; }
+  get showAxes() {
+    return this._showAxes
+  }
   set showAxes(showAxes) {
     if (showAxes === this._showAxes) {
-      return;
+      return
     }
     for (let [joint, mesh] of this._meshes) {
       if (showAxes) {
-        mesh.add(mesh.axesHelper);
+        mesh.add(mesh.axesHelper)
       } else {
-        mesh.remove(mesh.axesHelper);
+        mesh.remove(mesh.axesHelper)
       }
     }
-    this._showAxes = showAxes;
+    this._showAxes = showAxes
   }
 
-  get wireframe() { return this._wireframe; }
+  get wireframe() {
+    return this._wireframe
+  }
   set wireframe(wireframe) {
     if (wireframe === this._wireframe) {
-      return;
+      return
     }
     for (let [joint, mesh] of this._meshes) {
       if (mesh.boneMesh.material) {
-        mesh.boneMesh.material.wireframe = wireframe;
+        mesh.boneMesh.material.wireframe = wireframe
       }
     }
-    this._wireframe = wireframe;
+    this._wireframe = wireframe
   }
 
-  get color() { return this._color; }
+  get color() {
+    return this._color
+  }
   set color(color) {
     if (this._color && this._color.equals(color)) {
-      return;
+      return
     }
-    color = (color && color.isColor) ? color : new Color(color);
+    color = color && color.isColor ? color : new Color(color)
     for (let [joint, mesh] of this._meshes) {
       if (mesh.boneMesh.material) {
-        mesh.boneMesh.material.color = color;
+        mesh.boneMesh.material.color = color
       }
     }
-    this._color = color;
+    this._color = color
   }
 
   updateMatrixWorld(force) {
     for (let [joint, mesh] of this._meshes) {
-      mesh.matrix.copy(joint.bone.matrixWorld);
+      mesh.matrix.copy(joint.bone.matrixWorld)
     }
-    super.updateMatrixWorld(force);
+    super.updateMatrixWorld(force)
   }
 }
 
 // If this is being included via script tag and using THREE
 // globals, attach our exports to THREE.
 if (typeof window !== 'undefined' && typeof window.THREE === 'object') {
-  window.THREE.IK = IK;
-  window.THREE.IKChain = IKChain;
-  window.THREE.IKJoint = IKJoint;
-  window.THREE.IKBallConstraint = IKBallConstraint;
-  window.THREE.IKHelper = IKHelper;
+  window.THREE.IK = IK
+  window.THREE.IKChain = IKChain
+  window.THREE.IKJoint = IKJoint
+  window.THREE.IKBallConstraint = IKBallConstraint
+  window.THREE.IKHelper = IKHelper
 }
 
-export { IK, IKChain, IKJoint, IKBallConstraint, IKHelper };
+export { IK, IKChain, IKJoint, IKBallConstraint, IKHelper }

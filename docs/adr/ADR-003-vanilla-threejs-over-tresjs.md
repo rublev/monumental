@@ -41,24 +41,24 @@ We will use vanilla Three.js instead of TresJS.
 
 ```vue
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref } from 'vue'
-import * as THREE from 'three'
+import { onMounted, onUnmounted, ref } from 'vue';
+import * as THREE from 'three';
 
-const containerRef = ref<HTMLDivElement>()
-let scene: THREE.Scene
-let renderer: THREE.WebGLRenderer
+const containerRef = ref<HTMLDivElement>();
+let scene: THREE.Scene;
+let renderer: THREE.WebGLRenderer;
 
 onMounted(() => {
   // Initialize Three.js
-  scene = new THREE.Scene()
-  renderer = new THREE.WebGLRenderer()
+  scene = new THREE.Scene();
+  renderer = new THREE.WebGLRenderer();
   // ...setup
-})
+});
 
 onUnmounted(() => {
   // Cleanup
-  renderer.dispose()
-})
+  renderer.dispose();
+});
 </script>
 ```
 

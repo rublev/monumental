@@ -18,16 +18,19 @@ src/
 ## Critical Rules
 
 ### ✅ **base.scss** - CSS Variables & Global Resets Only
+
 - CSS custom properties (variables) for theming
 - Global resets (`*, body`, etc.)
 - **NEVER use `@apply` directives**
 
 ### ✅ **main.scss** - Minimal Import File
+
 - Import `base.scss` for custom variables
 - Import `tailwindcss` for utility classes
 - **Nothing else**
 
 ### ✅ **Components** - Pure Tailwind Utilities
+
 - Use only Tailwind utility classes
 - Reference CSS variables with `var(--variable-name)` if needed
 - **Never write custom CSS in components**
@@ -35,6 +38,7 @@ src/
 ## Rules
 
 ### ✅ DO
+
 - Use Tailwind utility classes for all styling
 - Use shadcn-vue components for UI elements
 - Apply responsive design with Tailwind's responsive prefixes (`sm:`, `md:`, `lg:`, etc.)
@@ -42,6 +46,7 @@ src/
 - Combine utilities for complex layouts (`flex items-center justify-between`)
 
 ### ❌ DON'T
+
 - Create new CSS/SCSS files for components
 - Add custom styles in `<style>` blocks
 - Use `@apply` directives anywhere (this breaks separation of concerns)
@@ -51,66 +56,43 @@ src/
 ## Common Patterns
 
 ### Layout
+
 ```vue
 <!-- Container with padding -->
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-
-<!-- Flex layouts -->
-<div class="flex items-center justify-between">
-<div class="flex flex-col space-y-4">
-
-<!-- Grid layouts -->
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"></div>
 ```
 
 ### Typography
+
 ```vue
 <!-- Headings -->
-<h1 class="text-3xl font-bold text-gray-900">
-<h2 class="text-2xl font-semibold text-gray-800">
-
-<!-- Body text -->
-<p class="text-gray-600 leading-relaxed">
-
-<!-- Links -->
-<a class="text-blue-600 hover:text-blue-800 transition-colors">
+<h1 class="text-3xl font-bold text-gray-900"></h1>
 ```
 
 ### Components
+
 ```vue
 <!-- Cards -->
-<div class="bg-white rounded-lg shadow-md p-6">
-
-<!-- Buttons -->
-<button class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition-colors">
-
-<!-- Forms -->
-<input class="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+<div class="bg-white rounded-lg shadow-md p-6"></div>
 ```
 
 ### States & Interactions
+
 ```vue
 <!-- Hover states -->
-<div class="hover:bg-gray-50 transition-colors">
-
-<!-- Focus states -->
-<button class="focus:outline-none focus:ring-2 focus:ring-blue-500">
-
-<!-- Active states -->
-<button class="active:bg-blue-800">
-
-<!-- Disabled states -->
-<button class="disabled:opacity-50 disabled:cursor-not-allowed">
+<div class="hover:bg-gray-50 transition-colors"></div>
 ```
 
 ## Architecture Principles
 
 ### Separation of Concerns
+
 - **CSS Variables** (base.scss): Theme tokens, design system values
 - **Tailwind Utilities**: All component styling, layout, interactions
 - **No mixing**: Never use `@apply` to blur this separation
 
 ### Why No @apply?
+
 - Breaks Tailwind's utility-first philosophy
 - Makes styles harder to track and debug
 - Creates hybrid approach that's neither pure CSS nor pure utilities
@@ -125,6 +107,7 @@ The only acceptable cases for custom CSS in `base.scss`:
 3. **Third-party library overrides** that can't use Tailwind classes
 
 **Never acceptable:**
+
 - `@apply` directives
 - Component-specific styles
 - Complex selectors or nested rules

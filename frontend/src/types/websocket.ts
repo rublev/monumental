@@ -71,19 +71,19 @@ export interface UseWebSocketReturn {
   connectionState: Readonly<Ref<ConnectionState>>
   isConnected: Readonly<Ref<boolean>>
   clientId: Readonly<Ref<string | null>>
-  
+
   // Metrics
   metrics: Readonly<Ref<ConnectionMetrics>>
-  
+
   // Connection methods
   connect: () => Promise<void>
   disconnect: () => void
-  
+
   // Messaging
   sendMessage: (data: any, options?: { queue?: boolean }) => boolean
   getQueueStatus: () => { length: number; maxSize: number; isFull: boolean }
   clearQueue: () => number
-  
+
   // Event handlers
   onMessage: (callback: (message: IncomingMessage) => void) => void
   onStateChange: (callback: (state: ConnectionState) => void) => void

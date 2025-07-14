@@ -1,21 +1,21 @@
 <template>
   <div class="websocket-demo">
     <h2>WebSocket Integration Demo</h2>
-    
+
     <div class="connection-status" :class="{ connected: isConnected }">
       {{ isConnected ? 'Connected' : 'Disconnected' }}
     </div>
-    
+
     <div class="controls">
       <button @click="connect" :disabled="isConnected">Connect</button>
       <button @click="disconnect" :disabled="!isConnected">Disconnect</button>
     </div>
-    
+
     <div class="crane-state" v-if="craneState">
       <h3>Crane State</h3>
       <pre>{{ JSON.stringify(craneState, null, 2) }}</pre>
     </div>
-    
+
     <div class="message-log">
       <h3>Message Log</h3>
       <div class="messages">
@@ -31,11 +31,7 @@
 
 <script setup lang="ts">
 import { ref, onUnmounted } from 'vue'
-import type { 
-  CraneState, 
-  StateUpdateMessage,
-  MessageType 
-} from '@monumental/shared'
+import type { CraneState, StateUpdateMessage, MessageType } from '@monumental/shared'
 import { WS_CONFIG } from '@monumental/shared'
 
 interface LogMessage {
@@ -51,18 +47,18 @@ let ws: WebSocket | null = null
 
 function connect() {
   if (ws) return
-  
+
   ws = new WebSocket(`ws://localhost:${WS_CONFIG.port}`)
-  
+
   ws.onopen = () => {
     isConnected.value = true
     logMessage('connection', 'Connected to WebSocket server')
   }
-  
+
   ws.onmessage = (event) => {
     try {
       const msg = JSON.parse(event.data)
-      
+
       if (msg.type === 'state_update') {
         const stateMsg = msg as StateUpdateMessage
         craneState.value = stateMsg.state
@@ -74,11 +70,11 @@ function connect() {
       logMessage('error', `Failed to parse message: ${error}`)
     }
   }
-  
+
   ws.onerror = (error) => {
     logMessage('error', `WebSocket error: ${error}`)
   }
-  
+
   ws.onclose = () => {
     isConnected.value = false
     ws = null
@@ -97,9 +93,9 @@ function logMessage(type: string, data: string) {
   messages.value.unshift({
     timestamp: Date.now(),
     type,
-    data
+    data,
   })
-  
+
   // Keep only last 50 messages
   if (messages.value.length > 50) {
     messages.value = messages.value.slice(0, 50)
@@ -108,11 +104,11 @@ function logMessage(type: string, data: string) {
 
 function formatTime(timestamp: number): string {
   const date = new Date(timestamp)
-  const time = date.toLocaleTimeString('en-US', { 
-    hour12: false, 
+  const time = date.toLocaleTimeString('en-US', {
+    hour12: false,
     hour: '2-digit',
     minute: '2-digit',
-    second: '2-digit'
+    second: '2-digit',
   })
   const ms = date.getMilliseconds().toString().padStart(3, '0')
   return `${time}.${ms}`

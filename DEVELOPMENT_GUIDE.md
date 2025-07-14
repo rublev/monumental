@@ -45,15 +45,15 @@ pnpm dev
 
 ### Available Commands
 
-| Command | Description |
-|---------|-------------|
-| `pnpm dev` | Start all services in development mode |
-| `pnpm dev:frontend` | Start only frontend |
-| `pnpm dev:backend` | Start only backend |
-| `pnpm build` | Build all packages |
-| `pnpm typecheck` | Run TypeScript checks |
-| `pnpm lint` | Run linting |
-| `pnpm test` | Run tests |
+| Command             | Description                            |
+| ------------------- | -------------------------------------- |
+| `pnpm dev`          | Start all services in development mode |
+| `pnpm dev:frontend` | Start only frontend                    |
+| `pnpm dev:backend`  | Start only backend                     |
+| `pnpm build`        | Build all packages                     |
+| `pnpm typecheck`    | Run TypeScript checks                  |
+| `pnpm lint`         | Run linting                            |
+| `pnpm test`         | Run tests                              |
 
 ## Coding Standards
 
@@ -73,8 +73,8 @@ interface CraneState {
 // Bad
 const state = {
   swing: 0,
-  lift: 0
-}
+  lift: 0,
+};
 ```
 
 ### Vue Components
@@ -91,7 +91,7 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  enabled: true
+  enabled: true,
 });
 </script>
 ```
@@ -197,12 +197,12 @@ perf: optimize mesh updates
 
 ### Optimization Targets
 
-| Metric | Target | Current |
-|--------|--------|---------|
-| Frame Rate | 60 FPS | 60 FPS |
-| IK Solve Time | <16ms | ~10ms |
-| WebSocket Latency | <50ms | <1ms |
-| Initial Load | <3s | TBD |
+| Metric            | Target | Current |
+| ----------------- | ------ | ------- |
+| Frame Rate        | 60 FPS | 60 FPS  |
+| IK Solve Time     | <16ms  | ~10ms   |
+| WebSocket Latency | <50ms  | <1ms    |
+| Initial Load      | <3s    | TBD     |
 
 ### Best Practices
 
@@ -239,6 +239,7 @@ function solveIK(target: Vector3Like): CraneActuators | null {
 ### Component Documentation
 
 Each Vue component should have:
+
 - Purpose description
 - Props documentation
 - Events documentation

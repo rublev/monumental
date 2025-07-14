@@ -24,9 +24,7 @@
             "id": 2,
             "title": "Install and configure uWebSockets.js",
             "description": "Install uWebSockets.js library and set up basic server configuration",
-            "dependencies": [
-              1
-            ],
+            "dependencies": [1],
             "details": "Install uWebSockets.js using pnpm install uWebSockets.js. Create a server configuration file that imports the library and sets up basic server options including port configuration, compression settings, and SSL options (if needed). Ensure compatibility with the project's Node.js version.",
             "status": "done",
             "testStrategy": ""
@@ -35,9 +33,7 @@
             "id": 3,
             "title": "Implement WebSocket endpoint and message handlers",
             "description": "Create WebSocket endpoint with proper message handling for client-server communication",
-            "dependencies": [
-              2
-            ],
+            "dependencies": [2],
             "details": "Implement the main WebSocket endpoint (e.g., /ws) with handlers for different message types. Create message parsing logic to handle JSON payloads, implement basic message validation, and set up response formatting. Include error handling for malformed messages.",
             "status": "done",
             "testStrategy": ""
@@ -46,9 +42,7 @@
             "id": 4,
             "title": "Implement connection lifecycle management",
             "description": "Handle WebSocket connection events including open, close, and error states",
-            "dependencies": [
-              3
-            ],
+            "dependencies": [3],
             "details": "Implement connection tracking with unique client IDs, handle connection open events with proper initialization, implement graceful connection closing with cleanup logic, add error handling for connection failures, and create a connection pool or map to track active connections.",
             "status": "done",
             "testStrategy": ""
@@ -57,9 +51,7 @@
             "id": 5,
             "title": "Configure server startup and environment settings",
             "description": "Set up server initialization, environment configuration, and startup scripts",
-            "dependencies": [
-              4
-            ],
+            "dependencies": [4],
             "details": "Create main server entry point (e.g., index.js or server.js), implement environment variable loading for configuration (PORT, HOST, etc.), add server startup logging, create pnpm scripts for development and production modes, and implement graceful shutdown handling for process termination.",
             "status": "done",
             "testStrategy": ""
@@ -81,9 +73,7 @@
             "title": "Organize project structure",
             "description": "Create a scalable folder structure following Vue3 and TypeScript best practices with minimal SCSS approach",
             "status": "done",
-            "dependencies": [
-              1
-            ],
+            "dependencies": [1],
             "details": "Create directories: src/components (UI components), src/views (page components), src/composables (Vue composables), src/utils (utility functions), src/types (TypeScript types), src/assets (static assets), src/styles (contains only main.scss and base.scss). Set up path aliases in tsconfig.json and vite.config.ts for clean imports like '@/components'. Ensure no additional CSS/SCSS files are created outside of main.scss and base.scss.",
             "testStrategy": ""
           },
@@ -92,12 +82,7 @@
             "title": "Clean up initial template and configure base files",
             "description": "Remove boilerplate code and set up essential configuration files with Tailwind-first approach",
             "status": "done",
-            "dependencies": [
-              1,
-              2,
-              3,
-              4
-            ],
+            "dependencies": [1, 2, 3, 4],
             "details": "Remove default Vue components and styles. Update App.vue with a clean layout structure using only Tailwind classes. Configure index.html with proper meta tags. Set up environment variables (.env files). Update README.md with project information including note about minimal SCSS usage. Configure .gitignore for Vue/TypeScript project. Create a base layout component structure using Tailwind utilities and shadcn-vue components.",
             "testStrategy": ""
           },
@@ -150,9 +135,7 @@
             "id": 2,
             "title": "Install and configure Tailwind CSS v4.1",
             "description": "Set up Tailwind CSS v4.1 with PostCSS configuration and create initial styling structure",
-            "dependencies": [
-              1
-            ],
+            "dependencies": [1],
             "details": "Install Tailwind CSS v4.1 beta using 'npm install tailwindcss@next @tailwindcss/postcss@next'. Create tailwind.config.ts with TypeScript support. Set up CSS entry file with Tailwind directives. Configure PostCSS with autoprefixer. Update vite.config.ts to ensure proper CSS processing.\n<info added on 2025-07-11T20:04:10.623Z>\nThe project has been updated to use SCSS instead of CSS. The implementation now includes:\n- SCSS entry file (src/styles/main.scss) with Tailwind directives\n- PostCSS configuration updated to support SCSS processing with autoprefixer\n- Vite configuration adjusted to handle SCSS files and ensure proper compilation\n- All style imports changed from .css to .scss extensions\n</info added on 2025-07-11T20:04:10.623Z>\n<info added on 2025-07-11T20:07:09.914Z>\nThe project has been simplified to use a minimal SCSS approach with only two essential files: main.scss (containing Tailwind directives) and base.scss (for any necessary global styles). All component styling should now be handled through Tailwind utility classes and shadcn-vue components. Custom SCSS files should be avoided going forward unless absolutely necessary for special cases. This Tailwind-first approach eliminates the need for component-specific stylesheets and promotes consistency through utility classes.\n</info added on 2025-07-11T20:07:09.914Z>\n<info added on 2025-07-11T20:09:18.272Z>\nThe installation command has been updated to use pnpm instead of npm. Use 'pnpm install tailwindcss@next @tailwindcss/postcss@next' to install Tailwind CSS v4.1 beta and its PostCSS integration.\n</info added on 2025-07-11T20:09:18.272Z>",
             "status": "done",
             "testStrategy": ""
@@ -191,10 +174,7 @@
         "title": "Implement WebSocket Client Connection with Vue 3 Composable",
         "description": "Create WebSocket client functionality using Vue 3 Composition API with TypeScript and reactive state management",
         "status": "done",
-        "dependencies": [
-          1,
-          2
-        ],
+        "dependencies": [1, 2],
         "priority": "medium",
         "details": "Create a composable (useWebSocket.ts) in composables directory using native WebSocket API. Define TypeScript interfaces for message types and connection states. Use ref() for WebSocket instance and reactive() for connection state (status: 'connecting' | 'connected' | 'disconnected'). Implement connection logic to ws://localhost:8080/ws with reconnection capability using exponential backoff. Create typed methods: connect(), disconnect(), send(message: MessageType), with proper error handling. Add WebSocket event handlers (onopen, onclose, onerror, onmessage) updating reactive state. Implement auto-reconnection logic with configurable max attempts. Export composable with full TypeScript types. In App.vue, use the composable with <script setup lang=\"ts\">: const { status, connect, send } = useWebSocket(). Call connect() in onMounted lifecycle hook. Display connection status using shadcn-vue Badge component with dynamic styling based on status.",
         "testStrategy": "Start both backend and frontend servers. Verify TypeScript compilation has no errors. Check browser console for successful WebSocket connection. Test sending typed messages and verify they're echoed back. Stop backend server and verify reconnection attempts with exponential backoff. Restart backend and confirm automatic reconnection. Verify reactive status updates trigger UI changes in the Badge component.",
@@ -212,9 +192,7 @@
             "id": 2,
             "title": "Implement WebSocket connection lifecycle methods",
             "description": "Add connect, disconnect, and connection state management to the WebSocket composable",
-            "dependencies": [
-              1
-            ],
+            "dependencies": [1],
             "details": "Implement `connect()` method with WebSocket initialization and event listeners. Add `disconnect()` method with proper cleanup. Create reactive state for connection status (connecting, connected, disconnected, error). Handle WebSocket open, close, and error events.",
             "status": "done",
             "testStrategy": ""
@@ -223,9 +201,7 @@
             "id": 3,
             "title": "Add automatic reconnection with exponential backoff",
             "description": "Implement reconnection logic with configurable retry attempts and exponential backoff strategy",
-            "dependencies": [
-              2
-            ],
+            "dependencies": [2],
             "details": "Create reconnection mechanism that triggers on unexpected disconnections. Implement exponential backoff algorithm with configurable base delay and max attempts. Add jitter to prevent thundering herd. Provide manual reconnect method and ability to cancel reconnection attempts.",
             "status": "done",
             "testStrategy": ""
@@ -234,9 +210,7 @@
             "id": 4,
             "title": "Build message queue and handler system",
             "description": "Create a robust message handling system with queuing for offline messages",
-            "dependencies": [
-              2
-            ],
+            "dependencies": [2],
             "details": "Implement message queue to store messages when disconnected. Add `send()` method with automatic queuing when offline. Create message handler registration system with event emitter pattern. Add JSON parsing/stringifying with error handling. Implement message acknowledgment tracking if needed.",
             "status": "done",
             "testStrategy": ""
@@ -245,10 +219,7 @@
             "id": 5,
             "title": "Create reactive state management for connection metrics",
             "description": "Add comprehensive state tracking for connection status, latency, and message statistics",
-            "dependencies": [
-              3,
-              4
-            ],
+            "dependencies": [3, 4],
             "details": "Track connection state, reconnection attempts, and last connection time. Implement ping/pong for latency measurement. Add message counters for sent/received/failed messages. Create computed properties for connection health indicators. Use Vue 3's reactive/ref for all state variables.",
             "status": "done",
             "testStrategy": ""
@@ -269,9 +240,7 @@
         "title": "Create Three.js Scene with TresJS Components",
         "description": "Implement a 3D scene using TresJS components with a rotating cube and OrbitControls from @tresjs/cientos",
         "status": "done",
-        "dependencies": [
-          2
-        ],
+        "dependencies": [2],
         "priority": "medium",
         "details": "Create ThreeScene.vue component using <script setup lang=\"ts\">. Import necessary types from @tresjs/core and @tresjs/cientos. Set up scene with <TresCanvas> component with window-size prop for responsiveness. Add <TresPerspectiveCamera> with :position=\"[0, 0, 5]\" and :look-at=\"[0, 0, 0]\". Include <TresAmbientLight> with :intensity=\"0.5\" and <TresDirectionalLight> with :position=\"[5, 5, 5]\". Create rotating cube using: <TresMesh ref=\"cubeRef\"> with nested <TresBoxGeometry :args=\"[1, 1, 1]\" /> and <TresMeshBasicMaterial :color=\"0x00ff88\" />. Import and add <OrbitControls> from @tresjs/cientos for camera interaction. Use useRenderLoop from @tresjs/core or onBeforeRender to rotate cube: cubeRef.value.rotation.x += 0.01. Add component to App.vue with proper sizing (e.g., class=\"w-full h-96\"). Include TypeScript types for all refs and props.",
         "testStrategy": "Verify ThreeScene component renders without WebGL errors. Confirm green cube is visible and rotating smoothly. Test OrbitControls by clicking and dragging to rotate camera view. Check mouse wheel zoom functionality. Verify scene is responsive when resizing browser window. Ensure TypeScript provides proper type checking for all TresJS components and refs.",
@@ -289,9 +258,7 @@
             "id": 2,
             "title": "Configure camera positioning and viewport settings",
             "description": "Set up the perspective camera with proper position, field of view, and responsive viewport handling",
-            "dependencies": [
-              1
-            ],
+            "dependencies": [1],
             "details": "Configure TresPerspectiveCamera with position at [0, 0, 5], set appropriate field of view (75 degrees), and ensure the canvas fills its container with proper aspect ratio. Add window resize handling for responsive behavior.\n<info added on 2025-07-11T21:12:45.836Z>\nCOMPLETED: Camera configuration successfully implemented with:\n\n1. TresPerspectiveCamera positioned at [0, 0, 5] \n2. Field of view set to 75 degrees\n3. Near plane: 0.1, Far plane: 1000\n4. Clear color set to #2a2a2a (dark gray)\n5. Canvas properly sized to h-96 (384px) with responsive container\n6. Fixed TresJS component resolution warnings by adding templateCompilerOptions to vite.config.ts\n\nTECHNICAL SOLUTION:\n- Added templateCompilerOptions from @tresjs/core to vite.config.ts\n- Camera properly viewing test orange cube from correct distance\n- Viewport handling working correctly within Tailwind container\n\nVISUAL VERIFICATION:\nOrange cube visible and properly positioned in center of dark canvas, confirming camera setup is working correctly.\n</info added on 2025-07-11T21:12:45.836Z>",
             "status": "done",
             "testStrategy": ""
@@ -300,9 +267,7 @@
             "id": 3,
             "title": "Implement ambient and directional lighting",
             "description": "Add lighting to the scene for proper 3D object visibility and depth perception",
-            "dependencies": [
-              1
-            ],
+            "dependencies": [1],
             "details": "Add TresAmbientLight with low intensity (0.5) for base illumination and TresDirectionalLight positioned at [5, 5, 5] with higher intensity for shadows and highlights. Configure light colors as needed.",
             "status": "done",
             "testStrategy": ""
@@ -311,9 +276,7 @@
             "id": 4,
             "title": "Create rotating 3D cube mesh with material",
             "description": "Build the 3D cube geometry with material and implement rotation animation using composables",
-            "dependencies": [
-              1
-            ],
+            "dependencies": [1],
             "details": "Create TresMesh with TresBoxGeometry (size 1x1x1) and TresMeshStandardMaterial with a color. Use useRenderLoop composable from @tresjs/core to animate rotation on X and Y axes. Store mesh reference using template refs.",
             "status": "done",
             "testStrategy": ""
@@ -322,12 +285,7 @@
             "id": 5,
             "title": "Integrate 3D scene component into main application",
             "description": "Import and properly mount the 3D scene component in the main App.vue with appropriate styling",
-            "dependencies": [
-              1,
-              2,
-              3,
-              4
-            ],
+            "dependencies": [1, 2, 3, 4],
             "details": "Import the created 3D scene component into App.vue, add it to the template with a proper container div, and style it to take appropriate space (e.g., height: 400px, width: 100%). Ensure the scene renders correctly alongside existing content.\n<info added on 2025-07-11T21:15:25.889Z>\nTask has been completed successfully. The ThreeScene component is properly integrated into HomeView.vue with appropriate styling and renders correctly. The component displays a rotating orange cube in a styled container below the WebSocket Test section. The implementation includes proper Vue component imports, template integration with Tailwind CSS styling (bg-white, rounded-lg, shadow-md, p-4), and a responsive canvas with dimensions of 384px height and 100% width. The 3D scene renders with correct lighting and camera positioning against a dark gray background (#2a2a2a).\n</info added on 2025-07-11T21:15:25.889Z>",
             "status": "done",
             "testStrategy": ""
@@ -366,9 +324,7 @@
             "id": 2,
             "title": "Evaluate TresJS vs Vanilla Three.js for Vue Integration",
             "description": "Compare TresJS wrapper approach with direct Three.js integration in Vue 3, analyzing performance, developer experience, and maintainability",
-            "dependencies": [
-              1
-            ],
+            "dependencies": [1],
             "details": "Create comparison matrix covering: reactive integration patterns, TypeScript support, bundle size impact, community support, update frequency, and compatibility with CCDIKSolver. Build minimal proof-of-concepts for both approaches.\n<info added on 2025-07-11T23:18:17.808Z>\nThe evaluation reveals that vanilla Three.js is the recommended approach for the crane demo. Key factors driving this decision:\n\n**Performance**: Direct API access without wrapper overhead is crucial for maintaining 60fps with physics simulation and IK calculations running simultaneously.\n\n**CCDIKSolver Compatibility**: Vanilla Three.js guarantees direct integration with CCDIKSolver addon, while TresJS lacks documentation and examples for this specific use case.\n\n**Architecture Decision**: Implement a hybrid approach where Vue 3 handles UI controls, state management, and WebSocket communication, while vanilla Three.js manages all 3D rendering, physics, and IK calculations within Vue's mounted lifecycle.\n\n**Implementation Strategy**: Create a clean separation of concerns with Vue composables managing application state and WebSocket sync, while Three.js scene, renderer, and IK solver operate independently with direct API calls for maximum performance optimization.\n\n**Risk Assessment**: TresJS's abstraction layer presents unnecessary complexity for advanced features like IK solving and real-time physics, making vanilla Three.js the safer choice for meeting all technical requirements.\n</info added on 2025-07-11T23:18:17.808Z>",
             "status": "done",
             "testStrategy": ""
@@ -395,11 +351,7 @@
             "id": 5,
             "title": "Design TypeScript Interface Architecture",
             "description": "Create comprehensive TypeScript interface definitions for all system components, ensuring type safety across client-server boundaries",
-            "dependencies": [
-              1,
-              3,
-              4
-            ],
+            "dependencies": [1, 3, 4],
             "details": "Define interfaces for: network protocol messages, physics state representations, IK chain configurations, crane component hierarchies, and event system. Establish naming conventions and type utility patterns.\n<info added on 2025-07-11T23:20:33.603Z>\n## TypeScript Interface Architecture Design\n\n### Core Domain Interfaces\n\n```typescript\n// Crane State Interfaces\ninterface CraneActuators {\n  swing: number;      // degrees\n  lift: number;       // mm\n  elbow: number;      // degrees\n  wrist: number;      // degrees\n  gripper: number;    // mm\n}\n\ninterface CraneConstraints {\n  swing: { min: number; max: number };\n  lift: { min: number; max: number };\n  elbow: { min: number; max: number };\n  wrist: { min: number; max: number };\n  gripper: { min: number; max: number };\n}\n\ninterface CraneState extends CraneActuators {\n  timestamp: number;\n  sequence: number;\n}\n\n// Physics Interfaces\ninterface PhysicsObject {\n  id: string;\n  type: 'brick' | 'ground' | 'crane';\n  mass: number;\n  restitution: number;\n  position: Vector3Like;\n  rotation: QuaternionLike;\n}\n\ninterface BrickState extends PhysicsObject {\n  type: 'brick';\n  isGrabbable: boolean;\n  isAttached: boolean;\n  attachedTo?: string;\n}\n\n// IK Interfaces\ninterface IKTarget {\n  position: Vector3Like;\n  reachable: boolean;\n  distance: number;\n}\n\ninterface IKChainConfig {\n  target: number;\n  effector: number;\n  links: IKLink[];\n  iteration?: number;\n  minAngle?: number;\n  maxAngle?: number;\n}\n\ninterface IKLink {\n  index: number;\n  rotationMin: Vector3Like;\n  rotationMax: Vector3Like;\n  enabled?: boolean;\n}\n```\n\n### WebSocket Protocol Interfaces\n\n```typescript\n// Message Types\nenum MessageType {\n  // Client → Server\n  MOVE_COMMAND = 'move_command',\n  IK_TARGET = 'ik_target',\n  EMERGENCY_STOP = 'emergency_stop',\n  SPAWN_BRICK = 'spawn_brick',\n  PICKUP_BRICK = 'pickup_brick',\n  RELEASE_BRICK = 'release_brick',\n  \n  // Server → Client\n  STATE_UPDATE = 'state_update',\n  IK_RESULT = 'ik_result',\n  PHYSICS_UPDATE = 'physics_update',\n  ERROR = 'error',\n  ACK = 'ack'\n}\n\n// Base Message\ninterface BaseMessage {\n  type: MessageType;\n  timestamp: number;\n  sequence: number;\n  clientId?: string;\n}\n\n// Command Messages\ninterface MoveCommand extends BaseMessage {\n  type: MessageType.MOVE_COMMAND;\n  actuator: keyof CraneActuators;\n  value: number;\n  speed?: number;\n}\n\ninterface IKTargetCommand extends BaseMessage {\n  type: MessageType.IK_TARGET;\n  target: Vector3Like;\n}\n\ninterface PickupCommand extends BaseMessage {\n  type: MessageType.PICKUP_BRICK;\n  brickId: string;\n}\n\n// State Messages\ninterface StateUpdate extends BaseMessage {\n  type: MessageType.STATE_UPDATE;\n  state: CraneState;\n  motion?: MotionState;\n}\n\ninterface IKResult extends BaseMessage {\n  type: MessageType.IK_RESULT;\n  success: boolean;\n  solution?: CraneActuators;\n  error?: string;\n}\n\ninterface PhysicsUpdate extends BaseMessage {\n  type: MessageType.PHYSICS_UPDATE;\n  objects: PhysicsObject[];\n}\n\n// Union Types\ntype ClientMessage = MoveCommand | IKTargetCommand | PickupCommand | BaseMessage;\ntype ServerMessage = StateUpdate | IKResult | PhysicsUpdate | BaseMessage;\n```\n\n### Utility Types\n\n```typescript\n// Three.js Compatible Types\ninterface Vector3Like {\n  x: number;\n  y: number;\n  z: number;\n}\n\ninterface QuaternionLike {\n  x: number;\n  y: number;\n  z: number;\n  w: number;\n}\n\n// Motion Planning\ninterface MotionState {\n  velocity: Partial<CraneActuators>;\n  acceleration: Partial<CraneActuators>;\n  targetPosition: Partial<CraneActuators>;\n  isMoving: boolean;\n}\n\n// Error Handling\ninterface ErrorResponse extends BaseMessage {\n  type: MessageType.ERROR;\n  code: ErrorCode;\n  message: string;\n  details?: unknown;\n}\n\nenum ErrorCode {\n  INVALID_POSITION = 'INVALID_POSITION',\n  UNREACHABLE_TARGET = 'UNREACHABLE_TARGET',\n  COLLISION_DETECTED = 'COLLISION_DETECTED',\n  INVALID_COMMAND = 'INVALID_COMMAND',\n  CONNECTION_ERROR = 'CONNECTION_ERROR'\n}\n```\n\n### Frontend Service Interfaces\n\n```typescript\n// WebSocket Service\ninterface WebSocketService {\n  connect(): Promise<void>;\n  disconnect(): void;\n  send(message: ClientMessage): void;\n  on<T extends ServerMessage>(\n    type: T['type'], \n    handler: (message: T) => void\n  ): void;\n  off(type: MessageType, handler: Function): void;\n}\n\n// Crane Controller\ninterface CraneController {\n  state: Readonly<CraneState>;\n  constraints: Readonly<CraneConstraints>;\n  \n  moveActuator(actuator: keyof CraneActuators, value: number): void;\n  moveToTarget(position: Vector3Like): Promise<boolean>;\n  emergencyStop(): void;\n  \n  onStateUpdate(callback: (state: CraneState) => void): void;\n}\n\n// Physics Manager\ninterface PhysicsManager {\n  world: RapierWorld;\n  \n  addBrick(position: Vector3Like): string;\n  removeBrick(id: string): void;\n  updateBrick(id: string, state: Partial<BrickState>): void;\n  \n  getBrick(id: string): BrickState | undefined;\n  getAllBricks(): BrickState[];\n  \n  checkProximity(gripperPos: Vector3Like, threshold: number): string[];\n}\n```\n\n### Binary Protocol Types (Performance Optimization)\n\n```typescript\n// Binary Message Format\nenum BinaryMessageType {\n  CRANE_STATE = 0x01,\n  IK_TARGET = 0x02,\n  PHYSICS_UPDATE = 0x03\n}\n\n// Type Guards\nfunction isCraneState(data: ArrayBuffer): boolean {\n  return new DataView(data).getUint8(0) === BinaryMessageType.CRANE_STATE;\n}\n\n// Encoders/Decoders\nclass BinaryProtocol {\n  static encodeCraneState(state: CraneState): ArrayBuffer {\n    const buffer = new ArrayBuffer(32);\n    const view = new DataView(buffer);\n    \n    view.setUint8(0, BinaryMessageType.CRANE_STATE);\n    view.setFloat32(1, state.swing);\n    view.setFloat32(5, state.lift);\n    view.setFloat32(9, state.elbow);\n    view.setFloat32(13, state.wrist);\n    view.setFloat32(17, state.gripper);\n    view.setFloat32(21, state.timestamp);\n    view.setUint32(25, state.sequence);\n    \n    return buffer;\n  }\n  \n  static decodeCraneState(buffer: ArrayBuffer): CraneState {\n    const view = new DataView(buffer);\n    \n    return {\n      swing: view.getFloat32(1),\n      lift: view.getFloat32(5),\n      elbow: view.getFloat32(9),\n      wrist: view.getFloat32(13),\n      gripper: view.getFloat32(17),\n      timestamp: view.getFloat32(21),\n      sequence: view.getUint32(25)\n    };\n  }\n}\n```\n\n### Vue Composable Types\n\n```typescript\n// Composable Return Types\ninterface UseCraneReturn {\n  state: Ref<CraneState>;\n  isConnected: Ref<boolean>;\n  moveActuator: (actuator: keyof CraneActuators, value: number) => void;\n  moveToPosition: (target: Vector3Like) => Promise<void>;\n  emergencyStop: () => void;\n}\n\ninterface UsePhysicsReturn {\n  bricks: Ref<BrickState[]>;\n  spawnBrick: (position?: Vector3Like) => void;\n  pickupBrick: (brickId: string) => void;\n  releaseBrick: () => void;\n  nearbyBricks: ComputedRef<string[]>;\n}\n```\n\nThis TypeScript architecture provides:\n1. Type safety across client-server boundaries\n2. Clear separation of concerns\n3. Support for both JSON and binary protocols\n4. Vue 3 integration types\n5. Extensibility for future features\n</info added on 2025-07-11T23:20:33.603Z>",
             "status": "done",
             "testStrategy": ""
@@ -408,10 +360,7 @@
             "id": 6,
             "title": "Establish Project Structure and Build Configuration",
             "description": "Design monorepo structure with shared packages, configure build tools, and establish development workflow",
-            "dependencies": [
-              2,
-              5
-            ],
+            "dependencies": [2, 5],
             "details": "Set up Turborepo or Nx workspace, configure Vite for client builds, establish shared TypeScript configs, implement hot-reload for all packages, and create Docker development environment. Define package boundaries and dependency rules.\n<info added on 2025-07-11T23:25:35.154Z>\nThe monorepo has been successfully implemented using pnpm workspaces. Created pnpm-workspace.yaml defining packages/* structure. Established @monumental/shared package containing TypeScript interfaces from task 5.5, configured with tsup for dual ESM/CJS builds and proper package.json exports. Updated all package.json files to include workspace scripts for parallel execution (dev:all, build:all, lint:all, test:all) and consistent individual scripts across packages. Frontend and backend now properly reference shared package as dependency. Implemented tsconfig.base.json with path mappings for @monumental/* imports. Added scripts/setup-dev.sh for automated development environment setup. Created PROJECT_STRUCTURE.md documenting the monorepo architecture. The workspace achieves all requirements: shared TypeScript configs, hot-reload across packages, clear package boundaries, and dependency rules enforced through pnpm workspace structure.\n</info added on 2025-07-11T23:25:35.154Z>",
             "status": "done",
             "testStrategy": ""
@@ -420,12 +369,7 @@
             "id": 7,
             "title": "Create Integration Proof-of-Concepts",
             "description": "Build minimal working examples demonstrating key technology integrations and validating architectural decisions",
-            "dependencies": [
-              1,
-              2,
-              3,
-              4
-            ],
+            "dependencies": [1, 2, 3, 4],
             "details": "Implement: Three.js + CCDIKSolver crane arm demo, uWebSockets.js echo server with TypeScript, Rapier.js synchronized physics demo, and full-stack IK state synchronization prototype. Document performance metrics and identify integration challenges.\n<info added on 2025-07-11T23:30:03.221Z>\nSuccessfully created and implemented all four proof-of-concept integrations with comprehensive testing and documentation:\n\n**Three.js + CCDIKSolver Demo (CraneIKDemo.vue):**\n- Built functional IK solver implementation with proper bone hierarchy setup\n- Created interactive controls using Vue sliders for real-time target positioning\n- Validated bone chain configuration suitable for crane arm mechanics\n- Achieved consistent 60fps performance with smooth solver updates\n\n**uWebSockets.js Echo Server (websocket-echo.ts):**\n- Implemented TypeScript-based WebSocket server with full type safety\n- Configured state broadcasting system operating at 10Hz update frequency\n- Developed JSON-based message protocol for client-server communication\n- Added client connection tracking and efficient broadcast mechanisms\n\n**WebSocket Client Demo (WebSocketDemo.vue):**\n- Created Vue component with connect/disconnect controls\n- Implemented real-time state update display with reactive data binding\n- Built comprehensive message logging system for debugging\n- Successfully validated bidirectional frontend-backend communication\n\n**Rapier.js Physics Demo (PhysicsDemo.vue):**\n- Developed physics simulation with dynamic brick spawning\n- Configured realistic gravity and collision detection parameters\n- Implemented Three.js mesh synchronization with physics bodies\n- Maintained stable 60fps performance with multiple simultaneous objects\n\n**Integration Architecture:**\n- Designed unified DemoView.vue with tabbed navigation for all POCs\n- Configured Vue router with /demo route for easy access\n- Established shared types package working seamlessly across frontend/backend\n- Created backend POC runner script (run-poc.ts) for testing server components\n\nAll proof-of-concepts documented in POC_RESULTS.md with detailed performance metrics, implementation notes, and architectural recommendations. No blocking issues or integration conflicts identified - all systems ready for production development.\n</info added on 2025-07-11T23:30:03.221Z>",
             "status": "done",
             "testStrategy": ""
@@ -434,9 +378,7 @@
             "id": 8,
             "title": "Define Coding Standards and Development Guidelines",
             "description": "Establish comprehensive coding standards, Git workflow, and contribution guidelines for the project",
-            "dependencies": [
-              5
-            ],
+            "dependencies": [5],
             "details": "Create ESLint/Prettier configurations, commit message conventions, PR templates, code review checklists, performance budgets, and testing strategies. Document architectural decision records (ADRs) for key technology choices.\n<info added on 2025-07-11T23:34:34.468Z>\nSuccessfully established comprehensive coding standards and development guidelines:\n\n1. **Main Development Guide** (DEVELOPMENT_GUIDE.md):\n   - Project overview and tech stack\n   - Getting started instructions\n   - Detailed coding standards for TypeScript, Vue, Three.js\n   - Architecture guidelines and coordinate system\n   - Git workflow with conventional commits\n   - Testing strategy (unit, integration, E2E)\n   - Performance guidelines and targets\n   - Documentation standards\n\n2. **Code Quality Tools**:\n   - ESLint configuration (.eslintrc.base.json) with TypeScript rules\n   - Prettier configuration (.prettierrc.json) for consistent formatting\n   - Strict TypeScript rules enforcing type safety\n\n3. **GitHub Templates**:\n   - Pull Request template with comprehensive checklist\n   - Type of change classification\n   - Testing requirements\n   - Performance impact section\n\n4. **Architecture Decision Records**:\n   - ADR-001: Choose Three.js over Babylon.js\n   - ADR-002: Select Rapier.js for physics\n   - ADR-003: Use vanilla Three.js instead of TresJS\n   - ADR-004: Implement binary WebSocket protocol (proposed)\n\n5. **Review and Monitoring Docs**:\n   - CODE_REVIEW_CHECKLIST.md with detailed review criteria\n   - PERFORMANCE_MONITORING.md with metrics, budgets, and profiling guides\n\nAll standards align with industry best practices and project-specific requirements.\n</info added on 2025-07-11T23:34:34.468Z>",
             "status": "done",
             "testStrategy": ""
@@ -450,10 +392,7 @@
         "details": "Create CraneVisualization.vue component in components directory using <script setup lang=\"ts\"> syntax. Import necessary Three.js types and TresJS components from @tresjs/core. Build crane geometry using: 1) Circular base - TresMesh with TresCylinderGeometry args=[baseRadius, baseRadius, baseHeight, 32] and TresMeshStandardMaterial with appropriate color. 2) Rectangular hollow column - Create outer TresBoxGeometry for column structure and inner geometry to create hollow effect, position above base. 3) Lift block - Small TresBoxGeometry positioned inside the column interior. Use TresGroup to organize crane components hierarchically. Set up appropriate lighting with TresAmbientLight and TresDirectionalLight. Position TresPerspectiveCamera to show full crane structure. Use ref() for component references and ensure proper TypeScript typing throughout. Focus on simple static geometry without physics or animations - purely for visual testing and reference.",
         "testStrategy": "Verify CraneVisualization.vue component renders without WebGL errors. Check that circular base appears as expected cylinder geometry. Confirm rectangular column is visible with hollow interior space. Validate lift block is positioned correctly inside column. Test component integration by importing into main Vue app and verifying crane structure matches reference images. Ensure proper TypeScript compilation with no type errors. Test camera positioning shows complete crane structure clearly. Verify lighting illuminates all crane components appropriately.",
         "status": "done",
-        "dependencies": [
-          2,
-          4
-        ],
+        "dependencies": [2, 4],
         "priority": "medium",
         "subtasks": [
           {
@@ -469,9 +408,7 @@
             "id": 2,
             "title": "Set up Three.js scene initialization",
             "description": "Initialize Three.js scene, camera, renderer, and lighting for the crane visualization",
-            "dependencies": [
-              1
-            ],
+            "dependencies": [1],
             "details": "Set up WebGL renderer, perspective camera with appropriate positioning, scene object, ambient and directional lighting. Configure renderer settings for proper display and add canvas to DOM.",
             "status": "done",
             "testStrategy": ""
@@ -480,9 +417,7 @@
             "id": 3,
             "title": "Add circular base geometry",
             "description": "Create and add the circular base geometry for the crane foundation",
-            "dependencies": [
-              2
-            ],
+            "dependencies": [2],
             "details": "Create a cylinder geometry for the crane base with appropriate dimensions. Apply material and positioning. Add the base mesh to the scene with proper scaling and positioning at ground level.",
             "status": "done",
             "testStrategy": ""
@@ -491,9 +426,7 @@
             "id": 4,
             "title": "Add rectangular column geometry",
             "description": "Create and add the vertical rectangular column geometry for the crane mast",
-            "dependencies": [
-              3
-            ],
+            "dependencies": [3],
             "details": "Create a box geometry for the crane's vertical column/mast. Position it correctly on top of the base, apply appropriate materials and dimensions to create a realistic crane column appearance.",
             "status": "done",
             "testStrategy": ""
@@ -502,9 +435,7 @@
             "id": 5,
             "title": "Add lift block inside column",
             "description": "Create and position the lift block geometry inside the crane column",
-            "dependencies": [
-              4
-            ],
+            "dependencies": [4],
             "details": "Create a smaller box geometry representing the lift block/elevator car. Position it inside the column structure with appropriate materials and sizing. Ensure proper visibility and positioning within the column bounds.",
             "status": "done",
             "testStrategy": ""
@@ -656,9 +587,7 @@
         "details": "1. Install THREE.IK library via npm and configure TypeScript types. 2. Remove existing FABRIK implementation from the codebase and replace with THREE.IK's IKSolver. 3. Convert current bone/skeleton system to be compatible with THREE.IK's chain structure, maintaining the 6-DOF kinematic chain (Base rotation, Lift translation, Arm1, Arm2, Vertical column, Gripper). 4. Configure IK chain with proper joint constraints using THREE.IK's constraint system: Base Y-axis rotation, Arm rotation limits, and Lift Y-axis translation handling. 5. Update the inverse kinematics solver calls to use THREE.IK's solver methods instead of custom FABRIK calculations. 6. Ensure target position handling and constraint enforcement work correctly with the new library. 7. Test integration with existing CCDIKSolver fallback if needed, or fully migrate to THREE.IK for consistency. 8. Update any UI controls or input handling to work with the new IK system. 9. Optimize performance and ensure smooth real-time manipulation of crane position through x/y/z coordinates or 3D click interactions.",
         "testStrategy": "1. Verify THREE.IK library installation and import without TypeScript errors. 2. Test that existing crane visual appearance is maintained after library integration. 3. Confirm inverse kinematics calculations produce stable and accurate results for various target positions. 4. Test joint constraint enforcement (base rotation limits, arm angle restrictions, lift translation bounds). 5. Verify smooth real-time crane manipulation through coordinate input and 3D click interactions. 6. Compare performance metrics between old FABRIK implementation and new THREE.IK system. 7. Test edge cases like unreachable positions and constraint violations. 8. Ensure WebSocket communication still works correctly with the new IK system. 9. Validate that the crane reaches target positions accurately and maintains proper joint relationships.",
         "status": "done",
-        "dependencies": [
-          7
-        ],
+        "dependencies": [7],
         "priority": "medium",
         "subtasks": []
       }
