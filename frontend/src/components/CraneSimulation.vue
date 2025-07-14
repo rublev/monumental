@@ -1,69 +1,3 @@
-<template>
-  <div class="bg-gray-900 text-gray-50 m-0 overflow-hidden">
-    <div ref="canvasContainer" class="w-screen h-screen"></div>
-
-    <div
-      class="absolute bottom-4 left-4 bg-gray-900/50 backdrop-blur-sm p-3 rounded-md text-xs font-mono border border-gray-600"
-    >
-      <strong>Live Solver Output:</strong><br />
-      Lift Height: {{ stats.liftHeight }}<br />
-      Shoulder Yaw: {{ stats.shoulderAngle }}°<br />
-      Elbow Yaw: {{ stats.elbowAngle }}°
-    </div>
-
-    <div
-      class="absolute bottom-4 right-4 bg-gray-900/50 backdrop-blur-sm p-4 rounded-lg shadow-xl w-72 border border-gray-600"
-    >
-      <h3 class="text-md font-bold mb-3 text-center">Target Position</h3>
-
-      <div>
-        <label for="x-slider" class="flex justify-between font-mono text-sm">
-          <span>X</span><span>{{ targetPosition.x.toFixed(1) }}</span>
-        </label>
-        <input
-          id="x-slider"
-          v-model.number="targetPosition.x"
-          type="range"
-          :min="SIMULATION_BOUNDS.X_MIN"
-          :max="SIMULATION_BOUNDS.X_MAX"
-          :step="SIMULATION_BOUNDS.STEP"
-          class="w-full h-2 bg-gray-600 rounded-lg cursor-pointer"
-        />
-      </div>
-
-      <div class="mt-2">
-        <label for="y-slider" class="flex justify-between font-mono text-sm">
-          <span>Y</span><span>{{ targetPosition.y.toFixed(1) }}</span>
-        </label>
-        <input
-          id="y-slider"
-          v-model.number="targetPosition.y"
-          type="range"
-          :min="SIMULATION_BOUNDS.Y_MIN"
-          :max="SIMULATION_BOUNDS.Y_MAX"
-          :step="SIMULATION_BOUNDS.STEP"
-          class="w-full h-2 bg-gray-600 rounded-lg cursor-pointer"
-        />
-      </div>
-
-      <div class="mt-2">
-        <label for="z-slider" class="flex justify-between font-mono text-sm">
-          <span>Z</span><span>{{ targetPosition.z.toFixed(1) }}</span>
-        </label>
-        <input
-          id="z-slider"
-          v-model.number="targetPosition.z"
-          type="range"
-          :min="SIMULATION_BOUNDS.Z_MIN"
-          :max="SIMULATION_BOUNDS.Z_MAX"
-          :step="SIMULATION_BOUNDS.STEP"
-          class="w-full h-2 bg-gray-600 rounded-lg cursor-pointer"
-        />
-      </div>
-    </div>
-  </div>
-</template>
-
 <script setup>
 import { ref, reactive, onMounted, onUnmounted, watch } from 'vue'
 import * as THREE from 'three'
@@ -251,3 +185,49 @@ onUnmounted(() => {
   }
 })
 </script>
+
+<template>
+  <div class="bg-gray-900 text-gray-50 m-0 overflow-hidden">
+    <div ref="canvasContainer" class="w-screen h-screen"></div>
+
+    <div
+      class="absolute bottom-4 left-4 bg-gray-900/50 backdrop-blur-sm p-3 rounded-md text-xs font-mono border border-gray-600">
+      <strong>Live Solver Output:</strong><br />
+      Lift Height: {{ stats.liftHeight }}<br />
+      Shoulder Yaw: {{ stats.shoulderAngle }}°<br />
+      Elbow Yaw: {{ stats.elbowAngle }}°
+    </div>
+
+    <div
+      class="absolute bottom-4 right-4 bg-gray-900/50 backdrop-blur-sm p-4 rounded-lg shadow-xl w-72 border border-gray-600">
+      <h3 class="text-md font-bold mb-3 text-center">Target Position</h3>
+
+      <div>
+        <label for="x-slider" class="flex justify-between font-mono text-sm">
+          <span>X</span><span>{{ targetPosition.x.toFixed(1) }}</span>
+        </label>
+        <input id="x-slider" v-model.number="targetPosition.x" type="range" :min="SIMULATION_BOUNDS.X_MIN"
+          :max="SIMULATION_BOUNDS.X_MAX" :step="SIMULATION_BOUNDS.STEP"
+          class="w-full h-2 bg-gray-600 rounded-lg cursor-pointer" />
+      </div>
+
+      <div class="mt-2">
+        <label for="y-slider" class="flex justify-between font-mono text-sm">
+          <span>Y</span><span>{{ targetPosition.y.toFixed(1) }}</span>
+        </label>
+        <input id="y-slider" v-model.number="targetPosition.y" type="range" :min="SIMULATION_BOUNDS.Y_MIN"
+          :max="SIMULATION_BOUNDS.Y_MAX" :step="SIMULATION_BOUNDS.STEP"
+          class="w-full h-2 bg-gray-600 rounded-lg cursor-pointer" />
+      </div>
+
+      <div class="mt-2">
+        <label for="z-slider" class="flex justify-between font-mono text-sm">
+          <span>Z</span><span>{{ targetPosition.z.toFixed(1) }}</span>
+        </label>
+        <input id="z-slider" v-model.number="targetPosition.z" type="range" :min="SIMULATION_BOUNDS.Z_MIN"
+          :max="SIMULATION_BOUNDS.Z_MAX" :step="SIMULATION_BOUNDS.STEP"
+          class="w-full h-2 bg-gray-600 rounded-lg cursor-pointer" />
+      </div>
+    </div>
+  </div>
+</template>
