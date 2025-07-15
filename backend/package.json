@@ -5,14 +5,14 @@
   "main": "dist/server.js",
   "type": "module",
   "scripts": {
-    "dev": "tsx watch src/server.ts",
+    "dev": "concurrently \"tsc --noEmit --watch\" \"tsx watch src/server.ts\"",
     "build": "tsc",
     "start": "node dist/server.js",
     "test": "echo \"No tests yet\"",
     "lint": "echo \"No linting configured yet\"",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist",
-    "poc:websocket": "tsx src/run-poc.ts websocket-echo"
+    "poc:websocket": "concurrently \"tsc --noEmit --watch\" \"tsx watch src/run-poc.ts websocket-echo\""
   },
   "keywords": [],
   "author": "",
@@ -24,6 +24,7 @@
   },
   "devDependencies": {
     "@types/node": "^24.0.13",
+    "concurrently": "^9.2.0",
     "tsx": "^4.20.3",
     "typescript": "^5.8.3"
   }

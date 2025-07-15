@@ -2,7 +2,11 @@
   "compilerOptions": {
     "target": "ES2022",
     "module": "ESNext",
-    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "lib": [
+      "ES2022",
+      "DOM",
+      "DOM.Iterable"
+    ],
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": false,
     "resolveJsonModule": true,
@@ -12,12 +16,17 @@
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
+    "preserveValueImports": false,
     "noFallthroughCasesInSwitch": true,
     "skipLibCheck": true,
     "allowSyntheticDefaultImports": true,
     "paths": {
-      "@monumental/shared": ["./packages/shared/src"],
-      "@monumental/shared/*": ["./packages/shared/src/*"]
+      "@monumental/shared": [
+        "./packages/shared"
+      ],
+      "@monumental/shared/*": [
+        "./packages/shared/*"
+      ]
     }
   }
 }
