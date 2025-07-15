@@ -1,37 +1,6 @@
-<template>
-  <div class="websocket-demo">
-    <h2>WebSocket Integration Demo</h2>
-
-    <div class="connection-status" :class="{ connected: isConnected }">
-      {{ isConnected ? 'Connected' : 'Disconnected' }}
-    </div>
-
-    <div class="controls">
-      <button @click="connect" :disabled="isConnected">Connect</button>
-      <button @click="disconnect" :disabled="!isConnected">Disconnect</button>
-    </div>
-
-    <div class="crane-state" v-if="craneState">
-      <h3>Crane State</h3>
-      <pre>{{ JSON.stringify(craneState, null, 2) }}</pre>
-    </div>
-
-    <div class="message-log">
-      <h3>Message Log</h3>
-      <div class="messages">
-        <div v-for="(msg, idx) in messages" :key="idx" class="message">
-          <span class="timestamp">{{ formatTime(msg.timestamp) }}</span>
-          <span class="type">{{ msg.type }}</span>
-          <span class="data">{{ msg.data }}</span>
-        </div>
-      </div>
-    </div>
-  </div>
-</template>
-
 <script setup lang="ts">
 import { ref, onUnmounted } from 'vue'
-import type { CraneState, StateUpdateMessage, MessageType } from '@monumental/shared'
+import type { CraneState, StateUpdateMessage } from '@monumental/shared'
 import { WS_CONFIG } from '@monumental/shared'
 
 interface LogMessage {
@@ -48,7 +17,7 @@ let ws: WebSocket | null = null
 function connect() {
   if (ws) return
 
-  ws = new WebSocket(`ws://localhost:${WS_CONFIG.port}`)
+  ws = new WebSocket(`ws://localhost:${WS_CONFIG.port}/ws`)
 
   ws.onopen = () => {
     isConnected.value = true
@@ -119,105 +88,40 @@ onUnmounted(() => {
 })
 </script>
 
-<style scoped>
-.websocket-demo {
-  padding: 20px;
-  max-width: 800px;
-  margin: 0 auto;
-}
+<template>
+  <div class="p-5 max-w-4xl mx-auto">
+    <h2 class="mb-5">WebSocket Integration Demo</h2>
 
-h2 {
-  margin-bottom: 20px;
-}
+    <div class="inline-block px-4 py-2 rounded font-bold mb-5"
+      :class="isConnected ? 'bg-green-400 text-gray-800' : 'bg-red-400 text-white'">
+      {{ isConnected ? 'Connected' : 'Disconnected' }}
+    </div>
 
-.connection-status {
-  display: inline-block;
-  padding: 8px 16px;
-  border-radius: 4px;
-  background: #ff4444;
-  color: white;
-  font-weight: bold;
-  margin-bottom: 20px;
-}
+    <div class="mb-8">
+      <button @click="connect" :disabled="isConnected"
+        class="mr-2.5 px-4 py-2 border-none rounded text-white cursor-pointer disabled:bg-gray-300 disabled:cursor-not-allowed bg-blue-600 enabled:hover:bg-blue-700">
+        Connect
+      </button>
+      <button @click="disconnect" :disabled="!isConnected"
+        class="mr-2.5 px-4 py-2 border-none rounded text-white cursor-pointer disabled:bg-gray-300 disabled:cursor-not-allowed bg-blue-600 enabled:hover:bg-blue-700">
+        Disconnect
+      </button>
+    </div>
 
-.connection-status.connected {
-  background: #44ff44;
-  color: #333;
-}
+    <div v-if="craneState" class="bg-gray-100 p-4 rounded-lg mb-8">
+      <h3 class="mt-0">Crane State</h3>
+      <pre class="m-0 text-xs">{{ JSON.stringify(craneState, null, 2) }}</pre>
+    </div>
 
-.controls {
-  margin-bottom: 30px;
-}
-
-.controls button {
-  margin-right: 10px;
-  padding: 8px 16px;
-  border: none;
-  border-radius: 4px;
-  background: #007bff;
-  color: white;
-  cursor: pointer;
-}
-
-.controls button:disabled {
-  background: #ccc;
-  cursor: not-allowed;
-}
-
-.crane-state {
-  background: #f5f5f5;
-  padding: 15px;
-  border-radius: 8px;
-  margin-bottom: 30px;
-}
-
-.crane-state h3 {
-  margin-top: 0;
-}
-
-.crane-state pre {
-  margin: 0;
-  font-size: 12px;
-}
-
-.message-log {
-  background: #f9f9f9;
-  padding: 15px;
-  border-radius: 8px;
-}
-
-.message-log h3 {
-  margin-top: 0;
-}
-
-.messages {
-  max-height: 300px;
-  overflow-y: auto;
-  font-family: monospace;
-  font-size: 12px;
-}
-
-.message {
-  display: flex;
-  gap: 10px;
-  padding: 4px 0;
-  border-bottom: 1px solid #eee;
-}
-
-.timestamp {
-  color: #666;
-  min-width: 100px;
-}
-
-.type {
-  color: #007bff;
-  font-weight: bold;
-  min-width: 120px;
-}
-
-.data {
-  flex: 1;
-  color: #333;
-  word-break: break-word;
-}
-</style>
+    <div class="bg-gray-50 p-4 rounded-lg">
+      <h3 class="mt-0">Message Log</h3>
+      <div class="max-h-80 overflow-y-auto font-mono text-xs">
+        <div v-for="(msg, idx) in messages" :key="idx" class="flex gap-2.5 py-1 border-b border-gray-200">
+          <span class="text-gray-600 min-w-[100px]">{{ formatTime(msg.timestamp) }}</span>
+          <span class="text-blue-600 font-bold min-w-[120px]">{{ msg.type }}</span>
+          <span class="flex-1 text-gray-800 break-words">{{ msg.data }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>

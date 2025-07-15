@@ -105,7 +105,7 @@ export const CRANE_CONSTRAINTS = {
 
 // WebSocket configuration
 export const WS_CONFIG = {
-  port: 9001,
+  port: 8080,
   heartbeatInterval: 30000, // ms
   reconnectDelay: 2000, // ms
   maxReconnectAttempts: 5,

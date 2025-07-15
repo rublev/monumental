@@ -1,11 +1,11 @@
 <template>
-  <div class="physics-demo">
-    <div ref="containerRef" class="canvas-container"></div>
-    <div class="controls">
-      <h3>Physics Demo Controls</h3>
-      <button @click="spawnBrick">Spawn Brick</button>
-      <button @click="clearBricks">Clear All Bricks</button>
-      <p>Bricks spawned: {{ brickCount }}</p>
+  <div class="w-full h-screen flex flex-col">
+    <div ref="containerRef" class="flex-1 relative"></div>
+    <div class="absolute top-5 right-5 bg-white/90 p-5 rounded-lg shadow-lg">
+      <h3 class="mt-0 mb-4">Physics Demo Controls</h3>
+      <button @click="spawnBrick" class="block w-full mb-2.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white border-none rounded cursor-pointer">Spawn Brick</button>
+      <button @click="clearBricks" class="block w-full mb-2.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white border-none rounded cursor-pointer">Clear All Bricks</button>
+      <p class="mt-2.5 mb-0 font-mono">Bricks spawned: {{ brickCount }}</p>
     </div>
   </div>
 </template>
@@ -205,51 +205,3 @@ onUnmounted(() => {
 })
 </script>
 
-<style scoped>
-.physics-demo {
-  width: 100%;
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
-
-.canvas-container {
-  flex: 1;
-  position: relative;
-}
-
-.controls {
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  background: rgba(255, 255, 255, 0.9);
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-}
-
-.controls h3 {
-  margin: 0 0 15px 0;
-}
-
-.controls button {
-  display: block;
-  width: 100%;
-  margin-bottom: 10px;
-  padding: 8px 16px;
-  background: #007bff;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.controls button:hover {
-  background: #0056b3;
-}
-
-.controls p {
-  margin: 10px 0 0 0;
-  font-family: monospace;
-}
-</style>
