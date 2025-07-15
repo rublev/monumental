@@ -1,5 +1,3 @@
-import type { Ref } from 'vue'
-
 // WebSocket connection states
 export type ConnectionState = 'disconnected' | 'connecting' | 'connected' | 'reconnecting' | 'error'
 
@@ -65,15 +63,13 @@ export interface ConnectionMetrics {
   latency?: number
 }
 
-// WebSocket composable return type
-export interface UseWebSocketReturn {
-  // Connection state
-  connectionState: Readonly<Ref<ConnectionState>>
-  isConnected: Readonly<Ref<boolean>>
-  clientId: Readonly<Ref<string | null>>
-
-  // Metrics
-  metrics: Readonly<Ref<ConnectionMetrics>>
+// WebSocket service interface (framework-agnostic)
+export interface WebSocketService {
+  // Connection state getters
+  getConnectionState: () => ConnectionState
+  isConnected: () => boolean
+  getClientId: () => string | null
+  getMetrics: () => ConnectionMetrics
 
   // Connection methods
   connect: () => Promise<void>
@@ -88,4 +84,13 @@ export interface UseWebSocketReturn {
   onMessage: (callback: (message: IncomingMessage) => void) => void
   onStateChange: (callback: (state: ConnectionState) => void) => void
   onError: (callback: (error: Event | Error) => void) => void
+}
+
+// Default WebSocket configuration
+export const DEFAULT_WEBSOCKET_CONFIG: WebSocketConfig = {
+  url: 'ws://localhost:8080/ws',
+  reconnectAttempts: 5,
+  reconnectInterval: 1000, // Start with 1 second
+  heartbeatInterval: 30000, // 30 seconds
+  connectionTimeout: 5000, // 5 seconds
 }

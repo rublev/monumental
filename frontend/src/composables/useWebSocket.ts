@@ -1,19 +1,42 @@
 import { ref, computed, readonly } from 'vue'
+import type { Ref } from 'vue'
 import type {
   ConnectionState,
   WebSocketConfig,
   ConnectionMetrics,
   IncomingMessage,
   OutgoingMessage,
-  UseWebSocketReturn,
-} from '@/types/websocket'
+} from '@monumental/shared'
+import { DEFAULT_WEBSOCKET_CONFIG } from '@monumental/shared'
+
+// Vue-specific return type for the composable
+export interface UseWebSocketReturn {
+  // Connection state
+  connectionState: Readonly<Ref<ConnectionState>>
+  isConnected: Readonly<Ref<boolean>>
+  clientId: Readonly<Ref<string | null>>
+
+  // Metrics
+  metrics: Readonly<Ref<ConnectionMetrics>>
+
+  // Connection methods
+  connect: () => Promise<void>
+  disconnect: () => void
+
+  // Messaging
+  sendMessage: (data: any, options?: { queue?: boolean }) => boolean
+  getQueueStatus: () => { length: number; maxSize: number; isFull: boolean }
+  clearQueue: () => number
+
+  // Event handlers
+  onMessage: (callback: (message: IncomingMessage) => void) => void
+  onStateChange: (callback: (state: ConnectionState) => void) => void
+  onError: (callback: (error: Event | Error) => void) => void
+}
 
 const DEFAULT_CONFIG: WebSocketConfig = {
-  url: import.meta.env.VITE_WS_URL || 'ws://localhost:8080/ws',
-  reconnectAttempts: 5,
-  reconnectInterval: 1000, // Start with 1 second
-  heartbeatInterval: 30000, // 30 seconds
-  connectionTimeout: 5000, // 5 seconds
+  ...DEFAULT_WEBSOCKET_CONFIG,
+  url: import.meta.env.VITE_WS_URL || DEFAULT_WEBSOCKET_CONFIG.url,
 }
 
 export function useWebSocket(config: Partial<WebSocketConfig> = {}): UseWebSocketReturn {

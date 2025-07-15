@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { ConnectionState } from '@/types/websocket'
+import type { ConnectionState } from '@monumental/shared'
 
 interface Props {
   connectionState: ConnectionState
@@ -82,36 +82,26 @@ const statusConfig = computed(() => {
       }
   }
 })
-
-const isOnline = computed(() => props.connectionState === 'connected')
 </script>
 
 <template>
   <div class="flex items-center space-x-3">
     <!-- Status Indicator -->
-    <div
-      class="flex items-center px-3 py-1 rounded-full text-sm font-medium border"
+    <div class="flex items-center px-3 py-1 rounded-full text-sm font-medium border"
       :class="[statusConfig.bgClass, statusConfig.textClass, statusConfig.borderClass]"
-      :title="statusConfig.description"
-    >
-      <span
-        class="w-2 h-2 rounded-full mr-2 animate-pulse"
-        :class="{
-          'bg-green-500': connectionState === 'connected',
-          'bg-yellow-500': connectionState === 'connecting' || connectionState === 'reconnecting',
-          'bg-red-500': connectionState === 'error',
-          'bg-gray-500': connectionState === 'disconnected',
-        }"
-      ></span>
+      :title="statusConfig.description">
+      <span class="w-2 h-2 rounded-full mr-2 animate-pulse" :class="{
+        'bg-green-500': connectionState === 'connected',
+        'bg-yellow-500': connectionState === 'connecting' || connectionState === 'reconnecting',
+        'bg-red-500': connectionState === 'error',
+        'bg-gray-500': connectionState === 'disconnected',
+      }"></span>
       {{ statusConfig.label }}
     </div>
 
     <!-- Client ID (if connected and showClientId is true) -->
-    <div
-      v-if="showClientId && clientId"
-      class="text-xs text-gray-600 font-mono bg-gray-100 px-2 py-1 rounded"
-      :title="`Client ID: ${clientId}`"
-    >
+    <div v-if="showClientId && clientId" class="text-xs text-gray-600 font-mono bg-gray-100 px-2 py-1 rounded"
+      :title="`Client ID: ${clientId}`">
       {{ clientId }}
     </div>
 
