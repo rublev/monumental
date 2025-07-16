@@ -9,6 +9,7 @@ export class Crane {
   private upperArmLength: number
   private lowerArmLength: number
   private wristExtLength: number
+  private baseRadius: number
 
   public base: THREE.Object3D
   public swingJoint: THREE.Object3D
@@ -25,6 +26,7 @@ export class Crane {
     this.upperArmLength = CRANE_CONFIG.ARM.UPPER_LENGTH
     this.lowerArmLength = CRANE_CONFIG.ARM.LOWER_LENGTH
     this.wristExtLength = CRANE_CONFIG.ARM.WRIST_EXT_LENGTH
+    this.baseRadius = CRANE_CONFIG.BASE.RADIUS
 
     this.base = new THREE.Object3D()
     this.swingJoint = new THREE.Object3D()
@@ -343,6 +345,10 @@ export class Crane {
       shoulderAngle: ((this.shoulderJoint.rotation.y * 180) / Math.PI).toFixed(1),
       elbowAngle: ((this.elbowJoint.rotation.y * 180) / Math.PI).toFixed(1),
     }
+  }
+
+  public get getBaseRadius(): number {
+    return this.baseRadius
   }
 }
 

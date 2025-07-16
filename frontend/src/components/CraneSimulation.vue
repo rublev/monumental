@@ -127,10 +127,10 @@ const updateTargetPosition = () => {
   // Visual clamping logic
   const horizontalDist = Math.sqrt(x * x + z * z)
 
-  if (crane && horizontalDist < crane.baseRadius) {
+  if (crane && horizontalDist < crane.getBaseRadius) {
     const angle = Math.atan2(z, x)
-    x = crane.baseRadius * Math.cos(angle)
-    z = crane.baseRadius * Math.sin(angle)
+    x = crane.getBaseRadius * Math.cos(angle)
+    z = crane.getBaseRadius * Math.sin(angle)
   }
 
   ikTarget.position.set(x, y, z)
