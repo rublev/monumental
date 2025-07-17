@@ -1,11 +1,11 @@
 import * as THREE from 'three'
 
 export class CustomAxesHelper extends THREE.Group {
-  constructor(size: number = 300) {
+  constructor() {
     super()
 
-    const axisLength = size
-    const axisThickness = 0.5
+    const axisLength = 20
+    const axisThickness = 0.1
 
     // X axis (red)
     const xGeometry = new THREE.CylinderGeometry(axisThickness, axisThickness, axisLength, 8)
@@ -17,7 +17,7 @@ export class CustomAxesHelper extends THREE.Group {
 
     // X arrow cone
     const xCone = new THREE.Mesh(
-      new THREE.ConeGeometry(6, 20, 8),
+      new THREE.ConeGeometry(0.5, 2, 20),
       new THREE.MeshBasicMaterial({ color: 0xff0000 }),
     )
     xCone.position.x = axisLength
@@ -33,7 +33,7 @@ export class CustomAxesHelper extends THREE.Group {
 
     // Y arrow cone
     const yCone = new THREE.Mesh(
-      new THREE.ConeGeometry(6, 20, 8),
+      new THREE.ConeGeometry(0.5, 2, 20),
       new THREE.MeshBasicMaterial({ color: 0x00ff00 }),
     )
     yCone.position.y = axisLength
@@ -49,7 +49,7 @@ export class CustomAxesHelper extends THREE.Group {
 
     // Z arrow cone
     const zCone = new THREE.Mesh(
-      new THREE.ConeGeometry(6, 20, 8),
+      new THREE.ConeGeometry(0.5, 2, 20),
       new THREE.MeshBasicMaterial({ color: 0x0000ff }),
     )
     zCone.position.z = axisLength
@@ -60,34 +60,34 @@ export class CustomAxesHelper extends THREE.Group {
     const createTextSprite = (text: string, color: string) => {
       const canvas = document.createElement('canvas')
       const context = canvas.getContext('2d')!
-      canvas.width = 128
-      canvas.height = 64
+      canvas.width = 64
+      canvas.height = 32
 
-      context.font = 'Bold 48px Arial'
+      context.font = 'Bold 24px Arial'
       context.fillStyle = color
       context.textAlign = 'center'
       context.textBaseline = 'middle'
-      context.fillText(text, 64, 32)
+      context.fillText(text, 32, 16)
 
       const texture = new THREE.CanvasTexture(canvas)
       const spriteMaterial = new THREE.SpriteMaterial({ map: texture })
       const sprite = new THREE.Sprite(spriteMaterial)
-      sprite.scale.set(40, 20, 1)
+      sprite.scale.set(10, 5, 1)
 
       return sprite
     }
 
-    // Add labels
+    // Add labels at the tips of the axes (at the cones)
     const xLabel = createTextSprite('X', '#ff0000')
-    xLabel.position.set(axisLength + 30, 0, 0)
+    xLabel.position.set(axisLength, 0, 0)
     this.add(xLabel)
 
     const yLabel = createTextSprite('Y', '#00ff00')
-    yLabel.position.set(0, axisLength + 30, 0)
+    yLabel.position.set(0, axisLength, 0)
     this.add(yLabel)
 
     const zLabel = createTextSprite('Z', '#0000ff')
-    zLabel.position.set(0, 0, axisLength + 30)
+    zLabel.position.set(0, 0, axisLength)
     this.add(zLabel)
 
     // Add origin sphere

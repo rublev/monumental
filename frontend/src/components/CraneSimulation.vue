@@ -18,10 +18,20 @@ const { createCrane } = useCrane()
 
 // Reactive data
 const canvasContainer = ref(null)
-const targetPosition = reactive({
+const pointA = reactive({
+  x: -5.0,
+  y: 2.0,
+  z: -2.0,
+})
+const pointB = reactive({
   x: 5.0,
-  y: 5.0,
-  z: 5.0,
+  y: 3.0,
+  z: 3.0,
+})
+
+const settings = reactive({
+  craneSpeed: 10.0, // units per second
+  pathSteps: 200,
 })
 
 const stats = reactive({
@@ -30,17 +40,33 @@ const stats = reactive({
   elbowAngle: '0.0',
 })
 
+// Animation state
+const animationState = reactive({
+  mode: 'IDLE', // IDLE, MOVING_TO_A, GRIPPING, MOVING_TO_B, RELEASING, RETURNING
+  startTime: 0,
+  duration: 0,
+  progress: 0,
+  path: [],
+  payloadAttached: false,
+})
+
+const homePosition = { x: 8, y: 12, z: 8 }
+
 // Three.js objects
 let scene, camera, renderer, controls
-let ikTarget, crane, axesHelper
+let crane, axesHelper
 let animationId
+let obstacleCylinder, pathLine
+let handleA, handleB, payload
+let raycaster, mouse, dragPlane, dragOffset
+let dragging = null
 
-// Animation state for smooth target transitions
-let targetAnimating = false
-let animationStartTime = 0
-let animationDuration = 1000 // milliseconds
-let animationStartPos = { x: 0, y: 0, z: 0 }
-let animationEndPos = { x: 0, y: 0, z: 0 }
+// Gripper settings
+const gripperSettings = {
+  openPos: 0.3,
+  closedPos: 0.1,
+  duration: 0.5,
+}
 
 // Methods
 const initThree = () => {
@@ -105,65 +131,209 @@ const initThree = () => {
   crane = createCrane()
   scene.add(crane.base)
 
-  // IK Target
-  ikTarget = new THREE.Mesh(
-    new THREE.SphereGeometry(
-      TARGET_CONFIG.RADIUS,
-      TARGET_CONFIG.SEGMENTS.width,
-      TARGET_CONFIG.SEGMENTS.height,
+  // Add obstacle cylinder (representing the crane base boundary)
+  const cylinderRadius = crane.getMinRadius
+  obstacleCylinder = new THREE.Mesh(
+    new THREE.CylinderGeometry(
+      cylinderRadius,
+      cylinderRadius,
+      50, // height
+      32,
+      1,
+      true
     ),
-    new THREE.MeshBasicMaterial({
-      color: TARGET_CONFIG.COLOR,
-      wireframe: true,
+    new THREE.MeshStandardMaterial({
+      color: 0x3b82f6,
       transparent: true,
-      opacity: TARGET_CONFIG.OPACITY,
-    }),
+      opacity: 0.15,
+      side: THREE.DoubleSide,
+    })
   )
-  scene.add(ikTarget)
+  obstacleCylinder.position.y = 25
+  scene.add(obstacleCylinder)
+
+  // Path line for visualization
+  pathLine = new THREE.Line(
+    new THREE.BufferGeometry(),
+    new THREE.LineBasicMaterial({ color: 0x0ea5e9 })
+  )
+  scene.add(pathLine)
+
+  // Point A (Pickup)
+  handleA = new THREE.Mesh(
+    new THREE.SphereGeometry(0.5),
+    new THREE.MeshStandardMaterial({
+      color: 0x16a34a,
+      transparent: true,
+      opacity: 0.7,
+    })
+  )
+  scene.add(handleA)
+
+  // Point B (Drop-off)
+  handleB = new THREE.Mesh(
+    new THREE.SphereGeometry(0.5),
+    new THREE.MeshStandardMaterial({
+      color: 0xef4444,
+      transparent: true,
+      opacity: 0.7,
+    })
+  )
+  scene.add(handleB)
+
+  // Payload
+  payload = new THREE.Mesh(
+    new THREE.SphereGeometry(0.5),
+    new THREE.MeshStandardMaterial({
+      color: 0xf97316,
+      emissive: 0xf97316,
+      emissiveIntensity: 0.5,
+    })
+  )
+  scene.add(payload)
 
   // Coordinate axes helper
-  axesHelper = new CustomAxesHelper(300)
+  axesHelper = new CustomAxesHelper()
   scene.add(axesHelper)
 
+  // Raycaster for dragging
+  raycaster = new THREE.Raycaster()
+  mouse = new THREE.Vector2()
+  dragPlane = new THREE.Plane()
+  dragOffset = new THREE.Vector3()
+
+  // Event listeners for dragging
+  renderer.domElement.addEventListener('pointerdown', onPointerDown)
+  renderer.domElement.addEventListener('pointermove', onPointerMove)
+  window.addEventListener('pointerup', onPointerUp)
   window.addEventListener('resize', onWindowResize)
 
-  // Initialize target position and crane IK on load
-  updateTargetPosition()
+  // Initialize positions
+  updatePositions()
+  crane.solveIK(homePosition)
 
   animate()
 }
 
-const updateTargetPosition = () => {
-  let { x, y, z } = targetPosition
+const updatePositions = () => {
+  if (!handleA || !handleB || !payload) return
 
-  // Visual clamping logic
-  const horizontalDist = Math.sqrt(x * x + z * z)
-  let finalX = x, finalY = y, finalZ = z
+  handleA.position.set(pointA.x, pointA.y, pointA.z)
+  handleB.position.set(pointB.x, pointB.y, pointB.z)
 
-  if (crane && horizontalDist < crane.getBaseRadius) {
-    const angle = Math.atan2(z, x)
-    finalX = crane.getBaseRadius * Math.cos(angle)
-    finalZ = crane.getBaseRadius * Math.sin(angle)
+  if (animationState.mode === 'IDLE') {
+    // Hide payload when idle
+    payload.visible = false
+
+    // Update path visualization
+    let startPoint = new THREE.Vector3(pointA.x, pointA.y, pointA.z)
+    let endPoint = new THREE.Vector3(pointB.x, pointB.y, pointB.z)
+
+    // If point A is unreachable, find the maximum reachable point from home to A
+    if (!crane.isReachable(pointA)) {
+      const homeToA = crane.calculatePath(crane.getEndEffectorPosition(), startPoint, settings.pathSteps)
+      startPoint = crane.findMaxReachablePoint(homeToA)
+    }
+
+    let path = crane.calculatePath(startPoint, endPoint, settings.pathSteps)
+
+    // If point B is unreachable, show path only to the maximum reachable point
+    if (!crane.isReachable(pointB)) {
+      const maxReachablePoint = crane.findMaxReachablePoint(path)
+      path = crane.calculatePath(startPoint, maxReachablePoint, settings.pathSteps)
+    }
+
+    pathLine.geometry.setFromPoints(path)
+    pathLine.visible = true
+  } else {
+    pathLine.visible = false
+  }
+}
+
+const startCycle = () => {
+  if (animationState.mode !== 'IDLE') return
+
+  // Calculate the effective pickup location (either A or max reachable point toward A)
+  let effectivePickupPoint = new THREE.Vector3(pointA.x, pointA.y, pointA.z)
+  if (!crane.isReachable(pointA)) {
+    const homeToA = crane.calculatePath(crane.getEndEffectorPosition(), effectivePickupPoint, settings.pathSteps)
+    effectivePickupPoint = crane.findMaxReachablePoint(homeToA)
   }
 
-  // Check if we need to animate to the new position
-  const currentPos = ikTarget.position
-  const distanceToMove = Math.sqrt(
-    (finalX - currentPos.x) ** 2 +
-    (finalY - currentPos.y) ** 2 +
-    (finalZ - currentPos.z) ** 2
-  )
+  // Position payload at the effective pickup location and make it visible
+  payload.position.copy(effectivePickupPoint)
+  payload.visible = true
 
-  // Only animate if the distance is significant (avoid micro-movements)
-  if (distanceToMove > 0.5) {
-    // Start animation
-    targetAnimating = true
-    animationStartTime = Date.now()
-    animationStartPos = { x: currentPos.x, y: currentPos.y, z: currentPos.z }
-    animationEndPos = { x: finalX, y: finalY, z: finalZ }
-  } else {
-    // Small movement, just set directly
-    ikTarget.position.set(finalX, finalY, finalZ)
+  startAnimationPhase('MOVING_TO_A')
+}
+
+const startAnimationPhase = (mode) => {
+  animationState.mode = mode
+  animationState.startTime = performance.now()
+  animationState.progress = 0
+
+  let startPoint = new THREE.Vector3()
+  let endPoint = new THREE.Vector3()
+
+  switch (mode) {
+    case 'MOVING_TO_A':
+      // For initial movement, we do need to start from current position
+      startPoint = crane.getEndEffectorPosition()
+      endPoint.set(pointA.x, pointA.y, pointA.z)
+      let pathToA = crane.calculatePath(startPoint, endPoint, settings.pathSteps)
+
+      // Check if point A is reachable, if not, find the maximum reachable point
+      if (!crane.isReachable(pointA)) {
+        const maxReachablePoint = crane.findMaxReachablePoint(pathToA)
+        // Recalculate path to only go to the reachable point
+        animationState.path = crane.calculatePath(startPoint, maxReachablePoint, settings.pathSteps)
+      } else {
+        animationState.path = pathToA
+      }
+      animationState.payloadAttached = false
+      break
+
+    case 'GRIPPING':
+      animationState.duration = gripperSettings.duration
+      break
+
+    case 'MOVING_TO_B':
+      // Use the exact points A and B for the path
+      startPoint.set(pointA.x, pointA.y, pointA.z)
+      endPoint.set(pointB.x, pointB.y, pointB.z)
+      let fullPath = crane.calculatePath(startPoint, endPoint, settings.pathSteps)
+
+      // Check if point B is reachable, if not, find the maximum reachable point
+      if (!crane.isReachable(pointB)) {
+        const maxReachablePoint = crane.findMaxReachablePoint(fullPath)
+        // Recalculate path to only go to the reachable point
+        animationState.path = crane.calculatePath(startPoint, maxReachablePoint, settings.pathSteps)
+      } else {
+        animationState.path = fullPath
+      }
+      animationState.payloadAttached = true
+      break
+
+    case 'RELEASING':
+      animationState.duration = gripperSettings.duration
+      break
+
+    case 'RETURNING':
+      // From point B back to home (or from max reachable point if B was unreachable)
+      startPoint = crane.getEndEffectorPosition()
+      endPoint.set(homePosition.x, homePosition.y, homePosition.z)
+      animationState.path = crane.calculatePath(startPoint, endPoint, settings.pathSteps)
+      animationState.payloadAttached = false
+      break
+  }
+
+  if (mode === 'MOVING_TO_A' || mode === 'MOVING_TO_B' || mode === 'RETURNING') {
+    const totalLength = animationState.path.reduce((acc, point, i, arr) => {
+      if (i > 0) acc += point.distanceTo(arr[i - 1])
+      return acc
+    }, 0)
+    animationState.duration = settings.craneSpeed > 0 ? totalLength / settings.craneSpeed : 0
+    animationState.duration = Math.max(animationState.duration, 0.25)
   }
 }
 
@@ -184,32 +354,88 @@ const onWindowResize = () => {
   renderer.setSize(canvasContainer.value.clientWidth, canvasContainer.value.clientHeight)
 }
 
+const easeInOutCubic = (x) => {
+  return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+}
+
 const animate = () => {
   animationId = requestAnimationFrame(animate)
 
-  // Handle smooth target animation
-  if (targetAnimating) {
-    const currentTime = Date.now()
-    const elapsed = currentTime - animationStartTime
-    const progress = Math.min(elapsed / animationDuration, 1)
+  const { mode, startTime, duration, path, payloadAttached } = animationState
 
-    const easeProgress = progress // linear easing
+  if (mode !== 'IDLE') {
+    const elapsedTime = (performance.now() - startTime) / 1000
+    let progress = duration > 0 ? elapsedTime / duration : 1
 
-    // Interpolate position
-    const x = animationStartPos.x + (animationEndPos.x - animationStartPos.x) * easeProgress
-    const y = animationStartPos.y + (animationEndPos.y - animationStartPos.y) * easeProgress
-    const z = animationStartPos.z + (animationEndPos.z - animationStartPos.z) * easeProgress
+    let isPhaseComplete = progress >= 1
+    progress = Math.min(progress, 1)
 
-    ikTarget.position.set(x, y, z)
+    const easedProgress = easeInOutCubic(progress)
 
-    // End animation when complete
-    if (progress >= 1) {
-      targetAnimating = false
+    switch (mode) {
+      case 'MOVING_TO_A':
+      case 'MOVING_TO_B':
+      case 'RETURNING':
+        // Use linear interpolation between path points for smoother movement
+        const exactIndex = easedProgress * (path.length - 1)
+        const lowerIndex = Math.floor(exactIndex)
+        const upperIndex = Math.min(lowerIndex + 1, path.length - 1)
+        const t = exactIndex - lowerIndex
+
+        if (path[lowerIndex] && path[upperIndex]) {
+          const interpolatedPos = new THREE.Vector3().lerpVectors(
+            path[lowerIndex],
+            path[upperIndex],
+            t
+          )
+          crane.solveIK(interpolatedPos)
+        } else if (path[lowerIndex]) {
+          crane.solveIK(path[lowerIndex])
+        }
+
+        if (isPhaseComplete) {
+          if (mode === 'MOVING_TO_A') startAnimationPhase('GRIPPING')
+          else if (mode === 'MOVING_TO_B') startAnimationPhase('RELEASING')
+          else if (mode === 'RETURNING') {
+            animationState.mode = 'IDLE'
+            // payload.visible = false // Hide payload when returning to idle
+          }
+        }
+        break
+
+      case 'GRIPPING':
+        // TODO: Animate gripper closing
+        animationState.payloadAttached = true // Attach payload during gripping
+        if (isPhaseComplete) startAnimationPhase('MOVING_TO_B')
+        break
+
+      case 'RELEASING':
+        // TODO: Animate gripper opening
+        animationState.payloadAttached = false // Detach payload during releasing
+        if (isPhaseComplete) startAnimationPhase('RETURNING')
+        break
     }
   }
 
+  // Update payload position
+  if (animationState.payloadAttached) {
+    payload.position.copy(crane.getEndEffectorPosition())
+  } else if (mode === 'RELEASING' || mode === 'RETURNING') {
+    // Position payload at the effective drop location
+    let effectiveDropPoint = new THREE.Vector3(pointB.x, pointB.y, pointB.z)
+    if (!crane.isReachable(pointB)) {
+      let startPoint = new THREE.Vector3(pointA.x, pointA.y, pointA.z)
+      if (!crane.isReachable(pointA)) {
+        const homeToA = crane.calculatePath(crane.getEndEffectorPosition(), startPoint, settings.pathSteps)
+        startPoint = crane.findMaxReachablePoint(homeToA)
+      }
+      const pathToB = crane.calculatePath(startPoint, effectiveDropPoint, settings.pathSteps)
+      effectiveDropPoint = crane.findMaxReachablePoint(pathToB)
+    }
+    payload.position.copy(effectiveDropPoint)
+  }
+
   if (controls) controls.update()
-  if (crane && ikTarget) crane.solveIK(ikTarget.position)
 
   updateSimStats()
 
@@ -218,8 +444,65 @@ const animate = () => {
   }
 }
 
+// Dragging logic
+const onPointerDown = (event) => {
+  if (animationState.mode !== 'IDLE') return
+
+  const rect = renderer.domElement.getBoundingClientRect()
+  mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1
+  mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1
+
+  raycaster.setFromCamera(mouse, camera)
+  const intersects = raycaster.intersectObjects([handleA, handleB])
+
+  if (intersects.length > 0) {
+    controls.enabled = false
+    dragging = intersects[0].object === handleA ? 'A' : 'B'
+    const pointToDrag = dragging === 'A' ? pointA : pointB
+
+    dragPlane.setFromNormalAndCoplanarPoint(
+      camera.getWorldDirection(dragPlane.normal),
+      new THREE.Vector3(pointToDrag.x, pointToDrag.y, pointToDrag.z)
+    )
+    const intersectionPoint = new THREE.Vector3()
+    raycaster.ray.intersectPlane(dragPlane, intersectionPoint)
+    dragOffset.subVectors(intersectionPoint, new THREE.Vector3(pointToDrag.x, pointToDrag.y, pointToDrag.z))
+    canvasContainer.value.style.cursor = 'grabbing'
+  }
+}
+
+const onPointerMove = (event) => {
+  if (!dragging) return
+
+  const rect = renderer.domElement.getBoundingClientRect()
+  mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1
+  mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1
+
+  raycaster.setFromCamera(mouse, camera)
+  const intersectionPoint = new THREE.Vector3()
+  if (raycaster.ray.intersectPlane(dragPlane, intersectionPoint)) {
+    intersectionPoint.sub(dragOffset)
+    const targetPoint = dragging === 'A' ? pointA : pointB
+    targetPoint.x = intersectionPoint.x
+    targetPoint.y = Math.max(0, intersectionPoint.y) // Keep above ground
+    targetPoint.z = intersectionPoint.z
+
+    if (dragging === 'A' && animationState.mode === 'IDLE') {
+      payload.position.copy(handleA.position)
+    }
+  }
+}
+
+const onPointerUp = () => {
+  if (dragging) {
+    controls.enabled = true
+    dragging = null
+    canvasContainer.value.style.cursor = 'grab'
+  }
+}
+
 // Watchers
-watch(targetPosition, updateTargetPosition, { deep: true })
+watch([pointA, pointB, settings], updatePositions, { deep: true })
 
 // Lifecycle
 onMounted(() => {
@@ -231,8 +514,11 @@ onUnmounted(() => {
     cancelAnimationFrame(animationId)
   }
   window.removeEventListener('resize', onWindowResize)
+  window.removeEventListener('pointerup', onPointerUp)
 
   if (renderer) {
+    renderer.domElement.removeEventListener('pointerdown', onPointerDown)
+    renderer.domElement.removeEventListener('pointermove', onPointerMove)
     renderer.dispose()
   }
 })
@@ -240,7 +526,7 @@ onUnmounted(() => {
 
 <template>
   <div class="bg-gray-900 text-gray-50 m-0 overflow-hidden">
-    <div ref="canvasContainer" class="w-screen h-screen"></div>
+    <div ref="canvasContainer" class="w-screen h-screen" style="cursor: grab;"></div>
 
     <div
       class="absolute bottom-4 left-4 bg-gray-900/50 backdrop-blur-sm p-3 rounded-md text-xs font-mono border border-gray-600">
@@ -251,35 +537,72 @@ onUnmounted(() => {
     </div>
 
     <div
-      class="absolute bottom-4 right-4 bg-gray-900/50 backdrop-blur-sm p-4 rounded-lg shadow-xl w-72 border border-gray-600">
-      <h3 class="text-md font-bold mb-3 text-center">Target Position</h3>
+      class="absolute bottom-4 right-4 bg-gray-900/50 backdrop-blur-sm p-4 rounded-lg shadow-xl w-80 border border-gray-600">
+      <h3 class="text-md font-bold mb-3 text-center">Crane Control</h3>
 
-      <div>
-        <label for="x-slider" class="flex justify-between font-mono text-sm">
-          <span>X</span><span>{{ targetPosition.x.toFixed(1) }}</span>
-        </label>
-        <input id="x-slider" v-model.number="targetPosition.x" type="range" :min="SIMULATION_BOUNDS.X_MIN"
-          :max="SIMULATION_BOUNDS.X_MAX" :step="SIMULATION_BOUNDS.STEP"
-          class="w-full h-2 bg-gray-600 rounded-lg cursor-pointer" />
+      <!-- Point A Controls -->
+      <div class="mb-4">
+        <h4 class="text-sm font-semibold mb-2 text-green-400">Point A (Pickup)</h4>
+        <div class="grid grid-cols-3 gap-2">
+          <div>
+            <label class="text-xs">X</label>
+            <input v-model.number="pointA.x" type="number" :step="SIMULATION_BOUNDS.STEP"
+              class="w-full px-2 py-1 bg-gray-800 border border-gray-600 rounded text-sm" />
+          </div>
+          <div>
+            <label class="text-xs">Y</label>
+            <input v-model.number="pointA.y" type="number" :step="SIMULATION_BOUNDS.STEP" :min="0"
+              class="w-full px-2 py-1 bg-gray-800 border border-gray-600 rounded text-sm" />
+          </div>
+          <div>
+            <label class="text-xs">Z</label>
+            <input v-model.number="pointA.z" type="number" :step="SIMULATION_BOUNDS.STEP"
+              class="w-full px-2 py-1 bg-gray-800 border border-gray-600 rounded text-sm" />
+          </div>
+        </div>
       </div>
 
-      <div class="mt-2">
-        <label for="y-slider" class="flex justify-between font-mono text-sm">
-          <span>Y</span><span>{{ targetPosition.y.toFixed(1) }}</span>
-        </label>
-        <input id="y-slider" v-model.number="targetPosition.y" type="range" :min="SIMULATION_BOUNDS.Y_MIN"
-          :max="SIMULATION_BOUNDS.Y_MAX" :step="SIMULATION_BOUNDS.STEP"
-          class="w-full h-2 bg-gray-600 rounded-lg cursor-pointer" />
+      <!-- Point B Controls -->
+      <div class="mb-4">
+        <h4 class="text-sm font-semibold mb-2 text-red-400">Point B (Drop-off)</h4>
+        <div class="grid grid-cols-3 gap-2">
+          <div>
+            <label class="text-xs">X</label>
+            <input v-model.number="pointB.x" type="number" :step="SIMULATION_BOUNDS.STEP"
+              class="w-full px-2 py-1 bg-gray-800 border border-gray-600 rounded text-sm" />
+          </div>
+          <div>
+            <label class="text-xs">Y</label>
+            <input v-model.number="pointB.y" type="number" :step="SIMULATION_BOUNDS.STEP" :min="0"
+              class="w-full px-2 py-1 bg-gray-800 border border-gray-600 rounded text-sm" />
+          </div>
+          <div>
+            <label class="text-xs">Z</label>
+            <input v-model.number="pointB.z" type="number" :step="SIMULATION_BOUNDS.STEP"
+              class="w-full px-2 py-1 bg-gray-800 border border-gray-600 rounded text-sm" />
+          </div>
+        </div>
       </div>
 
-      <div class="mt-2">
-        <label for="z-slider" class="flex justify-between font-mono text-sm">
-          <span>Z</span><span>{{ targetPosition.z.toFixed(1) }}</span>
-        </label>
-        <input id="z-slider" v-model.number="targetPosition.z" type="range" :min="SIMULATION_BOUNDS.Z_MIN"
-          :max="SIMULATION_BOUNDS.Z_MAX" :step="SIMULATION_BOUNDS.STEP"
-          class="w-full h-2 bg-gray-600 rounded-lg cursor-pointer" />
+      <!-- Settings -->
+      <div class="mb-4 space-y-2">
+        <div>
+          <label class="text-xs">Crane Speed (units/s)</label>
+          <input v-model.number="settings.craneSpeed" type="number" min="1" max="50" step="1"
+            class="w-full px-2 py-1 bg-gray-800 border border-gray-600 rounded text-sm" />
+        </div>
+        <div>
+          <label class="text-xs">Path Fidelity</label>
+          <input v-model.number="settings.pathSteps" type="number" min="10" max="500" step="10"
+            class="w-full px-2 py-1 bg-gray-800 border border-gray-600 rounded text-sm" />
+        </div>
       </div>
+
+      <!-- Start Button -->
+      <button @click="startCycle" :disabled="animationState.mode !== 'IDLE'"
+        class="w-full bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+        {{ animationState.mode === 'IDLE' ? 'Start Cycle' : 'Running...' }}
+      </button>
     </div>
   </div>
 </template>
