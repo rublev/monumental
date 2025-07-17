@@ -1,7 +1,0 @@
-There is an example repository in @CRANE-EXAMPLE/. It is a crane with a bunch of balls on the ground and a cup. you can click on a ball and it will pick it up with pincers and drop it in the cup.
-
-The difference between this example repo and mine is that our crane structure is different. we have a lift, and then an arm with an elbow, and then another arm with a wrist, and then a gripper.
-
-I want you to look at this CRANE-EXAMPLE repository and implement the same inverse kinematics (not the ball pickup/drop) so that I can input x/y/z coordinates or click in 3d space and have the crane. The CRANE-EXAMPLE is using two npm libraries: kinematics, and three.interaction (for the ball interaction, which right now we don't care about). My problem is I am unsure if this kinematics library works for our purpose, or only for this examples specific crane build. Use context7 when learning about these libraries.
-
-this task is specifically just the most barebones and simple frontend implementation, in @frontend/src/components/CraneVisualization.vue. no backend no nothing. 

@@ -15,14 +15,11 @@
     "clean": "rm -rf dist node_modules"
   },
   "dependencies": {
-    "@dimforge/rapier3d-compat": "^0.14.0",
     "@monumental/shared": "workspace:*",
     "@tailwindcss/vite": "^4.1.11",
-    "@types/dat.gui": "^0.7.13",
     "@types/three": "^0.168.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "dat.gui": "^0.7.9",
     "lucide-vue-next": "^0.525.0",
     "pinia": "^3.0.3",
     "reka-ui": "^2.3.2",
