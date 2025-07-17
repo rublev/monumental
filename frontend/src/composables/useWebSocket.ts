@@ -6,7 +6,8 @@ import type {
   ConnectionMetrics,
   IncomingMessage,
   OutgoingMessage,
-} from '@monumental/shared'
+} from '@monumental/shared/websocket'
+import { MessageType } from '@monumental/shared/websocket'
 import { DEFAULT_WEBSOCKET_CONFIG } from '@monumental/shared'
 
 // Vue-specific return type for the composable
@@ -49,9 +50,14 @@ export function useWebSocket(config: Partial<WebSocketConfig> = {}): UseWebSocke
 
   // Metrics
   const metrics = ref<ConnectionMetrics>({
-    messagesSent: 0,
-    messagesReceived: 0,
+    connectionCount: 0,
+    lastConnected: null,
     reconnectAttempts: 0,
+    averageLatency: 0,
+    messagesReceived: 0,
+    messagesSent: 0,
+    lastMessageAt: null,
+    connectedAt: null,
   })
 
   // Message queue for offline messages
@@ -96,7 +102,7 @@ export function useWebSocket(config: Partial<WebSocketConfig> = {}): UseWebSocke
 
       // Update metrics
       metrics.value.messagesReceived++
-      metrics.value.lastMessageAt = new Date()
+      metrics.value.lastMessageAt = Date.now()
 
       // Handle specific message types
       if (message.type === 'welcome' && message.clientId) {
@@ -135,7 +141,7 @@ export function useWebSocket(config: Partial<WebSocketConfig> = {}): UseWebSocke
     // Reset reconnection state
     metrics.value.reconnectAttempts = 0
     currentReconnectInterval = wsConfig.reconnectInterval
-    metrics.value.connectedAt = new Date()
+    metrics.value.connectedAt = Date.now()
 
     // Clear connection timeout
     if (connectionTimeoutId) {
@@ -196,7 +202,7 @@ export function useWebSocket(config: Partial<WebSocketConfig> = {}): UseWebSocke
 
   // Schedule reconnection with exponential backoff
   function scheduleReconnect() {
-    if (metrics.value.reconnectAttempts >= wsConfig.reconnectAttempts) {
+    if (metrics.value.reconnectAttempts >= (wsConfig.reconnectAttempts || 5)) {
       console.log('[WebSocket] Max reconnection attempts reached')
       updateConnectionState('error')
       return
@@ -213,7 +219,7 @@ export function useWebSocket(config: Partial<WebSocketConfig> = {}): UseWebSocke
       connect()
       // Exponential backoff with jitter
       currentReconnectInterval = Math.min(
-        currentReconnectInterval * 2 + Math.random() * 1000,
+        (currentReconnectInterval || 1000) * 2 + Math.random() * 1000,
         30000, // Cap at 30 seconds
       )
     }, currentReconnectInterval)
@@ -348,9 +354,9 @@ export function useWebSocket(config: Partial<WebSocketConfig> = {}): UseWebSocke
   // Send message to server (with queueing support)
   function sendMessage(data: any, options: { queue?: boolean } = { queue: true }): boolean {
     const message: OutgoingMessage = {
-      type: 'message',
-      data,
-      timestamp: new Date().toISOString(),
+      type: MessageType.MESSAGE,
+      timestamp: Date.now(),
+      sequence: Date.now(),
     }
 
     // If connected, send immediately

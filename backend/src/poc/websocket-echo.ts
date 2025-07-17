@@ -21,9 +21,12 @@ let craneState: CraneState = {
   wrist: 0,
   gripper: 0,
   timestamp: Date.now(),
+  sequence: 0,
+  isMoving: false,
+  hasTarget: false,
   endEffectorPosition: { x: 0, y: 0, z: 0 },
   isGripperOpen: true,
-  targetReached: true,
+  objects: [],
 };
 
 app.ws('/*', {
@@ -39,6 +42,7 @@ app.ws('/*', {
     const welcomeMessage: StateUpdateMessage = {
       type: 'state_update' as MessageType.STATE_UPDATE,
       timestamp: Date.now(),
+      sequence: ++craneState.sequence,
       state: craneState,
       objects: [],
     };
@@ -97,6 +101,7 @@ setInterval(() => {
   const stateUpdate: StateUpdateMessage = {
     type: 'state_update' as MessageType.STATE_UPDATE,
     timestamp: Date.now(),
+    sequence: ++craneState.sequence,
     state: craneState,
     objects: [],
   };

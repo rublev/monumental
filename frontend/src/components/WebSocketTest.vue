@@ -200,7 +200,7 @@ onUnmounted(() => {
             <div class="bg-gray-50 p-3 rounded-lg text-center">
               <div class="text-sm text-gray-600 mb-1">Connected</div>
               <div class="text-xl font-semibold text-gray-900">
-                {{ metrics.connectedAt ? metrics.connectedAt.toLocaleTimeString() : 'N/A' }}
+                {{ metrics.connectedAt ? new Date(metrics.connectedAt).toLocaleTimeString() : 'N/A' }}
               </div>
             </div>
             <div class="bg-gray-50 p-3 rounded-lg text-center">

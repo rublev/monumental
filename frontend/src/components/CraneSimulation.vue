@@ -4,6 +4,7 @@ import * as THREE from 'three'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { useCrane } from '@/composables/useCrane'
 import { SCENE_CONFIG } from '@monumental/shared'
+import { CustomAxesHelper } from '@/utils/CustomAxesHelper'
 
 // Use constants from shared package
 const SIMULATION_BOUNDS = SCENE_CONFIG.SIMULATION_BOUNDS
@@ -31,8 +32,15 @@ const stats = reactive({
 
 // Three.js objects
 let scene, camera, renderer, controls
-let ikTarget, crane
+let ikTarget, crane, axesHelper
 let animationId
+
+// Animation state for smooth target transitions
+let targetAnimating = false
+let animationStartTime = 0
+let animationDuration = 1000 // milliseconds
+let animationStartPos = { x: 0, y: 0, z: 0 }
+let animationEndPos = { x: 0, y: 0, z: 0 }
 
 // Methods
 const initThree = () => {
@@ -113,6 +121,10 @@ const initThree = () => {
   )
   scene.add(ikTarget)
 
+  // Coordinate axes helper
+  axesHelper = new CustomAxesHelper(300)
+  scene.add(axesHelper)
+
   window.addEventListener('resize', onWindowResize)
 
   // Initialize target position and crane IK on load
@@ -126,23 +138,42 @@ const updateTargetPosition = () => {
 
   // Visual clamping logic
   const horizontalDist = Math.sqrt(x * x + z * z)
+  let finalX = x, finalY = y, finalZ = z
 
   if (crane && horizontalDist < crane.getBaseRadius) {
     const angle = Math.atan2(z, x)
-    x = crane.getBaseRadius * Math.cos(angle)
-    z = crane.getBaseRadius * Math.sin(angle)
+    finalX = crane.getBaseRadius * Math.cos(angle)
+    finalZ = crane.getBaseRadius * Math.sin(angle)
   }
 
-  ikTarget.position.set(x, y, z)
+  // Check if we need to animate to the new position
+  const currentPos = ikTarget.position
+  const distanceToMove = Math.sqrt(
+    (finalX - currentPos.x) ** 2 +
+    (finalY - currentPos.y) ** 2 +
+    (finalZ - currentPos.z) ** 2
+  )
+
+  // Only animate if the distance is significant (avoid micro-movements)
+  if (distanceToMove > 0.5) {
+    // Start animation
+    targetAnimating = true
+    animationStartTime = Date.now()
+    animationStartPos = { x: currentPos.x, y: currentPos.y, z: currentPos.z }
+    animationEndPos = { x: finalX, y: finalY, z: finalZ }
+  } else {
+    // Small movement, just set directly
+    ikTarget.position.set(finalX, finalY, finalZ)
+  }
 }
 
 const updateSimStats = () => {
   if (!crane) return
 
   const craneStats = crane.getStats()
-  stats.liftHeight = craneStats.liftHeight
-  stats.shoulderAngle = craneStats.shoulderAngle
-  stats.elbowAngle = craneStats.elbowAngle
+  stats.liftHeight = craneStats.liftHeight.toFixed(2)
+  stats.shoulderAngle = craneStats.shoulderYaw.toFixed(1)
+  stats.elbowAngle = craneStats.elbowYaw.toFixed(1)
 }
 
 const onWindowResize = () => {
@@ -155,6 +186,27 @@ const onWindowResize = () => {
 
 const animate = () => {
   animationId = requestAnimationFrame(animate)
+
+  // Handle smooth target animation
+  if (targetAnimating) {
+    const currentTime = Date.now()
+    const elapsed = currentTime - animationStartTime
+    const progress = Math.min(elapsed / animationDuration, 1)
+
+    const easeProgress = progress // linear easing
+
+    // Interpolate position
+    const x = animationStartPos.x + (animationEndPos.x - animationStartPos.x) * easeProgress
+    const y = animationStartPos.y + (animationEndPos.y - animationStartPos.y) * easeProgress
+    const z = animationStartPos.z + (animationEndPos.z - animationStartPos.z) * easeProgress
+
+    ikTarget.position.set(x, y, z)
+
+    // End animation when complete
+    if (progress >= 1) {
+      targetAnimating = false
+    }
+  }
 
   if (controls) controls.update()
   if (crane && ikTarget) crane.solveIK(ikTarget.position)

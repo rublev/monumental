@@ -53,13 +53,13 @@ export class Crane {
 
   private createMaterials() {
     return {
-      base: new THREE.MeshStandardMaterial(CRANE_CONFIG.MATERIALS.BASE),
-      arm: new THREE.MeshStandardMaterial(CRANE_CONFIG.MATERIALS.ARM),
-      joint: new THREE.MeshStandardMaterial(CRANE_CONFIG.MATERIALS.JOINT),
-      gripper: new THREE.MeshStandardMaterial(CRANE_CONFIG.MATERIALS.GRIPPER),
-      tower: new THREE.MeshStandardMaterial(CRANE_CONFIG.MATERIALS.TOWER),
-      lift: new THREE.MeshStandardMaterial(CRANE_CONFIG.MATERIALS.LIFT),
-      cap: new THREE.MeshStandardMaterial(CRANE_CONFIG.MATERIALS.CAP),
+      base: new THREE.MeshStandardMaterial({ color: CRANE_CONFIG.MATERIALS.BASE }),
+      arm: new THREE.MeshStandardMaterial({ color: CRANE_CONFIG.MATERIALS.ARM }),
+      joint: new THREE.MeshStandardMaterial({ color: CRANE_CONFIG.MATERIALS.JOINT }),
+      gripper: new THREE.MeshStandardMaterial({ color: CRANE_CONFIG.MATERIALS.GRIPPER }),
+      tower: new THREE.MeshStandardMaterial({ color: CRANE_CONFIG.MATERIALS.TOWER }),
+      lift: new THREE.MeshStandardMaterial({ color: CRANE_CONFIG.MATERIALS.LIFT }),
+      cap: new THREE.MeshStandardMaterial({ color: CRANE_CONFIG.MATERIALS.CAP }),
     }
   }
 
@@ -340,10 +340,26 @@ export class Crane {
   }
 
   public getStats(): CraneStats {
+    // Calculate shoulder yaw (swing joint rotation relative to positive X-axis)
+    const shoulderYawRadians = this.swingJoint.rotation.y
+    const shoulderYawDegrees = (shoulderYawRadians * 180) / Math.PI
+
+    // Calculate elbow yaw (elbow joint rotation)
+    const elbowYawRadians = this.elbowJoint.rotation.y
+    const elbowYawDegrees = (elbowYawRadians * 180) / Math.PI
+
     return {
-      liftHeight: this.liftJoint.position.y.toFixed(2),
-      shoulderAngle: ((this.shoulderJoint.rotation.y * 180) / Math.PI).toFixed(1),
-      elbowAngle: ((this.elbowJoint.rotation.y * 180) / Math.PI).toFixed(1),
+      position: {
+        x: this.liftJoint.position.x,
+        y: this.liftJoint.position.y,
+        z: this.liftJoint.position.z,
+      },
+      isMoving: false,
+      hasTarget: false,
+      lastUpdate: Date.now(),
+      liftHeight: this.liftJoint.position.y,
+      shoulderYaw: shoulderYawDegrees,
+      elbowYaw: elbowYawDegrees,
     }
   }
 

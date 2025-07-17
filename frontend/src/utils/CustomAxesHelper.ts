@@ -5,7 +5,7 @@ export class CustomAxesHelper extends THREE.Group {
     super()
 
     const axisLength = size
-    const axisThickness = 2
+    const axisThickness = 0.5
 
     // X axis (red)
     const xGeometry = new THREE.CylinderGeometry(axisThickness, axisThickness, axisLength, 8)
@@ -92,7 +92,7 @@ export class CustomAxesHelper extends THREE.Group {
 
     // Add origin sphere
     const originSphere = new THREE.Mesh(
-      new THREE.SphereGeometry(5, 16, 16),
+      new THREE.SphereGeometry(1, 16, 16),
       new THREE.MeshBasicMaterial({ color: 0xffffff }),
     )
     this.add(originSphere)
