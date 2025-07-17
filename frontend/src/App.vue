@@ -3,49 +3,7 @@ import { RouterView } from 'vue-router'
 </script>
 
 <template>
-  <div class="h-full bg-gray-50 flex flex-col">
-    <header class="bg-white shadow-sm border-b border-gray-200">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between items-center h-16">
-          <div class="flex items-center">
-            <h1 class="text-xl font-semibold text-gray-900">Demo App</h1>
-          </div>
-          <nav class="flex space-x-8">
-            <RouterLink
-              to="/"
-              class="text-gray-500 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors"
-              active-class="text-blue-600 bg-blue-50"
-            >
-              Home
-            </RouterLink>
-            <RouterLink
-              to="/about"
-              class="text-gray-500 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors"
-              active-class="text-blue-600 bg-blue-50"
-            >
-              About
-            </RouterLink>
-            <RouterLink
-              to="/demo"
-              class="text-gray-500 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors"
-              active-class="text-blue-600 bg-blue-50"
-            >
-              Demo
-            </RouterLink>
-            <RouterLink
-              to="/crane-simulation"
-              class="text-gray-500 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors"
-              active-class="text-blue-600 bg-blue-50"
-            >
-              Crane Sim
-            </RouterLink>
-          </nav>
-        </div>
-      </div>
-    </header>
-
-    <main class="flex-1 flex flex-col">
-      <RouterView />
-    </main>
+  <div class="h-screen w-screen overflow-hidden">
+    <RouterView />
   </div>
 </template>

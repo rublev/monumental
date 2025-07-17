@@ -26,6 +26,7 @@ export interface UseWebSocketReturn {
 
   // Messaging
   sendMessage: (data: any, options?: { queue?: boolean }) => boolean
+  sendRawMessage: (message: any) => boolean
   getQueueStatus: () => { length: number; maxSize: number; isFull: boolean }
   clearQueue: () => number
 
@@ -187,7 +188,7 @@ export function useWebSocket(config: Partial<WebSocketConfig> = {}): UseWebSocke
 
     heartbeatIntervalId = window.setInterval(() => {
       if (isConnected.value) {
-        sendMessage({ type: 'ping', timestamp: new Date().toISOString() })
+        sendRawMessage({ type: 'ping', timestamp: new Date().toISOString() })
       }
     }, wsConfig.heartbeatInterval)
   }
@@ -357,6 +358,7 @@ export function useWebSocket(config: Partial<WebSocketConfig> = {}): UseWebSocke
       type: MessageType.MESSAGE,
       timestamp: Date.now(),
       sequence: Date.now(),
+      ...data // Include the actual data
     }
 
     // If connected, send immediately
@@ -371,6 +373,11 @@ export function useWebSocket(config: Partial<WebSocketConfig> = {}): UseWebSocke
 
     console.warn('[WebSocket] Cannot send message: not connected and queueing disabled')
     return false
+  }
+
+  // Send raw message directly (for custom message types)
+  function sendRawMessage(message: any): boolean {
+    return sendMessageDirect(message)
   }
 
   // Get queue status
@@ -419,6 +426,7 @@ export function useWebSocket(config: Partial<WebSocketConfig> = {}): UseWebSocke
     connect,
     disconnect,
     sendMessage,
+    sendRawMessage,
     getQueueStatus,
     clearQueue,
 

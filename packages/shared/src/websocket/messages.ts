@@ -16,6 +16,8 @@ export interface CraneState {
   isMoving: boolean;
   hasTarget: boolean;
   endEffectorPosition?: { x: number; y: number; z: number };
+  payloadPosition?: { x: number; y: number; z: number };
+  payloadAttached?: boolean;
   objects?: any[];
   isGripperOpen?: boolean;
 }

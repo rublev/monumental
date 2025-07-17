@@ -46,7 +46,8 @@
       "mcp__task-master-ai__expand_task",
       "mcp__task-master-ai__clear_subtasks",
       "Bash(pnpm remove:*)",
-      "mcp__task-master-ai__remove_task"
+      "mcp__task-master-ai__remove_task",
+      "Bash(curl:*)"
     ],
     "deny": []
   }

@@ -1,23 +1,34 @@
-<script setup>
+<script setup lang="ts">
 import { ref, reactive, onMounted, onUnmounted, watch } from 'vue'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { useCrane } from '@/composables/useCrane'
+import { useWebSocket } from '@/composables/useWebSocket'
 import { SCENE_CONFIG } from '@monumental/shared'
 import { CustomAxesHelper } from '@/utils/CustomAxesHelper'
+import { MessageType } from '@monumental/shared'
+import type {
+  ManualControlCommand,
+  StartCycleCommand,
+  CraneStateUpdate,
+  IncomingMessage
+} from '@monumental/shared'
 
 // Use constants from shared package
 const SIMULATION_BOUNDS = SCENE_CONFIG.SIMULATION_BOUNDS
 const CAMERA_CONFIG = SCENE_CONFIG.CAMERA
 const LIGHTING_CONFIG = SCENE_CONFIG.LIGHTING
 const ENVIRONMENT_CONFIG = SCENE_CONFIG.ENVIRONMENT
-const TARGET_CONFIG = SCENE_CONFIG.TARGET
 
 // Composables
 const { createCrane } = useCrane()
+const ws = useWebSocket()
+
+// WebSocket connection state
+const isBackendConnected = ref(false)
 
 // Reactive data
-const canvasContainer = ref(null)
+const canvasContainer = ref<HTMLDivElement | null>(null)
 const pointA = reactive({
   x: -5.0,
   y: 2.0,
@@ -30,7 +41,7 @@ const pointB = reactive({
 })
 
 const settings = reactive({
-  craneSpeed: 10.0, // units per second
+  craneSpeed: 40.0, // units per second
   pathSteps: 200,
 })
 
@@ -42,24 +53,48 @@ const stats = reactive({
 
 // Animation state
 const animationState = reactive({
-  mode: 'IDLE', // IDLE, MOVING_TO_A, GRIPPING, MOVING_TO_B, RELEASING, RETURNING
+  mode: 'IDLE' as 'IDLE' | 'MOVING_TO_A' | 'GRIPPING' | 'MOVING_TO_B' | 'RELEASING' | 'RETURNING',
   startTime: 0,
   duration: 0,
   progress: 0,
-  path: [],
+  path: [] as THREE.Vector3[],
   payloadAttached: false,
 })
 
 const homePosition = { x: 8, y: 12, z: 8 }
 
 // Three.js objects
-let scene, camera, renderer, controls
-let crane, axesHelper
-let animationId
-let obstacleCylinder, pathLine
-let handleA, handleB, payload
-let raycaster, mouse, dragPlane, dragOffset
-let dragging = null
+let scene: THREE.Scene
+let camera: THREE.PerspectiveCamera
+let renderer: THREE.WebGLRenderer
+let controls: OrbitControls
+let crane: any
+let axesHelper: any
+let animationId: number
+let obstacleCylinder: THREE.Mesh
+let pathLine: THREE.Line
+let handleA: THREE.Mesh
+let handleB: THREE.Mesh
+let payload: THREE.Mesh
+let raycaster: THREE.Raycaster
+let mouse: THREE.Vector2
+let dragPlane: THREE.Plane
+let dragOffset: THREE.Vector3
+let dragging: 'A' | 'B' | null = null
+
+// Manual control state
+const manualControl = reactive({
+  enabled: false,
+  endActuatorX: 0, // -1 to 1 for left/right
+  endActuatorY: 0, // -1 to 1 for forward/backward
+  liftDirection: 0, // -1 for down, 1 for up, 0 for stop
+  gripperAction: 'stop' as 'open' | 'close' | 'stop',
+  controlSpeed: 0.1, // Movement speed multiplier
+  lastSentTime: 0, // Throttle WebSocket messages
+})
+
+// Pressed keys tracking
+const pressedKeys = reactive(new Set<string>())
 
 // Gripper settings
 const gripperSettings = {
@@ -208,6 +243,10 @@ const initThree = () => {
   window.addEventListener('pointerup', onPointerUp)
   window.addEventListener('resize', onWindowResize)
 
+  // Keyboard event listeners for manual control
+  window.addEventListener('keydown', onKeyDown)
+  window.addEventListener('keyup', onKeyUp)
+
   // Initialize positions
   updatePositions()
   crane.solveIK(homePosition)
@@ -221,53 +260,99 @@ const updatePositions = () => {
   handleA.position.set(pointA.x, pointA.y, pointA.z)
   handleB.position.set(pointB.x, pointB.y, pointB.z)
 
+  // Always show path visualization, regardless of backend connection
   if (animationState.mode === 'IDLE') {
     // Hide payload when idle
     payload.visible = false
-
-    // Update path visualization
-    let startPoint = new THREE.Vector3(pointA.x, pointA.y, pointA.z)
-    let endPoint = new THREE.Vector3(pointB.x, pointB.y, pointB.z)
-
-    // If point A is unreachable, find the maximum reachable point from home to A
-    if (!crane.isReachable(pointA)) {
-      const homeToA = crane.calculatePath(crane.getEndEffectorPosition(), startPoint, settings.pathSteps)
-      startPoint = crane.findMaxReachablePoint(homeToA)
-    }
-
-    let path = crane.calculatePath(startPoint, endPoint, settings.pathSteps)
-
-    // If point B is unreachable, show path only to the maximum reachable point
-    if (!crane.isReachable(pointB)) {
-      const maxReachablePoint = crane.findMaxReachablePoint(path)
-      path = crane.calculatePath(startPoint, maxReachablePoint, settings.pathSteps)
-    }
-
-    pathLine.geometry.setFromPoints(path)
-    pathLine.visible = true
-  } else {
-    pathLine.visible = false
   }
+
+  // Update path visualization
+  let startPoint = new THREE.Vector3(pointA.x, pointA.y, pointA.z)
+  let endPoint = new THREE.Vector3(pointB.x, pointB.y, pointB.z)
+
+  // If point A is unreachable, find the maximum reachable point from home to A
+  if (!crane.isReachable(pointA)) {
+    const homeToA = crane.calculatePath(crane.getEndEffectorPosition(), startPoint, settings.pathSteps)
+    startPoint = crane.findMaxReachablePoint(homeToA)
+  }
+
+  let path = crane.calculatePath(startPoint, endPoint, settings.pathSteps)
+
+  // If point B is unreachable, show path only to the maximum reachable point
+  if (!crane.isReachable(pointB)) {
+    const maxReachablePoint = crane.findMaxReachablePoint(path)
+    path = crane.calculatePath(startPoint, maxReachablePoint, settings.pathSteps)
+  }
+
+  pathLine.geometry.setFromPoints(path)
+  pathLine.visible = true
 }
 
 const startCycle = () => {
   if (animationState.mode !== 'IDLE') return
 
-  // Calculate the effective pickup location (either A or max reachable point toward A)
-  let effectivePickupPoint = new THREE.Vector3(pointA.x, pointA.y, pointA.z)
-  if (!crane.isReachable(pointA)) {
-    const homeToA = crane.calculatePath(crane.getEndEffectorPosition(), effectivePickupPoint, settings.pathSteps)
-    effectivePickupPoint = crane.findMaxReachablePoint(homeToA)
+  // Send start cycle command to backend
+  if (isBackendConnected.value) {
+    const command: StartCycleCommand = {
+      type: MessageType.START_CYCLE,
+      timestamp: Date.now(),
+      sequence: Date.now(),
+      command: {
+        pointA: { x: pointA.x, y: pointA.y, z: pointA.z },
+        pointB: { x: pointB.x, y: pointB.y, z: pointB.z },
+        speed: settings.craneSpeed,
+      },
+    }
+    // Send the command using the WebSocket composable
+    console.log('Sending command:', command)
+    const success = ws.sendRawMessage(command)
+    if (!success) {
+      console.error('Failed to send command')
+    }
+  } else {
+    // Fallback to local animation if backend is not connected
+    console.warn('Backend not connected, running local animation')
+
+    // Calculate the effective pickup location (either A or max reachable point toward A)
+    let effectivePickupPoint = new THREE.Vector3(pointA.x, pointA.y, pointA.z)
+    if (!crane.isReachable(pointA)) {
+      const homeToA = crane.calculatePath(crane.getEndEffectorPosition(), effectivePickupPoint, settings.pathSteps)
+      effectivePickupPoint = crane.findMaxReachablePoint(homeToA)
+    }
+
+    // Position payload at the effective pickup location and make it visible
+    payload.position.copy(effectivePickupPoint)
+    payload.visible = true
+
+    startAnimationPhase('MOVING_TO_A')
   }
-
-  // Position payload at the effective pickup location and make it visible
-  payload.position.copy(effectivePickupPoint)
-  payload.visible = true
-
-  startAnimationPhase('MOVING_TO_A')
 }
 
-const startAnimationPhase = (mode) => {
+const stopCycle = () => {
+  if (animationState.mode === 'IDLE') return
+
+  // Send stop cycle command to backend
+  if (isBackendConnected.value) {
+    const command = {
+      type: MessageType.STOP_CYCLE,
+      timestamp: Date.now(),
+      sequence: Date.now(),
+    }
+    console.log('Sending stop command:', command)
+    const success = ws.sendRawMessage(command)
+    if (!success) {
+      console.error('Failed to send stop command')
+    }
+  } else {
+    // Fallback to local animation stop
+    console.warn('Backend not connected, stopping local animation')
+    animationState.mode = 'IDLE'
+    animationState.payloadAttached = false
+    // payload.visible = false // Hide payload when stopping
+  }
+}
+
+const startAnimationPhase = (mode: 'IDLE' | 'MOVING_TO_A' | 'GRIPPING' | 'MOVING_TO_B' | 'RELEASING' | 'RETURNING') => {
   animationState.mode = mode
   animationState.startTime = performance.now()
   animationState.progress = 0
@@ -354,13 +439,30 @@ const onWindowResize = () => {
   renderer.setSize(canvasContainer.value.clientWidth, canvasContainer.value.clientHeight)
 }
 
-const easeInOutCubic = (x) => {
+const easeInOutCubic = (x: number): number => {
   return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
 }
 
 const animate = () => {
   animationId = requestAnimationFrame(animate)
 
+  // Apply manual control continuously if enabled (works with both backend and local)
+  if (manualControl.enabled && animationState.mode === 'IDLE') {
+    if (manualControl.endActuatorX !== 0 || manualControl.endActuatorY !== 0 || manualControl.liftDirection !== 0) {
+      applyManualControl()
+    }
+  }
+
+  // If connected to backend, skip local animation logic
+  if (isBackendConnected.value) {
+    if (controls) controls.update()
+    if (renderer && scene && camera) {
+      renderer.render(scene, camera)
+    }
+    return
+  }
+
+  // Local animation logic (fallback when backend is disconnected)
   const { mode, startTime, duration, path, payloadAttached } = animationState
 
   if (mode !== 'IDLE') {
@@ -445,7 +547,7 @@ const animate = () => {
 }
 
 // Dragging logic
-const onPointerDown = (event) => {
+const onPointerDown = (event: PointerEvent) => {
   if (animationState.mode !== 'IDLE') return
 
   const rect = renderer.domElement.getBoundingClientRect()
@@ -467,11 +569,13 @@ const onPointerDown = (event) => {
     const intersectionPoint = new THREE.Vector3()
     raycaster.ray.intersectPlane(dragPlane, intersectionPoint)
     dragOffset.subVectors(intersectionPoint, new THREE.Vector3(pointToDrag.x, pointToDrag.y, pointToDrag.z))
-    canvasContainer.value.style.cursor = 'grabbing'
+    if (canvasContainer.value) {
+      canvasContainer.value.style.cursor = 'grabbing'
+    }
   }
 }
 
-const onPointerMove = (event) => {
+const onPointerMove = (event: PointerEvent) => {
   if (!dragging) return
 
   const rect = renderer.domElement.getBoundingClientRect()
@@ -497,8 +601,211 @@ const onPointerUp = () => {
   if (dragging) {
     controls.enabled = true
     dragging = null
-    canvasContainer.value.style.cursor = 'grab'
+    if (canvasContainer.value) {
+      canvasContainer.value.style.cursor = 'grab'
+    }
   }
+}
+
+// Keyboard event handlers for manual control
+const onKeyDown = (event: KeyboardEvent) => {
+  // Only handle keys if manual control is enabled and we're in IDLE mode
+  if (!manualControl.enabled || animationState.mode !== 'IDLE') return
+
+  const key = event.key.toLowerCase()
+
+  // Prevent default behavior for control keys
+  if (['w', 'a', 's', 'd', 'q', 'e', 'r', 'f'].includes(key)) {
+    event.preventDefault()
+  }
+
+  pressedKeys.add(key)
+  updateManualControlState()
+}
+
+const onKeyUp = (event: KeyboardEvent) => {
+  const key = event.key.toLowerCase()
+  pressedKeys.delete(key)
+  updateManualControlState()
+}
+
+const updateManualControlState = () => {
+  if (!manualControl.enabled || animationState.mode !== 'IDLE') return
+
+  // Reset control state
+  manualControl.endActuatorX = 0
+  manualControl.endActuatorY = 0
+  manualControl.liftDirection = 0
+  manualControl.gripperAction = 'stop'
+
+  // WASD controls for end actuator movement
+  if (pressedKeys.has('w')) manualControl.endActuatorY = 1  // Forward
+  if (pressedKeys.has('s')) manualControl.endActuatorY = -1 // Backward
+  if (pressedKeys.has('a')) manualControl.endActuatorX = -1 // Left
+  if (pressedKeys.has('d')) manualControl.endActuatorX = 1  // Right
+
+  // Q/E for lift height control
+  if (pressedKeys.has('q')) manualControl.liftDirection = 1  // Up
+  if (pressedKeys.has('e')) manualControl.liftDirection = -1 // Down
+
+  // R/F for gripper control
+  if (pressedKeys.has('r')) manualControl.gripperAction = 'open'
+  if (pressedKeys.has('f')) manualControl.gripperAction = 'close'
+}
+
+const applyManualControl = () => {
+  if (!crane || !manualControl.enabled) return
+
+  // Get current end effector position
+  const currentPos = crane.getEndEffectorPosition()
+  const newPos = currentPos.clone()
+
+  // Apply movement based on control inputs
+  // Note: X/Z movements are in world space, Y is lift height
+  newPos.x += manualControl.endActuatorX * manualControl.controlSpeed
+  newPos.z += manualControl.endActuatorY * manualControl.controlSpeed
+  newPos.y += manualControl.liftDirection * manualControl.controlSpeed
+
+  // Clamp to reasonable bounds
+  newPos.x = THREE.MathUtils.clamp(newPos.x, -15, 15)
+  newPos.z = THREE.MathUtils.clamp(newPos.z, -15, 15)
+  newPos.y = THREE.MathUtils.clamp(newPos.y, 2, 25)
+
+  // Apply the new position using inverse kinematics
+  crane.solveIK(newPos)
+
+  // Send manual control command to backend via websocket (throttled)
+  if (isBackendConnected.value) {
+    const now = Date.now()
+    // Throttle to 30fps (33ms) to prevent flooding
+    if (now - manualControl.lastSentTime > 33) {
+      manualControl.lastSentTime = now
+      const command: ManualControlCommand = {
+        type: MessageType.MANUAL_CONTROL,
+        timestamp: now,
+        sequence: now,
+        command: {
+          endActuatorX: manualControl.endActuatorX,
+          endActuatorY: manualControl.endActuatorY,
+          liftDirection: manualControl.liftDirection,
+          gripperAction: manualControl.gripperAction,
+        },
+      }
+      // Send the command using the WebSocket composable
+      const success = ws.sendRawMessage(command)
+      if (!success) {
+        console.error('Failed to send manual control command')
+      }
+    }
+  }
+}
+
+// WebSocket message handlers
+const handleWebSocketMessage = (message: IncomingMessage) => {
+  switch (message.type) {
+    case MessageType.STATE_UPDATE:
+      const stateUpdate = message as CraneStateUpdate
+      if (stateUpdate.state) {
+        // Update crane visualization based on backend state
+        updateCraneFromBackendState(stateUpdate.state)
+
+        // Update animation state from backend
+        if (stateUpdate.cycleProgress) {
+          animationState.mode = stateUpdate.cycleProgress.isActive ?
+            (stateUpdate.cycleProgress.currentPhase === 'moving_to_a' ? 'MOVING_TO_A' :
+              stateUpdate.cycleProgress.currentPhase === 'at_a' ? 'GRIPPING' :
+                stateUpdate.cycleProgress.currentPhase === 'moving_to_b' ? 'MOVING_TO_B' :
+                  stateUpdate.cycleProgress.currentPhase === 'at_b' ? 'RELEASING' : 'RETURNING') : 'IDLE'
+        }
+      }
+      break
+
+    case MessageType.CYCLE_COMPLETE:
+      console.log('Cycle completed by backend')
+      animationState.mode = 'IDLE'
+      break
+
+    case MessageType.ERROR:
+      console.error('Backend error:', message)
+      break
+
+    case MessageType.WELCOME:
+      console.log('Connected to backend crane controller')
+      isBackendConnected.value = true
+      break
+
+    default:
+      console.log('Received unknown message type:', message.type)
+  }
+}
+
+const updateCraneFromBackendState = (state: {
+  swing?: number;
+  lift?: number;
+  elbow?: number;
+  wrist?: number;
+  gripper?: number;
+  endEffectorPosition?: { x: number; y: number; z: number };
+  payloadPosition?: { x: number; y: number; z: number };
+  payloadAttached?: boolean;
+  isMoving?: boolean;
+}) => {
+  if (!crane || !payload) return
+
+  // Use the backend's end effector position to update the crane
+  if (state.endEffectorPosition) {
+    crane.solveIK(state.endEffectorPosition)
+  }
+
+  // Update payload visibility and position based on backend state
+  if (animationState.mode !== 'IDLE') {
+    // Show payload during cycle
+    payload.visible = true
+
+    // Use backend's payload position directly
+    if (state.payloadPosition) {
+      payload.position.set(
+        state.payloadPosition.x,
+        state.payloadPosition.y,
+        state.payloadPosition.z
+      )
+    }
+  } else {
+    // Hide payload when idle
+    payload.visible = false
+  }
+
+  // Update stats from backend state
+  if (state.swing !== undefined) {
+    stats.shoulderAngle = ((state.swing * 180) / Math.PI).toFixed(1)
+  }
+  if (state.lift !== undefined) {
+    stats.liftHeight = state.lift.toFixed(2)
+  }
+  if (state.elbow !== undefined) {
+    stats.elbowAngle = ((state.elbow * 180) / Math.PI).toFixed(1)
+  }
+}
+
+// WebSocket connection management
+const initWebSocket = () => {
+  // Set up message handler
+  ws.onMessage(handleWebSocketMessage)
+
+  // Handle connection state changes
+  ws.onStateChange((state) => {
+    console.log('WebSocket state:', state)
+    isBackendConnected.value = state === 'connected'
+  })
+
+  // Handle errors
+  ws.onError((error) => {
+    console.error('WebSocket error:', error)
+    isBackendConnected.value = false
+  })
+
+  // Connect to backend
+  ws.connect()
 }
 
 // Watchers
@@ -507,6 +814,7 @@ watch([pointA, pointB, settings], updatePositions, { deep: true })
 // Lifecycle
 onMounted(() => {
   initThree()
+  initWebSocket()
 })
 
 onUnmounted(() => {
@@ -515,17 +823,22 @@ onUnmounted(() => {
   }
   window.removeEventListener('resize', onWindowResize)
   window.removeEventListener('pointerup', onPointerUp)
+  window.removeEventListener('keydown', onKeyDown)
+  window.removeEventListener('keyup', onKeyUp)
 
   if (renderer) {
     renderer.domElement.removeEventListener('pointerdown', onPointerDown)
     renderer.domElement.removeEventListener('pointermove', onPointerMove)
     renderer.dispose()
   }
+
+  // Disconnect WebSocket
+  ws.disconnect()
 })
 </script>
 
 <template>
-  <div class="bg-gray-900 text-gray-50 m-0 overflow-hidden">
+  <div class="bg-gray-900 text-gray-50 h-screen w-screen overflow-hidden">
     <div ref="canvasContainer" class="w-screen h-screen" style="cursor: grab;"></div>
 
     <div
@@ -533,7 +846,11 @@ onUnmounted(() => {
       <strong>Live Solver Output:</strong><br />
       Lift Height: {{ stats.liftHeight }}<br />
       Shoulder Yaw: {{ stats.shoulderAngle }}°<br />
-      Elbow Yaw: {{ stats.elbowAngle }}°
+      Elbow Yaw: {{ stats.elbowAngle }}°<br />
+      <div class="mt-2 flex items-center space-x-2">
+        <div class="w-2 h-2 rounded-full" :class="isBackendConnected ? 'bg-green-500' : 'bg-red-500'"></div>
+        <span>{{ isBackendConnected ? 'Backend Connected' : 'Backend Disconnected' }}</span>
+      </div>
     </div>
 
     <div
@@ -598,11 +915,31 @@ onUnmounted(() => {
         </div>
       </div>
 
-      <!-- Start Button -->
-      <button @click="startCycle" :disabled="animationState.mode !== 'IDLE'"
-        class="w-full bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-        {{ animationState.mode === 'IDLE' ? 'Start Cycle' : 'Running...' }}
-      </button>
+      <!-- Manual Control Toggle -->
+      <div class="mb-4">
+        <label class="flex items-center space-x-2">
+          <input v-model="manualControl.enabled" type="checkbox" :disabled="animationState.mode !== 'IDLE'"
+            class="w-4 h-4 text-blue-600 bg-gray-800 border-gray-600 rounded focus:ring-blue-500" />
+          <span class="text-sm font-medium">Manual Control (WASD + Q/E)</span>
+        </label>
+        <div v-if="manualControl.enabled" class="mt-2 text-xs text-gray-400">
+          <div>WASD: Move end effector</div>
+          <div>Q/E: Lift up/down</div>
+          <div>R/F: Gripper open/close</div>
+        </div>
+      </div>
+
+      <!-- Start/Stop Buttons -->
+      <div class="flex gap-2">
+        <button @click="startCycle" :disabled="animationState.mode !== 'IDLE' || manualControl.enabled"
+          class="flex-1 bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+          {{ animationState.mode === 'IDLE' ? 'Start Cycle' : 'Running...' }}
+        </button>
+        <button @click="stopCycle" :disabled="animationState.mode === 'IDLE' || manualControl.enabled"
+          class="flex-1 bg-red-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+          Stop Cycle
+        </button>
+      </div>
     </div>
   </div>
 </template>
