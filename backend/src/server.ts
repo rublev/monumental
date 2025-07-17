@@ -1,5 +1,5 @@
 import uWS from 'uWebSockets.js';
-import { CraneController } from './crane/CraneController';
+import { CraneController } from './crane/CraneController.js';
 import { MessageType } from '@monumental/shared';
 import type { 
   ManualControlCommand, 
@@ -9,6 +9,8 @@ import type {
   StateRequestCommand,
   BackendToFrontendMessage,
 } from '@monumental/shared';
+import { readFileSync, existsSync } from 'fs';
+import { join } from 'path';
 
 interface WebSocketData {
   id: string;
@@ -214,17 +216,84 @@ app.ws<WebSocketData>('/ws', {
   idleTimeout: 120, // 2 minutes
 });
 
-// HTTP endpoint for health check
-app.get('/health', (res, req) => {
-  res
-    .writeStatus('200 OK')
-    .writeHeader('Content-Type', 'application/json')
-    .end(
-      JSON.stringify({
-        status: 'ok',
-        timestamp: new Date().toISOString(),
-      })
-    );
+// Serve static frontend files
+const frontendPath = join(process.cwd(), 'frontend/dist');
+
+app.get('/*', (res, req) => {
+  const url = req.getUrl();
+  
+  // Health check endpoint
+  if (url === '/health') {
+    res
+      .writeStatus('200 OK')
+      .writeHeader('Content-Type', 'application/json')
+      .end(
+        JSON.stringify({
+          status: 'ok',
+          timestamp: new Date().toISOString(),
+        })
+      );
+    return;
+  }
+
+  // Try to serve static files
+  let filePath = join(frontendPath, url === '/' ? 'index.html' : url);
+  
+  if (!existsSync(filePath)) {
+    // For SPA routing, fallback to index.html
+    filePath = join(frontendPath, 'index.html');
+  }
+  
+  if (existsSync(filePath)) {
+    try {
+      const content = readFileSync(filePath);
+      const ext = filePath.split('.').pop()?.toLowerCase();
+      
+      let contentType = 'text/plain';
+      switch (ext) {
+        case 'html':
+          contentType = 'text/html';
+          break;
+        case 'js':
+          contentType = 'application/javascript';
+          break;
+        case 'css':
+          contentType = 'text/css';
+          break;
+        case 'json':
+          contentType = 'application/json';
+          break;
+        case 'png':
+          contentType = 'image/png';
+          break;
+        case 'jpg':
+        case 'jpeg':
+          contentType = 'image/jpeg';
+          break;
+        case 'svg':
+          contentType = 'image/svg+xml';
+          break;
+        case 'ico':
+          contentType = 'image/x-icon';
+          break;
+      }
+      
+      res
+        .writeStatus('200 OK')
+        .writeHeader('Content-Type', contentType)
+        .end(content);
+    } catch (error) {
+      res
+        .writeStatus('500 Internal Server Error')
+        .writeHeader('Content-Type', 'text/plain')
+        .end('Internal Server Error');
+    }
+  } else {
+    res
+      .writeStatus('404 Not Found')
+      .writeHeader('Content-Type', 'text/plain')
+      .end('Not Found');
+  }
 });
 
 // Start the server

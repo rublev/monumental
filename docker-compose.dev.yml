@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  crane-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    ports:
+      - "5173:5173"  # Frontend dev server
+      - "8080:8080"  # Backend WebSocket server
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/frontend/node_modules
+      - /app/backend/node_modules
+      - /app/packages/shared/node_modules
+    environment:
+      - NODE_ENV=development
+      - VITE_HOST=0.0.0.0
+      - VITE_PORT=5173
+    stdin_open: true
+    tty: true
+    restart: unless-stopped

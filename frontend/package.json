@@ -17,14 +17,14 @@
   "dependencies": {
     "@monumental/shared": "workspace:*",
     "@tailwindcss/vite": "^4.1.11",
-    "@types/three": "^0.168.0",
+    "@types/three": "^0.178.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-vue-next": "^0.525.0",
     "pinia": "^3.0.3",
     "reka-ui": "^2.3.2",
     "tailwind-merge": "^3.3.1",
-    "three": "^0.168.0",
+    "three": "^0.178.0",
     "tw-animate-css": "^1.3.5",
     "vue": "^3.5.17",
     "vue-router": "^4.5.1"
@@ -32,13 +32,13 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.11",
     "@tsconfig/node22": "^22.0.2",
-    "@types/node": "^24.0.13",
+    "@types/node": "^24.0.14",
     "@vitejs/plugin-vue": "^6.0.0",
     "@vue/eslint-config-prettier": "^10.2.0",
     "@vue/eslint-config-typescript": "^14.6.0",
     "@vue/tsconfig": "^0.7.0",
     "concurrently": "^9.2.0",
-    "eslint": "^9.30.1",
+    "eslint": "^9.31.0",
     "eslint-plugin-vue": "~10.3.0",
     "jiti": "^2.4.2",
     "npm-run-all2": "^8.0.4",
@@ -46,7 +46,7 @@
     "sass-embedded": "^1.89.2",
     "tailwindcss": "^4.1.11",
     "typescript": "~5.8.3",
-    "vite": "^7.0.4",
+    "vite": "^7.0.5",
     "vite-plugin-vue-devtools": "^7.7.7",
     "vue-tsc": "^3.0.1"
   }

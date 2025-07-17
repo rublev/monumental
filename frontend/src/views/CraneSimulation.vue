@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted, onUnmounted, watch } from 'vue'
 import * as THREE from 'three'
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { useCrane } from '@/composables/useCrane'
 import { useWebSocket } from '@/composables/useWebSocket'
 import { SCENE_CONFIG } from '@monumental/shared'
