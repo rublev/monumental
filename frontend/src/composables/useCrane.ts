@@ -22,9 +22,6 @@ export interface AnimationState {
 }
 
 export class Crane {
-  private liftHeight: number
-  private liftMin: number
-  private liftMax: number
   private upperArmLength: number
   private lowerArmLength: number
   private wristExtLength: number
@@ -50,9 +47,6 @@ export class Crane {
   }
 
   constructor() {
-    this.liftHeight = CRANE_CONFIG.LIFT.HEIGHT
-    this.liftMin = CRANE_CONFIG.LIFT.MIN
-    this.liftMax = CRANE_CONFIG.LIFT.MAX
     this.upperArmLength = CRANE_CONFIG.ARM.UPPER_LENGTH
     this.lowerArmLength = CRANE_CONFIG.ARM.LOWER_LENGTH
     this.wristExtLength = CRANE_CONFIG.ARM.WRIST_EXT_LENGTH
@@ -75,7 +69,6 @@ export class Crane {
 
     this.buildBase(materials)
     this.buildTower(materials)
-    this.buildLift(materials)
     this.buildArms(materials)
     this.buildGripper(materials)
 
@@ -122,96 +115,6 @@ export class Crane {
     // Tower will be added to shoulder joint so it rotates with the lift
     // Store tower group to be added later in buildShoulder
     this.towerGroup = towerGroup
-  }
-
-  private buildCornerPosts(
-    towerGroup: THREE.Group,
-    material: THREE.MeshStandardMaterial,
-    width: number,
-    depth: number,
-    height: number,
-    beamThickness: number,
-  ): void {
-    const cornerPositions = [
-      [-width / 2, 0, -depth / 2],
-      [width / 2, 0, -depth / 2],
-      [-width / 2, 0, depth / 2],
-      [width / 2, 0, depth / 2],
-    ]
-
-    cornerPositions.forEach((pos) => {
-      const post = new THREE.Mesh(
-        new THREE.BoxGeometry(beamThickness, height, beamThickness),
-        material,
-      )
-      post.position.set(pos[0], height / 2 + 1, pos[2])
-      post.castShadow = true
-      post.receiveShadow = true
-      towerGroup.add(post)
-    })
-  }
-
-  private buildHorizontalBracing(
-    towerGroup: THREE.Group,
-    material: THREE.MeshStandardMaterial,
-    width: number,
-    depth: number,
-    beamThickness: number,
-    segmentHeight: number,
-    numSegments: number,
-  ): void {
-    for (let i = 0; i < numSegments; i++) {
-      const y = 1 + i * segmentHeight + segmentHeight / 2
-
-      const braces = [
-        {
-          pos: [0, y, depth / 2],
-          rot: [0, 0, 0],
-          size: [width, beamThickness, beamThickness],
-        },
-        {
-          pos: [-width / 2, y, 0],
-          rot: [0, Math.PI / 2, 0],
-          size: [depth, beamThickness, beamThickness],
-        },
-        {
-          pos: [width / 2, y, 0],
-          rot: [0, Math.PI / 2, 0],
-          size: [depth, beamThickness, beamThickness],
-        },
-      ]
-
-      braces.forEach((brace) => {
-        const mesh = new THREE.Mesh(
-          new THREE.BoxGeometry(brace.size[0], brace.size[1], brace.size[2]),
-          material,
-        )
-        mesh.position.set(brace.pos[0], brace.pos[1], brace.pos[2])
-        mesh.rotation.set(brace.rot[0], brace.rot[1], brace.rot[2])
-        mesh.castShadow = true
-        mesh.receiveShadow = true
-        towerGroup.add(mesh)
-      })
-    }
-  }
-
-  private buildTowerCap(
-    material: THREE.MeshStandardMaterial,
-    width: number,
-    depth: number,
-    height: number,
-  ): void {
-    const cap = new THREE.Mesh(new THREE.BoxGeometry(width + 1, 0.5, depth + 1), material)
-    cap.position.y = 1 + height + 0.25
-    cap.castShadow = true
-    cap.receiveShadow = true
-    this.swingJoint.add(cap)
-  }
-
-  private buildLift(materials: ReturnType<typeof this.createMaterials>): void {
-    // Lift geometry is now handled by the shoulder joint
-    // Just set the lift joint position
-    this.liftJoint.position.y = this.liftHeight
   }
 
   private buildArms(materials: ReturnType<typeof this.createMaterials>): void {
@@ -327,7 +230,7 @@ export class Crane {
 
     const discriminant = b * b - 4 * a * c
 
-    let intersections_t: number[] = []
+    const intersections_t: number[] = []
     if (discriminant >= 0) {
       const sqrtDiscriminant = Math.sqrt(discriminant)
       const t1 = (-b - sqrtDiscriminant) / (2 * a)
@@ -362,7 +265,7 @@ export class Crane {
       const I1_2d = new THREE.Vector2(I1.x, I1.z)
       const I2_2d = new THREE.Vector2(I2.x, I2.z)
       const startAngle = Math.atan2(I1_2d.y, I1_2d.x)
-      let endAngle = Math.atan2(I2_2d.y, I2_2d.x)
+      const endAngle = Math.atan2(I2_2d.y, I2_2d.x)
 
       let angleDiff = endAngle - startAngle
       if (angleDiff > Math.PI) angleDiff -= 2 * Math.PI
@@ -392,7 +295,7 @@ export class Crane {
       const numSteps = Math.max(pathSteps, 2)
       for (let i = 0; i <= numSteps; i++) {
         const t = i / numSteps
-        let distAlongPath = t * totalLength
+        const distAlongPath = t * totalLength
         let distRemaining = distAlongPath
 
         for (const segment of pathSegments) {

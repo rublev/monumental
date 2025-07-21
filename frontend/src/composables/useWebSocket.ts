@@ -6,6 +6,7 @@ import type {
   ConnectionMetrics,
   IncomingMessage,
   OutgoingMessage,
+  BaseMessage,
 } from '@monumental/shared/websocket'
 import { MessageType } from '@monumental/shared/websocket'
 import { DEFAULT_WEBSOCKET_CONFIG } from '@monumental/shared'
@@ -25,8 +26,11 @@ export interface UseWebSocketReturn {
   disconnect: () => void
 
   // Messaging
-  sendMessage: (data: any, options?: { queue?: boolean }) => boolean
-  sendRawMessage: (message: any) => boolean
+  sendMessage: (
+    data: Omit<BaseMessage, 'timestamp' | 'sequence'> | Record<string, unknown>,
+    options?: { queue?: boolean },
+  ) => boolean
+  sendRawMessage: (message: BaseMessage) => boolean
   getQueueStatus: () => { length: number; maxSize: number; isFull: boolean }
   clearQueue: () => number
 
@@ -188,7 +192,11 @@ export function useWebSocket(config: Partial<WebSocketConfig> = {}): UseWebSocke
 
     heartbeatIntervalId = window.setInterval(() => {
       if (isConnected.value) {
-        sendRawMessage({ type: 'ping', timestamp: new Date().toISOString() })
+        sendRawMessage({
+          type: MessageType.STATE_REQUEST,
+          timestamp: Date.now(),
+          sequence: Date.now(),
+        })
       }
     }, wsConfig.heartbeatInterval)
   }
@@ -353,13 +361,15 @@ export function useWebSocket(config: Partial<WebSocketConfig> = {}): UseWebSocke
   }
 
   // Send message to server (with queueing support)
-  function sendMessage(data: any, options: { queue?: boolean } = { queue: true }): boolean {
+  function sendMessage(
+    data: Omit<BaseMessage, 'timestamp' | 'sequence'> | Record<string, unknown>,
+    options: { queue?: boolean } = { queue: true },
+  ): boolean {
     const message: OutgoingMessage = {
-      type: MessageType.MESSAGE,
       timestamp: Date.now(),
       sequence: Date.now(),
       ...data, // Include the actual data
-    }
+    } as OutgoingMessage
 
     // If connected, send immediately
     if (isConnected.value) {
@@ -376,7 +386,7 @@ export function useWebSocket(config: Partial<WebSocketConfig> = {}): UseWebSocke
   }
 
   // Send raw message directly (for custom message types)
-  function sendRawMessage(message: any): boolean {
+  function sendRawMessage(message: BaseMessage): boolean {
     return sendMessageDirect(message)
   }
 

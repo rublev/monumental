@@ -2,7 +2,7 @@
 import { ref, reactive, onMounted, onUnmounted, watch } from 'vue'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
-import { useCrane } from '@/composables/useCrane'
+import { useCrane, Crane } from '@/composables/useCrane'
 import { useWebSocket } from '@/composables/useWebSocket'
 import { SCENE_CONFIG } from '@monumental/shared'
 import { CustomAxesHelper } from '@/utils/CustomAxesHelper'
@@ -68,8 +68,8 @@ let scene: THREE.Scene
 let camera: THREE.PerspectiveCamera
 let renderer: THREE.WebGLRenderer
 let controls: OrbitControls
-let crane: any
-let axesHelper: any
+let crane: Crane
+let axesHelper: CustomAxesHelper
 let animationId: number
 let obstacleCylinder: THREE.Mesh
 let pathLine: THREE.Line
@@ -268,7 +268,7 @@ const updatePositions = () => {
 
   // Update path visualization
   let startPoint = new THREE.Vector3(pointA.x, pointA.y, pointA.z)
-  let endPoint = new THREE.Vector3(pointB.x, pointB.y, pointB.z)
+  const endPoint = new THREE.Vector3(pointB.x, pointB.y, pointB.z)
 
   // If point A is unreachable, find the maximum reachable point from home to A
   if (!crane.isReachable(pointA)) {
@@ -368,14 +368,14 @@ const startAnimationPhase = (
   animationState.progress = 0
 
   let startPoint = new THREE.Vector3()
-  let endPoint = new THREE.Vector3()
+  const endPoint = new THREE.Vector3()
 
   switch (mode) {
     case 'MOVING_TO_A':
       // For initial movement, we do need to start from current position
       startPoint = crane.getEndEffectorPosition()
       endPoint.set(pointA.x, pointA.y, pointA.z)
-      let pathToA = crane.calculatePath(startPoint, endPoint, settings.pathSteps)
+      const pathToA = crane.calculatePath(startPoint, endPoint, settings.pathSteps)
 
       // Check if point A is reachable, if not, find the maximum reachable point
       if (!crane.isReachable(pointA)) {
@@ -396,7 +396,7 @@ const startAnimationPhase = (
       // Use the exact points A and B for the path
       startPoint.set(pointA.x, pointA.y, pointA.z)
       endPoint.set(pointB.x, pointB.y, pointB.z)
-      let fullPath = crane.calculatePath(startPoint, endPoint, settings.pathSteps)
+      const fullPath = crane.calculatePath(startPoint, endPoint, settings.pathSteps)
 
       // Check if point B is reachable, if not, find the maximum reachable point
       if (!crane.isReachable(pointB)) {
@@ -477,13 +477,13 @@ const animate = () => {
   }
 
   // Local animation logic (fallback when backend is disconnected)
-  const { mode, startTime, duration, path, payloadAttached } = animationState
+  const { mode, startTime, duration, path } = animationState
 
   if (mode !== 'IDLE') {
     const elapsedTime = (performance.now() - startTime) / 1000
     let progress = duration > 0 ? elapsedTime / duration : 1
 
-    let isPhaseComplete = progress >= 1
+    const isPhaseComplete = progress >= 1
     progress = Math.min(progress, 1)
 
     const easedProgress = easeInOutCubic(progress)
