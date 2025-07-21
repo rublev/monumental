@@ -1,5 +1,4 @@
 import { CRANE_CONFIG, MessageType } from '@monumental/shared';
-import type { CraneStats, TargetPosition } from '@monumental/shared';
 import type {
   ManualControlCommand,
   StartCycleCommand,
