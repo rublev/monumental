@@ -48,6 +48,20 @@ docker-compose -f docker-compose.dev.yml up --build
 
 That's it! No need to install Node.js, pnpm, or any other dependencies.
 
+## IDE Development Setup
+
+**For IDE users (VSCode, Cursor, etc.)**: To avoid import errors and path resolution issues in your IDE, install packages locally even when using Docker:
+
+```bash
+# Install packages locally for IDE support
+pnpm install
+
+# Then run Docker for development
+./install.sh
+```
+
+This gives you the best of both worlds: Docker for runtime isolation and local packages for IDE intellisense.
+
 ## Alternative: Manual Development Setup
 
 If you prefer to run without Docker:
