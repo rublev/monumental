@@ -5,6 +5,7 @@ This project has been containerized for easy setup and deployment.
 ## Quick Start
 
 ### Option 1: Using Docker Compose (Recommended)
+
 ```bash
 # Build and run the application
 docker-compose up --build
@@ -14,6 +15,7 @@ docker-compose up --build -d
 ```
 
 ### Option 2: Using Docker directly
+
 ```bash
 # Build the image
 docker build -t crane-simulation .
@@ -25,6 +27,7 @@ docker run -p 8080:8080 crane-simulation
 ## Accessing the Application
 
 Once the container is running:
+
 - **Web Application**: http://localhost:8080
 - **Health Check**: http://localhost:8080/health
 - **WebSocket**: ws://localhost:8080/ws
@@ -32,6 +35,7 @@ Once the container is running:
 ## What's Included
 
 The Docker setup includes:
+
 - **Frontend**: Vue.js application with Three.js 3D visualization
 - **Backend**: Node.js WebSocket server with crane simulation
 - **Shared Libraries**: Common types and utilities
@@ -47,6 +51,7 @@ The Docker setup includes:
 ## Troubleshooting
 
 ### Container won't start
+
 ```bash
 # Check logs
 docker-compose logs
@@ -56,6 +61,7 @@ docker logs <container_id>
 ```
 
 ### Port already in use
+
 ```bash
 # Stop existing containers
 docker-compose down
@@ -65,6 +71,7 @@ docker run -p 3000:8080 crane-simulation
 ```
 
 ### Build fails
+
 ```bash
 # Clean build
 docker-compose down --rmi all

@@ -11,7 +11,7 @@ import type {
   ManualControlCommand,
   StartCycleCommand,
   CraneStateUpdate,
-  IncomingMessage
+  IncomingMessage,
 } from '@monumental/shared'
 
 // Use constants from shared package
@@ -175,14 +175,14 @@ const initThree = () => {
       50, // height
       32,
       1,
-      true
+      true,
     ),
     new THREE.MeshStandardMaterial({
       color: 0x3b82f6,
       transparent: true,
       opacity: 0.15,
       side: THREE.DoubleSide,
-    })
+    }),
   )
   obstacleCylinder.position.y = 25
   scene.add(obstacleCylinder)
@@ -190,7 +190,7 @@ const initThree = () => {
   // Path line for visualization
   pathLine = new THREE.Line(
     new THREE.BufferGeometry(),
-    new THREE.LineBasicMaterial({ color: 0x0ea5e9 })
+    new THREE.LineBasicMaterial({ color: 0x0ea5e9 }),
   )
   scene.add(pathLine)
 
@@ -201,7 +201,7 @@ const initThree = () => {
       color: 0x16a34a,
       transparent: true,
       opacity: 0.7,
-    })
+    }),
   )
   scene.add(handleA)
 
@@ -212,7 +212,7 @@ const initThree = () => {
       color: 0xef4444,
       transparent: true,
       opacity: 0.7,
-    })
+    }),
   )
   scene.add(handleB)
 
@@ -223,7 +223,7 @@ const initThree = () => {
       color: 0xf97316,
       emissive: 0xf97316,
       emissiveIntensity: 0.5,
-    })
+    }),
   )
   scene.add(payload)
 
@@ -272,7 +272,11 @@ const updatePositions = () => {
 
   // If point A is unreachable, find the maximum reachable point from home to A
   if (!crane.isReachable(pointA)) {
-    const homeToA = crane.calculatePath(crane.getEndEffectorPosition(), startPoint, settings.pathSteps)
+    const homeToA = crane.calculatePath(
+      crane.getEndEffectorPosition(),
+      startPoint,
+      settings.pathSteps,
+    )
     startPoint = crane.findMaxReachablePoint(homeToA)
   }
 
@@ -316,7 +320,11 @@ const startCycle = () => {
     // Calculate the effective pickup location (either A or max reachable point toward A)
     let effectivePickupPoint = new THREE.Vector3(pointA.x, pointA.y, pointA.z)
     if (!crane.isReachable(pointA)) {
-      const homeToA = crane.calculatePath(crane.getEndEffectorPosition(), effectivePickupPoint, settings.pathSteps)
+      const homeToA = crane.calculatePath(
+        crane.getEndEffectorPosition(),
+        effectivePickupPoint,
+        settings.pathSteps,
+      )
       effectivePickupPoint = crane.findMaxReachablePoint(homeToA)
     }
 
@@ -352,7 +360,9 @@ const stopCycle = () => {
   }
 }
 
-const startAnimationPhase = (mode: 'IDLE' | 'MOVING_TO_A' | 'GRIPPING' | 'MOVING_TO_B' | 'RELEASING' | 'RETURNING') => {
+const startAnimationPhase = (
+  mode: 'IDLE' | 'MOVING_TO_A' | 'GRIPPING' | 'MOVING_TO_B' | 'RELEASING' | 'RETURNING',
+) => {
   animationState.mode = mode
   animationState.startTime = performance.now()
   animationState.progress = 0
@@ -448,7 +458,11 @@ const animate = () => {
 
   // Apply manual control continuously if enabled (works with both backend and local)
   if (manualControl.enabled && animationState.mode === 'IDLE') {
-    if (manualControl.endActuatorX !== 0 || manualControl.endActuatorY !== 0 || manualControl.liftDirection !== 0) {
+    if (
+      manualControl.endActuatorX !== 0 ||
+      manualControl.endActuatorY !== 0 ||
+      manualControl.liftDirection !== 0
+    ) {
       applyManualControl()
     }
   }
@@ -488,7 +502,7 @@ const animate = () => {
           const interpolatedPos = new THREE.Vector3().lerpVectors(
             path[lowerIndex],
             path[upperIndex],
-            t
+            t,
           )
           crane.solveIK(interpolatedPos)
         } else if (path[lowerIndex]) {
@@ -528,7 +542,11 @@ const animate = () => {
     if (!crane.isReachable(pointB)) {
       let startPoint = new THREE.Vector3(pointA.x, pointA.y, pointA.z)
       if (!crane.isReachable(pointA)) {
-        const homeToA = crane.calculatePath(crane.getEndEffectorPosition(), startPoint, settings.pathSteps)
+        const homeToA = crane.calculatePath(
+          crane.getEndEffectorPosition(),
+          startPoint,
+          settings.pathSteps,
+        )
         startPoint = crane.findMaxReachablePoint(homeToA)
       }
       const pathToB = crane.calculatePath(startPoint, effectiveDropPoint, settings.pathSteps)
@@ -564,11 +582,14 @@ const onPointerDown = (event: PointerEvent) => {
 
     dragPlane.setFromNormalAndCoplanarPoint(
       camera.getWorldDirection(dragPlane.normal),
-      new THREE.Vector3(pointToDrag.x, pointToDrag.y, pointToDrag.z)
+      new THREE.Vector3(pointToDrag.x, pointToDrag.y, pointToDrag.z),
     )
     const intersectionPoint = new THREE.Vector3()
     raycaster.ray.intersectPlane(dragPlane, intersectionPoint)
-    dragOffset.subVectors(intersectionPoint, new THREE.Vector3(pointToDrag.x, pointToDrag.y, pointToDrag.z))
+    dragOffset.subVectors(
+      intersectionPoint,
+      new THREE.Vector3(pointToDrag.x, pointToDrag.y, pointToDrag.z),
+    )
     if (canvasContainer.value) {
       canvasContainer.value.style.cursor = 'grabbing'
     }
@@ -639,13 +660,13 @@ const updateManualControlState = () => {
   manualControl.gripperAction = 'stop'
 
   // WASD controls for end actuator movement
-  if (pressedKeys.has('w')) manualControl.endActuatorY = 1  // Forward
+  if (pressedKeys.has('w')) manualControl.endActuatorY = 1 // Forward
   if (pressedKeys.has('s')) manualControl.endActuatorY = -1 // Backward
   if (pressedKeys.has('a')) manualControl.endActuatorX = -1 // Left
-  if (pressedKeys.has('d')) manualControl.endActuatorX = 1  // Right
+  if (pressedKeys.has('d')) manualControl.endActuatorX = 1 // Right
 
   // Q/E for lift height control
-  if (pressedKeys.has('q')) manualControl.liftDirection = 1  // Up
+  if (pressedKeys.has('q')) manualControl.liftDirection = 1 // Up
   if (pressedKeys.has('e')) manualControl.liftDirection = -1 // Down
 
   // R/F for gripper control
@@ -711,11 +732,17 @@ const handleWebSocketMessage = (message: IncomingMessage) => {
 
         // Update animation state from backend
         if (stateUpdate.cycleProgress) {
-          animationState.mode = stateUpdate.cycleProgress.isActive ?
-            (stateUpdate.cycleProgress.currentPhase === 'moving_to_a' ? 'MOVING_TO_A' :
-              stateUpdate.cycleProgress.currentPhase === 'at_a' ? 'GRIPPING' :
-                stateUpdate.cycleProgress.currentPhase === 'moving_to_b' ? 'MOVING_TO_B' :
-                  stateUpdate.cycleProgress.currentPhase === 'at_b' ? 'RELEASING' : 'RETURNING') : 'IDLE'
+          animationState.mode = stateUpdate.cycleProgress.isActive
+            ? stateUpdate.cycleProgress.currentPhase === 'moving_to_a'
+              ? 'MOVING_TO_A'
+              : stateUpdate.cycleProgress.currentPhase === 'at_a'
+                ? 'GRIPPING'
+                : stateUpdate.cycleProgress.currentPhase === 'moving_to_b'
+                  ? 'MOVING_TO_B'
+                  : stateUpdate.cycleProgress.currentPhase === 'at_b'
+                    ? 'RELEASING'
+                    : 'RETURNING'
+            : 'IDLE'
         }
       }
       break
@@ -740,15 +767,15 @@ const handleWebSocketMessage = (message: IncomingMessage) => {
 }
 
 const updateCraneFromBackendState = (state: {
-  swing?: number;
-  lift?: number;
-  elbow?: number;
-  wrist?: number;
-  gripper?: number;
-  endEffectorPosition?: { x: number; y: number; z: number };
-  payloadPosition?: { x: number; y: number; z: number };
-  payloadAttached?: boolean;
-  isMoving?: boolean;
+  swing?: number
+  lift?: number
+  elbow?: number
+  wrist?: number
+  gripper?: number
+  endEffectorPosition?: { x: number; y: number; z: number }
+  payloadPosition?: { x: number; y: number; z: number }
+  payloadAttached?: boolean
+  isMoving?: boolean
 }) => {
   if (!crane || !payload) return
 
@@ -767,7 +794,7 @@ const updateCraneFromBackendState = (state: {
       payload.position.set(
         state.payloadPosition.x,
         state.payloadPosition.y,
-        state.payloadPosition.z
+        state.payloadPosition.z,
       )
     }
   } else {
@@ -839,22 +866,27 @@ onUnmounted(() => {
 
 <template>
   <div class="bg-gray-900 text-gray-50 h-screen w-screen overflow-hidden">
-    <div ref="canvasContainer" class="w-screen h-screen" style="cursor: grab;"></div>
+    <div ref="canvasContainer" class="w-screen h-screen" style="cursor: grab"></div>
 
     <div
-      class="absolute bottom-4 left-4 bg-gray-900/50 backdrop-blur-sm p-3 rounded-md text-xs font-mono border border-gray-600">
+      class="absolute bottom-4 left-4 bg-gray-900/50 backdrop-blur-sm p-3 rounded-md text-xs font-mono border border-gray-600"
+    >
       <strong>Live Solver Output:</strong><br />
       Lift Height: {{ stats.liftHeight }}<br />
       Shoulder Yaw: {{ stats.shoulderAngle }}°<br />
       Elbow Yaw: {{ stats.elbowAngle }}°<br />
       <div class="mt-2 flex items-center space-x-2">
-        <div class="w-2 h-2 rounded-full" :class="isBackendConnected ? 'bg-green-500' : 'bg-red-500'"></div>
+        <div
+          class="w-2 h-2 rounded-full"
+          :class="isBackendConnected ? 'bg-green-500' : 'bg-red-500'"
+        ></div>
         <span>{{ isBackendConnected ? 'Backend Connected' : 'Backend Disconnected' }}</span>
       </div>
     </div>
 
     <div
-      class="absolute bottom-4 right-4 bg-gray-900/50 backdrop-blur-sm p-4 rounded-lg shadow-xl w-80 border border-gray-600">
+      class="absolute bottom-4 right-4 bg-gray-900/50 backdrop-blur-sm p-4 rounded-lg shadow-xl w-80 border border-gray-600"
+    >
       <h3 class="text-md font-bold mb-3 text-center">Crane Control</h3>
 
       <!-- Point A Controls -->
@@ -863,18 +895,31 @@ onUnmounted(() => {
         <div class="grid grid-cols-3 gap-2">
           <div>
             <label class="text-xs">X</label>
-            <input v-model.number="pointA.x" type="number" :step="SIMULATION_BOUNDS.STEP"
-              class="w-full px-2 py-1 bg-gray-800 border border-gray-600 rounded text-sm" />
+            <input
+              v-model.number="pointA.x"
+              type="number"
+              :step="SIMULATION_BOUNDS.STEP"
+              class="w-full px-2 py-1 bg-gray-800 border border-gray-600 rounded text-sm"
+            />
           </div>
           <div>
             <label class="text-xs">Y</label>
-            <input v-model.number="pointA.y" type="number" :step="SIMULATION_BOUNDS.STEP" :min="0"
-              class="w-full px-2 py-1 bg-gray-800 border border-gray-600 rounded text-sm" />
+            <input
+              v-model.number="pointA.y"
+              type="number"
+              :step="SIMULATION_BOUNDS.STEP"
+              :min="0"
+              class="w-full px-2 py-1 bg-gray-800 border border-gray-600 rounded text-sm"
+            />
           </div>
           <div>
             <label class="text-xs">Z</label>
-            <input v-model.number="pointA.z" type="number" :step="SIMULATION_BOUNDS.STEP"
-              class="w-full px-2 py-1 bg-gray-800 border border-gray-600 rounded text-sm" />
+            <input
+              v-model.number="pointA.z"
+              type="number"
+              :step="SIMULATION_BOUNDS.STEP"
+              class="w-full px-2 py-1 bg-gray-800 border border-gray-600 rounded text-sm"
+            />
           </div>
         </div>
       </div>
@@ -885,18 +930,31 @@ onUnmounted(() => {
         <div class="grid grid-cols-3 gap-2">
           <div>
             <label class="text-xs">X</label>
-            <input v-model.number="pointB.x" type="number" :step="SIMULATION_BOUNDS.STEP"
-              class="w-full px-2 py-1 bg-gray-800 border border-gray-600 rounded text-sm" />
+            <input
+              v-model.number="pointB.x"
+              type="number"
+              :step="SIMULATION_BOUNDS.STEP"
+              class="w-full px-2 py-1 bg-gray-800 border border-gray-600 rounded text-sm"
+            />
           </div>
           <div>
             <label class="text-xs">Y</label>
-            <input v-model.number="pointB.y" type="number" :step="SIMULATION_BOUNDS.STEP" :min="0"
-              class="w-full px-2 py-1 bg-gray-800 border border-gray-600 rounded text-sm" />
+            <input
+              v-model.number="pointB.y"
+              type="number"
+              :step="SIMULATION_BOUNDS.STEP"
+              :min="0"
+              class="w-full px-2 py-1 bg-gray-800 border border-gray-600 rounded text-sm"
+            />
           </div>
           <div>
             <label class="text-xs">Z</label>
-            <input v-model.number="pointB.z" type="number" :step="SIMULATION_BOUNDS.STEP"
-              class="w-full px-2 py-1 bg-gray-800 border border-gray-600 rounded text-sm" />
+            <input
+              v-model.number="pointB.z"
+              type="number"
+              :step="SIMULATION_BOUNDS.STEP"
+              class="w-full px-2 py-1 bg-gray-800 border border-gray-600 rounded text-sm"
+            />
           </div>
         </div>
       </div>
@@ -905,21 +963,37 @@ onUnmounted(() => {
       <div class="mb-4 space-y-2">
         <div>
           <label class="text-xs">Crane Speed (units/s)</label>
-          <input v-model.number="settings.craneSpeed" type="number" min="1" max="50" step="1"
-            class="w-full px-2 py-1 bg-gray-800 border border-gray-600 rounded text-sm" />
+          <input
+            v-model.number="settings.craneSpeed"
+            type="number"
+            min="1"
+            max="50"
+            step="1"
+            class="w-full px-2 py-1 bg-gray-800 border border-gray-600 rounded text-sm"
+          />
         </div>
         <div>
           <label class="text-xs">Path Fidelity</label>
-          <input v-model.number="settings.pathSteps" type="number" min="10" max="500" step="10"
-            class="w-full px-2 py-1 bg-gray-800 border border-gray-600 rounded text-sm" />
+          <input
+            v-model.number="settings.pathSteps"
+            type="number"
+            min="10"
+            max="500"
+            step="10"
+            class="w-full px-2 py-1 bg-gray-800 border border-gray-600 rounded text-sm"
+          />
         </div>
       </div>
 
       <!-- Manual Control Toggle -->
       <div class="mb-4">
         <label class="flex items-center space-x-2">
-          <input v-model="manualControl.enabled" type="checkbox" :disabled="animationState.mode !== 'IDLE'"
-            class="w-4 h-4 text-blue-600 bg-gray-800 border-gray-600 rounded focus:ring-blue-500" />
+          <input
+            v-model="manualControl.enabled"
+            type="checkbox"
+            :disabled="animationState.mode !== 'IDLE'"
+            class="w-4 h-4 text-blue-600 bg-gray-800 border-gray-600 rounded focus:ring-blue-500"
+          />
           <span class="text-sm font-medium">Manual Control (WASD + Q/E)</span>
         </label>
         <div v-if="manualControl.enabled" class="mt-2 text-xs text-gray-400">
@@ -931,12 +1005,18 @@ onUnmounted(() => {
 
       <!-- Start/Stop Buttons -->
       <div class="flex gap-2">
-        <button @click="startCycle" :disabled="animationState.mode !== 'IDLE' || manualControl.enabled"
-          class="flex-1 bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+        <button
+          @click="startCycle"
+          :disabled="animationState.mode !== 'IDLE' || manualControl.enabled"
+          class="flex-1 bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
           {{ animationState.mode === 'IDLE' ? 'Start Cycle' : 'Running...' }}
         </button>
-        <button @click="stopCycle" :disabled="animationState.mode === 'IDLE' || manualControl.enabled"
-          class="flex-1 bg-red-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+        <button
+          @click="stopCycle"
+          :disabled="animationState.mode === 'IDLE' || manualControl.enabled"
+          class="flex-1 bg-red-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
           Stop Cycle
         </button>
       </div>

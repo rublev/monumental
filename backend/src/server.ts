@@ -1,12 +1,9 @@
 import uWS from 'uWebSockets.js';
 import { CraneController } from './crane/CraneController.js';
 import { MessageType } from '@monumental/shared';
-import type { 
-  ManualControlCommand, 
-  StartCycleCommand, 
-  StopCycleCommand, 
-  EmergencyStopCommand,
-  StateRequestCommand,
+import type {
+  ManualControlCommand,
+  StartCycleCommand,
   BackendToFrontendMessage,
 } from '@monumental/shared';
 import { readFileSync, existsSync } from 'fs';
@@ -38,7 +35,7 @@ craneController.setBroadcastCallback((message: BackendToFrontendMessage) => {
 // WebSocket endpoint
 app.ws<WebSocketData>('/ws', {
   // Handle incoming messages
-  message: (ws, message, isBinary) => {
+  message: (ws, message) => {
     try {
       // Convert ArrayBuffer to string
       const messageStr = Buffer.from(message).toString();
@@ -70,21 +67,23 @@ app.ws<WebSocketData>('/ws', {
       // Handle different message types
       switch (parsedMessage.type) {
         case MessageType.MANUAL_CONTROL:
-          craneController.handleManualControl(parsedMessage as ManualControlCommand);
+          craneController.handleManualControl(
+            parsedMessage as ManualControlCommand
+          );
           break;
-          
+
         case MessageType.START_CYCLE:
           craneController.startCycle(parsedMessage as StartCycleCommand);
           break;
-          
+
         case MessageType.STOP_CYCLE:
           craneController.stopCycle();
           break;
-          
+
         case MessageType.EMERGENCY_STOP:
           craneController.emergencyStop();
           break;
-          
+
         case MessageType.STATE_REQUEST:
           // Send current state immediately
           const currentState = craneController.getCurrentState();
@@ -111,7 +110,7 @@ app.ws<WebSocketData>('/ws', {
             false
           );
           break;
-          
+
         default:
           console.warn('[WS] Unknown message type:', parsedMessage.type);
           ws.send(
@@ -201,10 +200,10 @@ app.ws<WebSocketData>('/ws', {
   // Handle disconnections
   close: (ws, code, message) => {
     const clientId = ws.getUserData().id;
-    
+
     // Remove from active connections
     activeConnections.delete(ws);
-    
+
     console.log(
       `[WS] Client disconnected: ${clientId}, code: ${code}, message: ${Buffer.from(message).toString()}`
     );
@@ -221,7 +220,7 @@ const frontendPath = join(process.cwd(), 'frontend/dist');
 
 app.get('/*', (res, req) => {
   const url = req.getUrl();
-  
+
   // Health check endpoint
   if (url === '/health') {
     res
@@ -238,17 +237,17 @@ app.get('/*', (res, req) => {
 
   // Try to serve static files
   let filePath = join(frontendPath, url === '/' ? 'index.html' : url);
-  
+
   if (!existsSync(filePath)) {
     // For SPA routing, fallback to index.html
     filePath = join(frontendPath, 'index.html');
   }
-  
+
   if (existsSync(filePath)) {
     try {
       const content = readFileSync(filePath);
       const ext = filePath.split('.').pop()?.toLowerCase();
-      
+
       let contentType = 'text/plain';
       switch (ext) {
         case 'html':
@@ -277,7 +276,7 @@ app.get('/*', (res, req) => {
           contentType = 'image/x-icon';
           break;
       }
-      
+
       res
         .writeStatus('200 OK')
         .writeHeader('Content-Type', contentType)

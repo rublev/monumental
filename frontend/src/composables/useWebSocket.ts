@@ -358,7 +358,7 @@ export function useWebSocket(config: Partial<WebSocketConfig> = {}): UseWebSocke
       type: MessageType.MESSAGE,
       timestamp: Date.now(),
       sequence: Date.now(),
-      ...data // Include the actual data
+      ...data, // Include the actual data
     }
 
     // If connected, send immediately

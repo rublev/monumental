@@ -1,6 +1,6 @@
 /**
  * WebSocket Event Flow Documentation
- * 
+ *
  * This file defines the complete event flow between frontend and backend
  * for the crane control system.
  */
@@ -24,10 +24,10 @@ export interface ManualControlCommand extends BaseMessage {
     // A/D: Left/right movement
     endActuatorX?: number; // -1 to 1 for left/right
     endActuatorY?: number; // -1 to 1 for forward/backward
-    
+
     // Height controls for lift (e.g., Q/E keys)
     liftDirection?: number; // -1 for down, 1 for up, 0 for stop
-    
+
     // Optional gripper control
     gripperAction?: 'open' | 'close' | 'stop';
   };
@@ -133,21 +133,21 @@ export interface SystemStatusUpdate extends BaseMessage {
 
 /**
  * TYPICAL EVENT FLOW:
- * 
+ *
  * 1. Frontend connects to backend
  *    Frontend -> Backend: Connection established
  *    Backend -> Frontend: SystemStatusUpdate (connection confirmed)
  *    Backend -> Frontend: CraneStateUpdate (initial state)
- * 
+ *
  * 2. Manual control mode:
  *    Frontend -> Backend: ManualControlCommand (WASD/height keys)
  *    Backend -> Frontend: CraneStateUpdate (updated positions)
- * 
+ *
  * 3. Automated cycle mode:
  *    Frontend -> Backend: StartCycleCommand (with A/B points)
  *    Backend -> Frontend: CraneStateUpdate (movement updates at fixed rate)
  *    Backend -> Frontend: CycleCompleteNotification (when done)
- * 
+ *
  * 4. Emergency scenarios:
  *    Frontend -> Backend: EmergencyStopCommand
  *    Backend -> Frontend: CraneStateUpdate (stopped state)
@@ -161,17 +161,19 @@ export interface SystemStatusUpdate extends BaseMessage {
 // Note: New message types are already defined in types.ts MessageType enum
 
 // Union types for easy typing
-export type FrontendToBackendMessage = 
+export type FrontendToBackendMessage =
   | ManualControlCommand
   | StartCycleCommand
   | StopCycleCommand
   | EmergencyStopCommand
   | StateRequestCommand;
 
-export type BackendToFrontendMessage = 
+export type BackendToFrontendMessage =
   | CraneStateUpdate
   | CycleCompleteNotification
   | ErrorNotification
   | SystemStatusUpdate;
 
-export type AllWebSocketMessages = FrontendToBackendMessage | BackendToFrontendMessage;
+export type AllWebSocketMessages =
+  | FrontendToBackendMessage
+  | BackendToFrontendMessage;

@@ -3,7 +3,12 @@
  */
 
 // Connection state
-export type ConnectionState = 'connecting' | 'connected' | 'disconnected' | 'error' | 'reconnecting';
+export type ConnectionState =
+  | 'connecting'
+  | 'connected'
+  | 'disconnected'
+  | 'error'
+  | 'reconnecting';
 
 // Message types
 export enum MessageType {

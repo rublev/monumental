@@ -293,13 +293,13 @@ export class Crane {
 
   private setupHierarchy(): void {
     this.base.add(this.swingJoint)
-    
+
     // Add tower to swing joint so it rotates but doesn't move up/down with lift
     if (this.towerGroup) {
       this.towerGroup.position.y = 0 // Tower starts at base level
       this.swingJoint.add(this.towerGroup)
     }
-    
+
     this.swingJoint.add(this.liftJoint)
     this.liftJoint.add(this.shoulderJoint)
     // Add offset to match 3d-playground-v2.html where armAssembly.position.x = 10
@@ -435,7 +435,7 @@ export class Crane {
 
   public findMaxReachablePoint(path: THREE.Vector3[]): THREE.Vector3 {
     const maxReach = this.upperArmLength + this.lowerArmLength
-    
+
     // Find the last reachable point in the path
     for (let i = path.length - 1; i >= 0; i--) {
       const point = path[i]
@@ -444,7 +444,7 @@ export class Crane {
         return point.clone()
       }
     }
-    
+
     // If no point is reachable, return the first point (shouldn't happen in normal usage)
     return path[0]?.clone() || new THREE.Vector3()
   }

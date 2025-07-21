@@ -5,6 +5,7 @@
 > **⚠️ Platform Support**: This Docker setup has been tested on **macOS (Apple Silicon)** only. It may work on Linux and Windows, but is currently untested on those platforms.
 
 ### Automatic Installation (Recommended)
+
 ```bash
 # For Linux/Mac:
 ./install.sh
@@ -14,19 +15,23 @@ install.bat
 ```
 
 The installation script will:
+
 1. Check for Docker and install it if needed (Linux only)
 2. Verify Docker is running
 3. Build and start the application in development mode
 4. Open the app at http://localhost:5173 (with backend on :8080)
 
 ### Manual Installation
+
 If you prefer to install manually:
 
 #### Prerequisites
+
 - **Docker**: Install from https://docs.docker.com/get-docker/
 - **Docker Compose**: Usually included with Docker Desktop
 
 #### Installation & Run
+
 ```bash
 # 1. Clone/download this repository
 # 2. Navigate to the project directory
@@ -48,10 +53,12 @@ That's it! No need to install Node.js, pnpm, or any other dependencies.
 If you prefer to run without Docker:
 
 ### Prerequisites
+
 - Node.js 24.3.0+ (or use `nvm use` to automatically use the correct version)
 - pnpm package manager
 
 ### Installation
+
 ```bash
 # Use the correct Node.js version (if using nvm)
 nvm use
@@ -112,6 +119,7 @@ This is a TypeScript monorepo with three main packages optimized for performance
 ## Troubleshooting
 
 ### Docker Issues
+
 ```bash
 # If container won't start, check logs:
 docker compose logs
@@ -126,11 +134,13 @@ docker compose up --build
 ```
 
 ### System Requirements
+
 - **Docker**: Version 20.10 or higher
 - **Available Memory**: 2GB minimum
 - **Ports**: 5173 and 8080 must be available
 
 ### Known Issues
+
 - **uWebSockets.js compatibility**: This project uses uWebSockets.js for high-performance WebSocket communication, which requires glibc (not musl). The Docker setup uses `node:22-slim` instead of Alpine to ensure compatibility.
 
 ## Project Structure

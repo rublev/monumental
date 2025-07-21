@@ -1,25 +1,12 @@
 {
   "extends": "@vue/tsconfig/tsconfig.dom.json",
-  "include": [
-    "env.d.ts",
-    "src/**/*",
-    "src/**/*.vue"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist"
-  ],
+  "include": ["env.d.ts", "src/**/*", "src/**/*.vue"],
+  "exclude": ["node_modules", "dist"],
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@/*": [
-        "./src/*"
-      ]
+      "@/*": ["./src/*"]
     },
-    "lib": [
-      "ES2017",
-      "DOM",
-      "DOM.Iterable"
-    ]
+    "lib": ["ES2017", "DOM", "DOM.Iterable"]
   }
 }
