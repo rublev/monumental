@@ -87,7 +87,7 @@ export const CRANE_CONFIG = {
   },
   HOME_POSITION: {
     x: 5,
-    y: 5,
+    y: 10,
     z: 5,
   },
   base: {

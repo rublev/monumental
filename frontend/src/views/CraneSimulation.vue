@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, reactive, onMounted, onUnmounted, watch } from 'vue'
+import { ref, reactive, onMounted, onUnmounted, watch, computed } from 'vue'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { useCrane, Crane } from '@/composables/useCrane'
@@ -7,6 +7,8 @@ import { useWebSocket } from '@/composables/useWebSocket'
 import { SCENE_CONFIG } from '@monumental/shared/config'
 import { CRANE_DEFAULTS } from '@monumental/shared/crane'
 import { ViewportGizmo } from 'three-viewport-gizmo'
+import { MapPin, Package, Settings, Gamepad2, PlayCircle, Activity } from 'lucide-vue-next'
+import { Slider } from '@/components/ui/slider'
 
 import { MessageType } from '@monumental/shared/websocket'
 import type {
@@ -15,6 +17,7 @@ import type {
   CraneStateUpdate,
   IncomingMessage,
 } from '@monumental/shared/websocket'
+import type { AnimationState } from '@monumental/shared/crane'
 
 // Use constants from shared package
 const SIMULATION_BOUNDS = SCENE_CONFIG.SIMULATION_BOUNDS
@@ -46,6 +49,13 @@ const settings = reactive({
   craneSpeed: CRANE_DEFAULTS.SPEED,
 })
 
+const craneSpeedSlider = computed({
+  get: () => [settings.craneSpeed],
+  set: (value: number[]) => {
+    settings.craneSpeed = value[0] || CRANE_DEFAULTS.SPEED
+  },
+})
+
 const stats = reactive({
   liftHeight: '0.0',
   shoulderAngle: '0.0',
@@ -54,8 +64,8 @@ const stats = reactive({
 })
 
 // Animation state (now handled by backend)
-const animationState = reactive({
-  mode: 'IDLE' as 'IDLE' | 'MOVING_TO_A' | 'GRIPPING' | 'MOVING_TO_B' | 'RELEASING' | 'RETURNING',
+const animationState = reactive<Pick<AnimationState, 'mode'>>({
+  mode: 'IDLE',
 })
 
 const homePosition = CRANE_DEFAULTS.HOME_POSITION
@@ -78,6 +88,7 @@ let dragPlane: THREE.Plane
 let dragOffset: THREE.Vector3
 let dragging: 'A' | 'B' | null = null
 let viewportGizmo: ViewportGizmo
+let resizeObserver: ResizeObserver | null = null
 
 // Manual control state
 const manualControl = reactive({
@@ -236,6 +247,27 @@ const initThree = () => {
   window.addEventListener('keydown', onKeyDown)
   window.addEventListener('keyup', onKeyUp)
 
+  // Set up ResizeObserver to handle container size changes
+  if (canvasContainer.value) {
+    resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const { width, height } = entry.contentRect
+        if (width > 0 && height > 0) {
+          // Update Three.js to match container dimensions
+          camera.aspect = width / height
+          camera.updateProjectionMatrix()
+          renderer.setSize(width, height)
+          renderer.setPixelRatio(window.devicePixelRatio)
+
+          if (viewportGizmo) {
+            viewportGizmo.update()
+          }
+        }
+      }
+    })
+    resizeObserver.observe(canvasContainer.value)
+  }
+
   // Initialize positions
   updatePositions()
   crane.solveIK(homePosition)
@@ -334,73 +366,110 @@ const updateSimStats = () => {
 }
 
 const createViewportGizmo = () => {
-  console.log('=== VIEWPORT GIZMO DEBUG ===')
-  console.log('canvasContainer.value:', canvasContainer.value)
-  console.log('camera:', camera)
-  console.log('renderer:', renderer)
-  console.log('controls:', controls)
+  if (!canvasContainer.value || !camera || !renderer) return
 
-  if (!canvasContainer.value) {
-    console.error('No canvas container available')
-    return
-  }
-
-  if (!camera) {
-    console.error('No camera available')
-    return
-  }
-
-  if (!renderer) {
-    console.error('No renderer available')
-    return
-  }
-
-  // Create viewport gizmo with proper configuration
   try {
-    console.log('Creating ViewportGizmo...')
     viewportGizmo = new ViewportGizmo(camera, renderer, {
       container: canvasContainer.value,
-      size: 100,
+      size: 128,
       placement: 'bottom-right',
-      offset: { right: 20, bottom: 20 },
+      offset: { right: 16, bottom: 16 },
       type: 'cube',
       animated: true,
       speed: 2,
+      background: {
+        enabled: true,
+        color: '#2d1b69',
+        opacity: 0.8,
+        hover: {
+          color: '#1e1548',
+          opacity: 0.9,
+        },
+      },
+      font: {
+        family: 'monospace',
+        weight: 'bold',
+      },
+      x: {
+        color: '#ff5f2e',
+        labelColor: '#2d1b69',
+        hover: {
+          color: '#e5471a',
+          labelColor: '#2d1b69',
+        },
+      },
+      nx: {
+        color: '#ff5f2e',
+        labelColor: '#2d1b69',
+        hover: {
+          color: '#e5471a',
+          labelColor: '#2d1b69',
+        },
+      },
+      y: {
+        color: '#ff5f2e',
+        labelColor: '#2d1b69',
+        hover: {
+          color: '#e5471a',
+          labelColor: '#2d1b69',
+        },
+      },
+      ny: {
+        color: '#ff5f2e',
+        labelColor: '#2d1b69',
+        hover: {
+          color: '#e5471a',
+          labelColor: '#2d1b69',
+        },
+      },
+      z: {
+        color: '#ff5f2e',
+        labelColor: '#2d1b69',
+        hover: {
+          color: '#e5471a',
+          labelColor: '#2d1b69',
+        },
+      },
+      nz: {
+        color: '#ff5f2e',
+        labelColor: '#2d1b69',
+        hover: {
+          color: '#e5471a',
+          labelColor: '#2d1b69',
+        },
+      },
+      corners: {
+        color: '#ff5f2e',
+        hover: {
+          color: '#e5471a',
+        },
+      },
     })
 
-    console.log('ViewportGizmo instance created:', viewportGizmo)
-    console.log('ViewportGizmo enabled:', viewportGizmo.enabled)
-
-    // Attach controls for automatic synchronization
+    // Attach controls for camera synchronization
     if (controls) {
       viewportGizmo.attachControls(controls)
-      console.log('Controls attached to gizmo')
-    } else {
-      console.warn('No controls available to attach')
     }
 
-    // Force an initial render
+    // Initial render
     viewportGizmo.render()
-    console.log('Initial render called')
-
-    console.log('Viewport gizmo setup complete')
   } catch (error) {
     console.error('Error creating viewport gizmo:', error)
-    if (error instanceof Error) {
-      console.error('Error details:', error.message)
-      console.error('Error stack:', error.stack)
-    }
   }
 }
 
 const onWindowResize = () => {
   if (!canvasContainer.value || !camera || !renderer) return
 
-  camera.aspect = canvasContainer.value.clientWidth / canvasContainer.value.clientHeight
-  camera.updateProjectionMatrix()
-  renderer.setSize(canvasContainer.value.clientWidth, canvasContainer.value.clientHeight)
+  const width = canvasContainer.value.clientWidth
+  const height = canvasContainer.value.clientHeight
 
-  // Update viewport gizmo on resize
+  // Update Three.js to match new dimensions
+  camera.aspect = width / height
+  camera.updateProjectionMatrix()
+  renderer.setSize(width, height)
+  renderer.setPixelRatio(window.devicePixelRatio)
+
   if (viewportGizmo) {
     viewportGizmo.update()
   }
@@ -747,164 +816,233 @@ onUnmounted(() => {
     viewportGizmo.dispose()
   }
 
+  // Disconnect ResizeObserver
+  if (resizeObserver) {
+    resizeObserver.disconnect()
+    resizeObserver = null
+  }
+
   // Disconnect WebSocket
   ws.disconnect()
 })
 </script>
 
 <template>
-  <div class="bg-gray-900 text-gray-50 h-screen w-screen overflow-hidden">
-    <!-- Monumental Logo -->
-    <div class="absolute top-4 left-4 z-10">
-      <img src="@/assets/monumental.svg" alt="Monumental" class="h-8 w-auto text-white" />
+  <div class="h-screen flex bg-gray-900 text-gray-50 overflow-hidden">
+    <!-- Sidebar -->
+    <div class="w-80 min-w-80 flex-shrink-0 bg-monumental-purple flex flex-col font-mono pb-5">
+      <!-- Header with Logo -->
+      <div class="pt-5 pr-5 pb-5 pl-5">
+        <img
+          src="@/assets/monumental.svg"
+          alt="Monumental"
+          class="w-full h-auto text-monumental-orange"
+          style="
+            filter: invert(47%) sepia(99%) saturate(2118%) hue-rotate(0deg) brightness(102%)
+              contrast(101%);
+          "
+        />
+      </div>
+
+      <!-- Main Content Area -->
+      <div class="flex-1 overflow-y-auto pt-0 pr-5 pb-0 pl-5 space-y-4 flex flex-col">
+        <!-- Combined Monitoring Display -->
+        <div class="bg-black/75 p-4 rounded-[10px]">
+          <!-- Live Stats -->
+          <div>
+            <h3 class="text-sm font-semibold mb-3 flex items-center gap-2 text-monumental-orange">
+              <Activity class="w-4 h-4" />
+              Live Solver Output
+            </h3>
+            <div class="text-xs space-y-2 text-gray-300">
+              <div class="flex justify-between">
+                <span>Lift Height:</span>
+                <span class="text-monumental-orange">{{ stats.liftHeight }}</span>
+              </div>
+              <div class="flex justify-between">
+                <span>Shoulder Yaw:</span>
+                <span class="text-monumental-orange">{{ stats.shoulderAngle }}°</span>
+              </div>
+              <div class="flex justify-between">
+                <span>Elbow Yaw:</span>
+                <span class="text-monumental-orange">{{ stats.elbowAngle }}°</span>
+              </div>
+              <div class="flex justify-between">
+                <span>Wrist Yaw:</span>
+                <span class="text-monumental-orange">{{ stats.wristAngle }}°</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Divider -->
+          <div class="-mx-4 my-4 border-t border-gray-600 opacity-30"></div>
+
+          <!-- Point A Display -->
+          <div>
+            <h4 class="text-sm font-semibold mb-3 flex items-center gap-2 text-green-400">
+              <MapPin class="w-4 h-4" />
+              Point A (Pickup)
+            </h4>
+            <div class="grid grid-cols-3 gap-2">
+              <div>
+                <label class="text-xs text-gray-300">X</label>
+                <input
+                  v-model.number="pointA.x"
+                  type="number"
+                  :step="SIMULATION_BOUNDS.STEP"
+                  class="w-full px-2 py-1 bg-gray-800 border border-gray-600 text-sm text-white focus:outline-none focus:border-green-400 focus:ring-1 focus:ring-green-400"
+                />
+              </div>
+              <div>
+                <label class="text-xs text-gray-300">Y</label>
+                <input
+                  v-model.number="pointA.y"
+                  type="number"
+                  :step="SIMULATION_BOUNDS.STEP"
+                  :min="0"
+                  class="w-full px-2 py-1 bg-gray-800 border border-gray-600 text-sm text-white focus:outline-none focus:border-green-400 focus:ring-1 focus:ring-green-400"
+                />
+              </div>
+              <div>
+                <label class="text-xs text-gray-300">Z</label>
+                <input
+                  v-model.number="pointA.z"
+                  type="number"
+                  :step="SIMULATION_BOUNDS.STEP"
+                  class="w-full px-2 py-1 bg-gray-800 border border-gray-600 text-sm text-white focus:outline-none focus:border-green-400 focus:ring-1 focus:ring-green-400"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- Divider -->
+          <div class="-mx-4 my-4 border-t border-gray-600 opacity-30"></div>
+
+          <!-- Point B Display -->
+          <div>
+            <h4 class="text-sm font-semibold mb-3 flex items-center gap-2 text-red-400">
+              <Package class="w-4 h-4" />
+              Point B (Drop-off)
+            </h4>
+            <div class="grid grid-cols-3 gap-2">
+              <div>
+                <label class="text-xs text-gray-300">X</label>
+                <input
+                  v-model.number="pointB.x"
+                  type="number"
+                  :step="SIMULATION_BOUNDS.STEP"
+                  class="w-full px-2 py-1 bg-gray-800 border border-gray-600 text-sm text-white focus:outline-none focus:border-red-400 focus:ring-1 focus:ring-red-400"
+                />
+              </div>
+              <div>
+                <label class="text-xs text-gray-300">Y</label>
+                <input
+                  v-model.number="pointB.y"
+                  type="number"
+                  :step="SIMULATION_BOUNDS.STEP"
+                  :min="0"
+                  class="w-full px-2 py-1 bg-gray-800 border border-gray-600 text-sm text-white focus:outline-none focus:border-red-400 focus:ring-1 focus:ring-red-400"
+                />
+              </div>
+              <div>
+                <label class="text-xs text-gray-300">Z</label>
+                <input
+                  v-model.number="pointB.z"
+                  type="number"
+                  :step="SIMULATION_BOUNDS.STEP"
+                  class="w-full px-2 py-1 bg-gray-800 border border-gray-600 text-sm text-white focus:outline-none focus:border-red-400 focus:ring-1 focus:ring-red-400"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Spacer to push controls to bottom -->
+        <div class="flex-1"></div>
+
+        <!-- Bottom Section - Controls -->
+        <div class="space-y-4">
+          <!-- Settings -->
+          <div class="bg-monumental-purple-light p-4">
+            <h4 class="text-sm font-semibold mb-3 flex items-center gap-2 text-monumental-orange">
+              <Settings class="w-4 h-4" />
+              Settings
+            </h4>
+            <div>
+              <label class="text-xs text-gray-300 block mb-2">Crane Speed (units/s)</label>
+              <div class="flex items-center gap-3">
+                <Slider v-model="craneSpeedSlider" :min="1" :max="50" :step="1" class="flex-1" />
+                <span class="text-sm text-monumental-orange font-mono w-8 text-right">{{
+                  settings.craneSpeed
+                }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Manual Control -->
+          <div class="bg-monumental-purple-light p-4">
+            <h4 class="text-sm font-semibold mb-3 flex items-center gap-2 text-monumental-orange">
+              <Gamepad2 class="w-4 h-4" />
+              Manual Control
+            </h4>
+            <label class="flex items-center space-x-3">
+              <input
+                v-model="manualControl.enabled"
+                type="checkbox"
+                :disabled="animationState.mode !== 'IDLE'"
+                class="w-4 h-4 text-monumental-orange bg-monumental-purple focus:ring-monumental-orange focus:ring-2 rounded"
+              />
+              <span class="text-sm font-medium text-white">Enable Manual Control</span>
+            </label>
+            <div v-if="manualControl.enabled" class="mt-3 text-xs text-gray-300 space-y-1">
+              <div><span class="text-monumental-orange">WASD:</span> Move end effector</div>
+              <div><span class="text-monumental-orange">Q/E:</span> Lift up/down</div>
+              <div><span class="text-monumental-orange">R/F:</span> Gripper open/close</div>
+            </div>
+          </div>
+
+          <!-- Cycle Control -->
+          <div class="bg-monumental-purple-light px-4 pt-4 pb-0">
+            <h4 class="text-sm font-semibold mb-3 flex items-center gap-2 text-monumental-orange">
+              <PlayCircle class="w-4 h-4" />
+              Cycle Control
+            </h4>
+            <button
+              @click="animationState.mode === 'IDLE' ? startCycle() : stopCycle()"
+              :disabled="manualControl.enabled"
+              class="w-full text-white font-bold py-4 px-6 mb-0 text-base transition-all duration-200 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 rounded-lg"
+              :class="
+                animationState.mode === 'IDLE'
+                  ? 'bg-black/50 hover:bg-black/70'
+                  : 'bg-red-600 hover:bg-red-700'
+              "
+            >
+              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                <path v-if="animationState.mode === 'IDLE'" d="M8 5v14l11-7z" />
+                <path v-else d="M6 6h12v12H6z" />
+              </svg>
+              {{ animationState.mode === 'IDLE' ? 'Start Cycle' : 'Stop Cycle' }}
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <div ref="canvasContainer" class="w-screen h-screen" style="cursor: grab"></div>
+    <!-- Main 3D Scene Area -->
+    <div class="flex-1 bg-monumental-purple pt-5 pr-5 pb-5 min-w-0">
+      <div class="w-full h-full rounded-[10px] border border-gray-600 overflow-hidden relative">
+        <div ref="canvasContainer" class="absolute inset-0" style="cursor: grab"></div>
 
-    <div
-      class="absolute bottom-4 left-4 bg-gray-900/50 backdrop-blur-sm p-4 rounded-lg shadow-xl w-80 border border-gray-600"
-    >
-      <!-- Live Stats Section -->
-      <div class="mb-4">
-        <h3 class="text-sm font-bold mb-2 text-center">Live Solver Output</h3>
-        <div class="text-xs font-mono space-y-1">
-          <div>Lift Height: {{ stats.liftHeight }}</div>
-          <div>Shoulder Yaw: {{ stats.shoulderAngle }}°</div>
-          <div>Elbow Yaw: {{ stats.elbowAngle }}°</div>
-          <div>Wrist Yaw: {{ stats.wristAngle }}°</div>
-        </div>
-        <div class="mt-2 flex items-center space-x-2 text-xs">
-          <div
-            class="w-2 h-2 rounded-full"
-            :class="isBackendConnected ? 'bg-green-500' : 'bg-red-500'"
-          ></div>
-          <span>{{ isBackendConnected ? 'Backend Connected' : 'Backend Disconnected' }}</span>
-        </div>
-      </div>
-      <!-- Controls Section -->
-      <h3 class="text-sm font-bold mb-3 text-center border-t border-gray-600 pt-4">
-        Crane Control
-      </h3>
-
-      <!-- Point A Controls -->
-      <div class="mb-4">
-        <h4 class="text-sm font-semibold mb-2 text-green-400">Point A (Pickup)</h4>
-        <div class="grid grid-cols-3 gap-2">
-          <div>
-            <label class="text-xs">X</label>
-            <input
-              v-model.number="pointA.x"
-              type="number"
-              :step="SIMULATION_BOUNDS.STEP"
-              class="w-full px-2 py-1 bg-gray-800 border border-gray-600 rounded text-sm"
-            />
-          </div>
-          <div>
-            <label class="text-xs">Y</label>
-            <input
-              v-model.number="pointA.y"
-              type="number"
-              :step="SIMULATION_BOUNDS.STEP"
-              :min="0"
-              class="w-full px-2 py-1 bg-gray-800 border border-gray-600 rounded text-sm"
-            />
-          </div>
-          <div>
-            <label class="text-xs">Z</label>
-            <input
-              v-model.number="pointA.z"
-              type="number"
-              :step="SIMULATION_BOUNDS.STEP"
-              class="w-full px-2 py-1 bg-gray-800 border border-gray-600 rounded text-sm"
-            />
-          </div>
-        </div>
-      </div>
-
-      <!-- Point B Controls -->
-      <div class="mb-4">
-        <h4 class="text-sm font-semibold mb-2 text-red-400">Point B (Drop-off)</h4>
-        <div class="grid grid-cols-3 gap-2">
-          <div>
-            <label class="text-xs">X</label>
-            <input
-              v-model.number="pointB.x"
-              type="number"
-              :step="SIMULATION_BOUNDS.STEP"
-              class="w-full px-2 py-1 bg-gray-800 border border-gray-600 rounded text-sm"
-            />
-          </div>
-          <div>
-            <label class="text-xs">Y</label>
-            <input
-              v-model.number="pointB.y"
-              type="number"
-              :step="SIMULATION_BOUNDS.STEP"
-              :min="0"
-              class="w-full px-2 py-1 bg-gray-800 border border-gray-600 rounded text-sm"
-            />
-          </div>
-          <div>
-            <label class="text-xs">Z</label>
-            <input
-              v-model.number="pointB.z"
-              type="number"
-              :step="SIMULATION_BOUNDS.STEP"
-              class="w-full px-2 py-1 bg-gray-800 border border-gray-600 rounded text-sm"
-            />
-          </div>
-        </div>
-      </div>
-
-      <!-- Settings -->
-      <div class="mb-4 space-y-2">
-        <div>
-          <label class="text-xs">Crane Speed (units/s)</label>
-          <input
-            v-model.number="settings.craneSpeed"
-            type="number"
-            min="1"
-            max="50"
-            step="1"
-            class="w-full px-2 py-1 bg-gray-800 border border-gray-600 rounded text-sm"
-          />
-        </div>
-      </div>
-
-      <!-- Manual Control Toggle -->
-      <div class="mb-4">
-        <label class="flex items-center space-x-2">
-          <input
-            v-model="manualControl.enabled"
-            type="checkbox"
-            :disabled="animationState.mode !== 'IDLE'"
-            class="w-4 h-4 text-blue-600 bg-gray-800 border-gray-600 rounded focus:ring-blue-500"
-          />
-          <span class="text-sm font-medium">Manual Control (WASD + Q/E)</span>
-        </label>
-        <div v-if="manualControl.enabled" class="mt-2 text-xs text-gray-400">
-          <div>WASD: Move end effector</div>
-          <div>Q/E: Lift up/down</div>
-          <div>R/F: Gripper open/close</div>
-        </div>
-      </div>
-
-      <!-- Start/Stop Buttons -->
-      <div class="flex gap-2">
-        <button
-          @click="startCycle"
-          :disabled="animationState.mode !== 'IDLE' || manualControl.enabled"
-          class="flex-1 bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        <!-- Backend Status Badge -->
+        <div
+          class="absolute bottom-4 left-4 px-4 py-2 text-sm font-mono shadow-lg z-10 bg-gray-900 border border-gray-600 rounded-md"
         >
-          {{ animationState.mode === 'IDLE' ? 'Start Cycle' : 'Running...' }}
-        </button>
-        <button
-          @click="stopCycle"
-          :disabled="animationState.mode === 'IDLE' || manualControl.enabled"
-          class="flex-1 bg-red-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          Stop Cycle
-        </button>
+          <span
+            class="inline-block w-2 h-2 rounded-full mr-2"
+            :class="isBackendConnected ? 'bg-green-400' : 'bg-red-400'"
+          ></span>
+          Backend {{ isBackendConnected ? 'Connected' : 'Disconnected' }}
+        </div>
       </div>
     </div>
   </div>
