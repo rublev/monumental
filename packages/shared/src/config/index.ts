@@ -70,7 +70,7 @@ export const SCENE_CONFIG = {
       height: 8,
     },
   },
-};
+}
 
 // Crane configuration
 export const CRANE_CONFIG = {
@@ -150,7 +150,7 @@ export const CRANE_CONFIG = {
     target: 0xef4444,
     brick: 0xcc4400,
   },
-};
+}
 
 // WebSocket configuration
 export const WS_CONFIG = {
@@ -162,7 +162,7 @@ export const WS_CONFIG = {
   reconnectInterval: 1000,
   reconnectAttempts: 5,
   connectionTimeout: 10000,
-};
+}
 
 // Physics configuration
 export const PHYSICS_CONFIG = {
@@ -177,4 +177,4 @@ export const PHYSICS_CONFIG = {
     y: 50,
     z: 50,
   },
-};
+}

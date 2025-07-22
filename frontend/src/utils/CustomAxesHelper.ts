@@ -18,7 +18,7 @@ export class CustomAxesHelper extends THREE.Group {
     // X arrow cone
     const xCone = new THREE.Mesh(
       new THREE.ConeGeometry(0.5, 2, 20),
-      new THREE.MeshBasicMaterial({ color: 0xff0000 }),
+      new THREE.MeshBasicMaterial({ color: 0xff0000 })
     )
     xCone.position.x = axisLength
     xCone.rotation.z = -Math.PI / 2
@@ -34,7 +34,7 @@ export class CustomAxesHelper extends THREE.Group {
     // Y arrow cone
     const yCone = new THREE.Mesh(
       new THREE.ConeGeometry(0.5, 2, 20),
-      new THREE.MeshBasicMaterial({ color: 0x00ff00 }),
+      new THREE.MeshBasicMaterial({ color: 0x00ff00 })
     )
     yCone.position.y = axisLength
     this.add(yCone)
@@ -50,7 +50,7 @@ export class CustomAxesHelper extends THREE.Group {
     // Z arrow cone
     const zCone = new THREE.Mesh(
       new THREE.ConeGeometry(0.5, 2, 20),
-      new THREE.MeshBasicMaterial({ color: 0x0000ff }),
+      new THREE.MeshBasicMaterial({ color: 0x0000ff })
     )
     zCone.position.z = axisLength
     zCone.rotation.x = Math.PI / 2
@@ -93,7 +93,7 @@ export class CustomAxesHelper extends THREE.Group {
     // Add origin sphere
     const originSphere = new THREE.Mesh(
       new THREE.SphereGeometry(1, 16, 16),
-      new THREE.MeshBasicMaterial({ color: 0xffffff }),
+      new THREE.MeshBasicMaterial({ color: 0xffffff })
     )
     this.add(originSphere)
   }

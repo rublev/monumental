@@ -190,7 +190,7 @@ export function useWebSocket(config: Partial<WebSocketConfig> = {}) {
     metrics.value.reconnectAttempts++
 
     console.log(
-      `[WebSocket] Scheduling reconnect in ${currentReconnectInterval}ms (attempt ${metrics.value.reconnectAttempts}/${wsConfig.reconnectAttempts})`,
+      `[WebSocket] Scheduling reconnect in ${currentReconnectInterval}ms (attempt ${metrics.value.reconnectAttempts}/${wsConfig.reconnectAttempts})`
     )
 
     reconnectTimeoutId = window.setTimeout(() => {
@@ -198,7 +198,7 @@ export function useWebSocket(config: Partial<WebSocketConfig> = {}) {
       // Exponential backoff with jitter
       currentReconnectInterval = Math.min(
         (currentReconnectInterval || 1000) * 2 + Math.random() * 1000,
-        30000, // Cap at 30 seconds
+        30000 // Cap at 30 seconds
       )
     }, currentReconnectInterval)
   }
@@ -332,7 +332,7 @@ export function useWebSocket(config: Partial<WebSocketConfig> = {}) {
   // Send message to server (with queueing support)
   function sendMessage(
     data: Omit<BaseMessage, 'timestamp' | 'sequence'> | Record<string, unknown>,
-    options: { queue?: boolean } = { queue: true },
+    options: { queue?: boolean } = { queue: true }
   ): boolean {
     const message: OutgoingMessage = {
       timestamp: Date.now(),

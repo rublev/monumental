@@ -18,5 +18,5 @@ export default defineConfigWithVueTs(
 
   pluginVue.configs['flat/essential'],
   vueTsConfigs.recommended,
-  skipFormatting,
+  skipFormatting
 )

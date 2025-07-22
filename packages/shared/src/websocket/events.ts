@@ -5,8 +5,8 @@
  * for the crane control system.
  */
 
-import type { BaseMessage, MessageType } from './types';
-import type { CraneState } from '../crane/types';
+import type { BaseMessage, MessageType } from './types'
+import type { CraneState } from '../crane/types'
 
 // =============================================================================
 // FRONTEND -> BACKEND EVENTS
@@ -17,20 +17,20 @@ import type { CraneState } from '../crane/types';
  * or height control keys. These provide direct actuator control.
  */
 export interface ManualControlCommand extends BaseMessage {
-  type: MessageType.MANUAL_CONTROL;
+  type: MessageType.MANUAL_CONTROL
   command: {
     // WASD controls for end actuator/gripper movement
     // W/S: Forward/backward movement
     // A/D: Left/right movement
-    endActuatorX?: number; // -1 to 1 for left/right
-    endActuatorY?: number; // -1 to 1 for forward/backward
+    endActuatorX?: number // -1 to 1 for left/right
+    endActuatorY?: number // -1 to 1 for forward/backward
 
     // Height controls for lift (e.g., Q/E keys)
-    liftDirection?: number; // -1 for down, 1 for up, 0 for stop
+    liftDirection?: number // -1 for down, 1 for up, 0 for stop
 
     // Optional gripper control
-    gripperAction?: 'open' | 'close' | 'stop';
-  };
+    gripperAction?: 'open' | 'close' | 'stop'
+  }
 }
 
 /**
@@ -38,33 +38,33 @@ export interface ManualControlCommand extends BaseMessage {
  * after setting A and B points. Backend will begin automated movement.
  */
 export interface StartCycleCommand extends BaseMessage {
-  type: MessageType.START_CYCLE;
+  type: MessageType.START_CYCLE
   command: {
-    pointA: { x: number; y: number; z: number };
-    pointB: { x: number; y: number; z: number };
-    speed?: number; // Optional speed multiplier
-  };
+    pointA: { x: number; y: number; z: number }
+    pointB: { x: number; y: number; z: number }
+    speed?: number // Optional speed multiplier
+  }
 }
 
 /**
  * Stop cycle command to halt automated movement
  */
 export interface StopCycleCommand extends BaseMessage {
-  type: MessageType.STOP_CYCLE;
+  type: MessageType.STOP_CYCLE
 }
 
 /**
  * Emergency stop command for immediate halt of all movement
  */
 export interface EmergencyStopCommand extends BaseMessage {
-  type: MessageType.EMERGENCY_STOP;
+  type: MessageType.EMERGENCY_STOP
 }
 
 /**
  * Request current crane state (for initialization or sync)
  */
 export interface StateRequestCommand extends BaseMessage {
-  type: MessageType.STATE_REQUEST;
+  type: MessageType.STATE_REQUEST
 }
 
 // =============================================================================
@@ -76,55 +76,55 @@ export interface StateRequestCommand extends BaseMessage {
  * Contains current actuator positions and movement status
  */
 export interface CraneStateUpdate extends BaseMessage {
-  type: MessageType.STATE_UPDATE;
-  state: CraneState;
+  type: MessageType.STATE_UPDATE
+  state: CraneState
   cycleProgress?: {
-    isActive: boolean;
-    currentPhase: 'moving_to_a' | 'at_a' | 'moving_to_b' | 'at_b' | 'idle';
-    progressPercent: number;
-    estimatedTimeRemaining: number;
-  };
+    isActive: boolean
+    currentPhase: 'moving_to_a' | 'at_a' | 'moving_to_b' | 'at_b' | 'idle'
+    progressPercent: number
+    estimatedTimeRemaining: number
+  }
 }
 
 /**
  * Cycle completion notification sent when automated cycle finishes
  */
 export interface CycleCompleteNotification extends BaseMessage {
-  type: MessageType.CYCLE_COMPLETE;
+  type: MessageType.CYCLE_COMPLETE
   details: {
-    totalTime: number;
-    cycleCount: number;
-    finalPosition: { x: number; y: number; z: number };
-  };
+    totalTime: number
+    cycleCount: number
+    finalPosition: { x: number; y: number; z: number }
+  }
 }
 
 /**
  * Error notifications for invalid commands or system errors
  */
 export interface ErrorNotification extends BaseMessage {
-  type: MessageType.ERROR;
+  type: MessageType.ERROR
   error: {
-    code: string;
-    message: string;
-    details?: any;
-  };
+    code: string
+    message: string
+    details?: any
+  }
 }
 
 /**
  * System status updates (e.g., connection established, limits reached)
  */
 export interface SystemStatusUpdate extends BaseMessage {
-  type: MessageType.SYSTEM_STATUS;
+  type: MessageType.SYSTEM_STATUS
   status: {
-    isConnected: boolean;
+    isConnected: boolean
     limitsReached?: {
-      swing?: boolean;
-      lift?: boolean;
-      elbow?: boolean;
-      wrist?: boolean;
-    };
-    calibrationStatus?: 'calibrated' | 'calibrating' | 'uncalibrated';
-  };
+      swing?: boolean
+      lift?: boolean
+      elbow?: boolean
+      wrist?: boolean
+    }
+    calibrationStatus?: 'calibrated' | 'calibrating' | 'uncalibrated'
+  }
 }
 
 // =============================================================================
@@ -166,14 +166,12 @@ export type FrontendToBackendMessage =
   | StartCycleCommand
   | StopCycleCommand
   | EmergencyStopCommand
-  | StateRequestCommand;
+  | StateRequestCommand
 
 export type BackendToFrontendMessage =
   | CraneStateUpdate
   | CycleCompleteNotification
   | ErrorNotification
-  | SystemStatusUpdate;
+  | SystemStatusUpdate
 
-export type AllWebSocketMessages =
-  | FrontendToBackendMessage
-  | BackendToFrontendMessage;
+export type AllWebSocketMessages = FrontendToBackendMessage | BackendToFrontendMessage

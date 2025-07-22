@@ -90,9 +90,9 @@ export class Crane {
         CRANE_CONFIG.BASE.RADIUS,
         CRANE_CONFIG.BASE.RADIUS,
         CRANE_CONFIG.BASE.HEIGHT,
-        CRANE_CONFIG.BASE.SEGMENTS,
+        CRANE_CONFIG.BASE.SEGMENTS
       ),
-      materials.base,
+      materials.base
     )
     basePlate.position.y = CRANE_CONFIG.BASE.HEIGHT / 2
     this.base.add(basePlate)
@@ -129,7 +129,7 @@ export class Crane {
 
     const shoulderLift = new THREE.Mesh(
       new THREE.BoxGeometry(liftWidth, liftHeight, liftDepth),
-      materials.lift,
+      materials.lift
     )
     shoulderLift.castShadow = true
     shoulderLift.receiveShadow = true
@@ -139,7 +139,7 @@ export class Crane {
 
     const upperArm = new THREE.Mesh(
       new THREE.BoxGeometry(this.upperArmLength, 0.4, 0.6),
-      materials.arm,
+      materials.arm
     )
     upperArm.position.x = this.upperArmLength / 2
     this.shoulderJoint.add(upperArm)
@@ -151,7 +151,7 @@ export class Crane {
 
     const lowerArm = new THREE.Mesh(
       new THREE.BoxGeometry(this.lowerArmLength, 0.4, 0.6),
-      materials.arm,
+      materials.arm
     )
     lowerArm.position.x = this.lowerArmLength / 2
     this.elbowJoint.add(lowerArm)
@@ -163,7 +163,7 @@ export class Crane {
 
     const wristExt = new THREE.Mesh(
       new THREE.BoxGeometry(0.4, this.wristExtLength, 0.4),
-      materials.base,
+      materials.base
     )
     wristExt.position.y = -this.wristExtLength / 2
     this.wristJoint.add(wristExt)
@@ -214,7 +214,7 @@ export class Crane {
   public calculatePath(
     startPoint: THREE.Vector3,
     endPoint: THREE.Vector3,
-    pathSteps: number = 200,
+    pathSteps: number = 200
   ): THREE.Vector3[] {
     const pathPoints: THREE.Vector3[] = []
     const pA_2d = new THREE.Vector2(startPoint.x, startPoint.z)

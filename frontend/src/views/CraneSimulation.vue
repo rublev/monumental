@@ -103,7 +103,7 @@ const initThree = () => {
     CAMERA_CONFIG.FOV,
     canvasContainer.value.clientWidth / canvasContainer.value.clientHeight,
     CAMERA_CONFIG.NEAR,
-    CAMERA_CONFIG.FAR,
+    CAMERA_CONFIG.FAR
   )
   camera.position.set(CAMERA_CONFIG.POSITION.x, CAMERA_CONFIG.POSITION.y, CAMERA_CONFIG.POSITION.z)
   camera.lookAt(CAMERA_CONFIG.LOOK_AT.x, CAMERA_CONFIG.LOOK_AT.y, CAMERA_CONFIG.LOOK_AT.z)
@@ -116,18 +116,18 @@ const initThree = () => {
   // Lighting
   const ambientLight = new THREE.AmbientLight(
     LIGHTING_CONFIG.AMBIENT.color,
-    LIGHTING_CONFIG.AMBIENT.intensity,
+    LIGHTING_CONFIG.AMBIENT.intensity
   )
   scene.add(ambientLight)
 
   const directionalLight = new THREE.DirectionalLight(
     LIGHTING_CONFIG.DIRECTIONAL.color,
-    LIGHTING_CONFIG.DIRECTIONAL.intensity,
+    LIGHTING_CONFIG.DIRECTIONAL.intensity
   )
   directionalLight.position.set(
     LIGHTING_CONFIG.DIRECTIONAL.position.x,
     LIGHTING_CONFIG.DIRECTIONAL.position.y,
-    LIGHTING_CONFIG.DIRECTIONAL.position.z,
+    LIGHTING_CONFIG.DIRECTIONAL.position.z
   )
   scene.add(directionalLight)
 
@@ -138,7 +138,7 @@ const initThree = () => {
   // Ground and grid
   const ground = new THREE.Mesh(
     new THREE.PlaneGeometry(ENVIRONMENT_CONFIG.GROUND_SIZE, ENVIRONMENT_CONFIG.GROUND_SIZE),
-    new THREE.MeshStandardMaterial({ color: ENVIRONMENT_CONFIG.GROUND_COLOR }),
+    new THREE.MeshStandardMaterial({ color: ENVIRONMENT_CONFIG.GROUND_COLOR })
   )
   ground.rotation.x = -Math.PI / 2
   scene.add(ground)
@@ -147,7 +147,7 @@ const initThree = () => {
     ENVIRONMENT_CONFIG.GRID_SIZE,
     ENVIRONMENT_CONFIG.GRID_SIZE,
     ENVIRONMENT_CONFIG.GRID_COLOR,
-    ENVIRONMENT_CONFIG.GRID_COLOR,
+    ENVIRONMENT_CONFIG.GRID_COLOR
   )
   scene.add(grid)
 
@@ -164,14 +164,14 @@ const initThree = () => {
       50, // height
       32,
       1,
-      true,
+      true
     ),
     new THREE.MeshStandardMaterial({
       color: 0x3b82f6,
       transparent: true,
       opacity: 0.15,
       side: THREE.DoubleSide,
-    }),
+    })
   )
   obstacleCylinder.position.y = 25
   scene.add(obstacleCylinder)
@@ -179,7 +179,7 @@ const initThree = () => {
   // Path line for visualization
   pathLine = new THREE.Line(
     new THREE.BufferGeometry(),
-    new THREE.LineBasicMaterial({ color: 0x0ea5e9 }),
+    new THREE.LineBasicMaterial({ color: 0x0ea5e9 })
   )
   scene.add(pathLine)
 
@@ -190,7 +190,7 @@ const initThree = () => {
       color: 0x16a34a,
       transparent: true,
       opacity: 0.7,
-    }),
+    })
   )
   scene.add(handleA)
 
@@ -201,7 +201,7 @@ const initThree = () => {
       color: 0xef4444,
       transparent: true,
       opacity: 0.7,
-    }),
+    })
   )
   scene.add(handleB)
 
@@ -212,7 +212,7 @@ const initThree = () => {
       color: 0xf97316,
       emissive: 0xf97316,
       emissiveIntensity: 0.5,
-    }),
+    })
   )
   scene.add(payload)
 
@@ -264,7 +264,7 @@ const updatePositions = () => {
     const homeToA = crane.calculatePath(
       crane.getEndEffectorPosition(),
       startPoint,
-      settings.pathSteps,
+      settings.pathSteps
     )
     startPoint = crane.findMaxReachablePoint(homeToA)
   }
@@ -387,13 +387,13 @@ const onPointerDown = (event: PointerEvent) => {
 
     dragPlane.setFromNormalAndCoplanarPoint(
       camera.getWorldDirection(dragPlane.normal),
-      new THREE.Vector3(pointToDrag.x, pointToDrag.y, pointToDrag.z),
+      new THREE.Vector3(pointToDrag.x, pointToDrag.y, pointToDrag.z)
     )
     const intersectionPoint = new THREE.Vector3()
     raycaster.ray.intersectPlane(dragPlane, intersectionPoint)
     dragOffset.subVectors(
       intersectionPoint,
-      new THREE.Vector3(pointToDrag.x, pointToDrag.y, pointToDrag.z),
+      new THREE.Vector3(pointToDrag.x, pointToDrag.y, pointToDrag.z)
     )
     if (canvasContainer.value) {
       canvasContainer.value.style.cursor = 'grabbing'
@@ -599,7 +599,7 @@ const updateCraneFromBackendState = (state: {
       payload.position.set(
         state.payloadPosition.x,
         state.payloadPosition.y,
-        state.payloadPosition.z,
+        state.payloadPosition.z
       )
     }
   } else {

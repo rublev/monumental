@@ -1,36 +1,36 @@
-import uWS from 'uWebSockets.js';
-import { CraneController } from './crane/CraneController.js';
-import { MessageType } from '@monumental/shared/websocket';
+import uWS from 'uWebSockets.js'
+import { CraneController } from './crane/CraneController.js'
+import { MessageType } from '@monumental/shared/websocket'
 import type {
   ManualControlCommand,
   StartCycleCommand,
   BackendToFrontendMessage,
-} from '@monumental/shared/websocket';
-import { readFileSync, existsSync } from 'fs';
-import { join } from 'path';
+} from '@monumental/shared/websocket'
+import { readFileSync, existsSync } from 'fs'
+import { join } from 'path'
 
 interface WebSocketData {
-  id: string;
-  connectedAt: Date;
+  id: string
+  connectedAt: Date
 }
 
-const PORT = process.env.PORT ? parseInt(process.env.PORT) : 8080;
+const PORT = process.env.PORT ? parseInt(process.env.PORT) : 8080
 
-const app = uWS.App();
-const craneController = new CraneController();
+const app = uWS.App()
+const craneController = new CraneController()
 
 // Store active connections for broadcasting
-const activeConnections = new Set<uWS.WebSocket<WebSocketData>>();
+const activeConnections = new Set<uWS.WebSocket<WebSocketData>>()
 
 // Set up crane controller to broadcast to all connected clients
 craneController.setBroadcastCallback((message: BackendToFrontendMessage) => {
-  const messageStr = JSON.stringify(message);
+  const messageStr = JSON.stringify(message)
   activeConnections.forEach((ws) => {
     if (ws.getBufferedAmount() === 0) {
-      ws.send(messageStr, false);
+      ws.send(messageStr, false)
     }
-  });
-});
+  })
+})
 
 // WebSocket endpoint
 app.ws<WebSocketData>('/ws', {
@@ -38,17 +38,15 @@ app.ws<WebSocketData>('/ws', {
   message: (ws, message) => {
     try {
       // Convert ArrayBuffer to string
-      const messageStr = Buffer.from(message).toString();
-      console.log(
-        `[WS] Received message from ${ws.getUserData().id}: ${messageStr}`
-      );
+      const messageStr = Buffer.from(message).toString()
+      console.log(`[WS] Received message from ${ws.getUserData().id}: ${messageStr}`)
 
       // Parse JSON message
-      let parsedMessage: { type: string; [key: string]: any };
+      let parsedMessage: { type: string; [key: string]: any }
       try {
-        parsedMessage = JSON.parse(messageStr);
+        parsedMessage = JSON.parse(messageStr)
       } catch (e) {
-        console.error('[WS] Invalid JSON received:', e);
+        console.error('[WS] Invalid JSON received:', e)
         ws.send(
           JSON.stringify({
             type: MessageType.ERROR,
@@ -60,33 +58,31 @@ app.ws<WebSocketData>('/ws', {
             },
           }),
           false
-        );
-        return;
+        )
+        return
       }
 
       // Handle different message types
       switch (parsedMessage.type) {
         case MessageType.MANUAL_CONTROL:
-          craneController.handleManualControl(
-            parsedMessage as ManualControlCommand
-          );
-          break;
+          craneController.handleManualControl(parsedMessage as ManualControlCommand)
+          break
 
         case MessageType.START_CYCLE:
-          craneController.startCycle(parsedMessage as StartCycleCommand);
-          break;
+          craneController.startCycle(parsedMessage as StartCycleCommand)
+          break
 
         case MessageType.STOP_CYCLE:
-          craneController.stopCycle();
-          break;
+          craneController.stopCycle()
+          break
 
         case MessageType.EMERGENCY_STOP:
-          craneController.emergencyStop();
-          break;
+          craneController.emergencyStop()
+          break
 
         case MessageType.STATE_REQUEST:
           // Send current state immediately
-          const currentState = craneController.getCurrentState();
+          const currentState = craneController.getCurrentState()
           ws.send(
             JSON.stringify({
               type: MessageType.STATE_UPDATE,
@@ -108,11 +104,11 @@ app.ws<WebSocketData>('/ws', {
               cycleProgress: currentState.cycleProgress,
             }),
             false
-          );
-          break;
+          )
+          break
 
         default:
-          console.warn('[WS] Unknown message type:', parsedMessage.type);
+          console.warn('[WS] Unknown message type:', parsedMessage.type)
           ws.send(
             JSON.stringify({
               type: MessageType.ERROR,
@@ -124,10 +120,10 @@ app.ws<WebSocketData>('/ws', {
               },
             }),
             false
-          );
+          )
       }
     } catch (error) {
-      console.error('[WS] Error handling message:', error);
+      console.error('[WS] Error handling message:', error)
       ws.send(
         JSON.stringify({
           type: MessageType.ERROR,
@@ -139,25 +135,25 @@ app.ws<WebSocketData>('/ws', {
           },
         }),
         false
-      );
+      )
     }
   },
 
   // Handle new connections
   open: (ws) => {
-    const clientId = `client_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+    const clientId = `client_${Date.now()}_${Math.random().toString(36).substring(7)}`
     const userData: WebSocketData = {
       id: clientId,
       connectedAt: new Date(),
-    };
+    }
 
-    ws.getUserData().id = clientId;
-    ws.getUserData().connectedAt = userData.connectedAt;
+    ws.getUserData().id = clientId
+    ws.getUserData().connectedAt = userData.connectedAt
 
     // Add to active connections
-    activeConnections.add(ws);
+    activeConnections.add(ws)
 
-    console.log(`[WS] Client connected: ${clientId}`);
+    console.log(`[WS] Client connected: ${clientId}`)
 
     // Send welcome message
     ws.send(
@@ -169,10 +165,10 @@ app.ws<WebSocketData>('/ws', {
         message: 'Connected to Crane WebSocket server',
       }),
       false
-    );
+    )
 
     // Send initial crane state
-    const currentState = craneController.getCurrentState();
+    const currentState = craneController.getCurrentState()
     ws.send(
       JSON.stringify({
         type: MessageType.STATE_UPDATE,
@@ -194,32 +190,32 @@ app.ws<WebSocketData>('/ws', {
         cycleProgress: currentState.cycleProgress,
       }),
       false
-    );
+    )
   },
 
   // Handle disconnections
   close: (ws, code, message) => {
-    const clientId = ws.getUserData().id;
+    const clientId = ws.getUserData().id
 
     // Remove from active connections
-    activeConnections.delete(ws);
+    activeConnections.delete(ws)
 
     console.log(
       `[WS] Client disconnected: ${clientId}, code: ${code}, message: ${Buffer.from(message).toString()}`
-    );
+    )
   },
 
   // Configuration
   compression: uWS.DEDICATED_COMPRESSOR_3KB,
   maxPayloadLength: 16 * 1024 * 1024, // 16MB
   idleTimeout: 120, // 2 minutes
-});
+})
 
 // Serve static frontend files
-const frontendPath = join(process.cwd(), 'frontend/dist');
+const frontendPath = join(process.cwd(), 'frontend/dist')
 
 app.get('/*', (res, req) => {
-  const url = req.getUrl();
+  const url = req.getUrl()
 
   // Health check endpoint
   if (url === '/health') {
@@ -231,91 +227,85 @@ app.get('/*', (res, req) => {
           status: 'ok',
           timestamp: new Date().toISOString(),
         })
-      );
-    return;
+      )
+    return
   }
 
   // Try to serve static files
-  let filePath = join(frontendPath, url === '/' ? 'index.html' : url);
+  let filePath = join(frontendPath, url === '/' ? 'index.html' : url)
 
   if (!existsSync(filePath)) {
     // For SPA routing, fallback to index.html
-    filePath = join(frontendPath, 'index.html');
+    filePath = join(frontendPath, 'index.html')
   }
 
   if (existsSync(filePath)) {
     try {
-      const content = readFileSync(filePath);
-      const ext = filePath.split('.').pop()?.toLowerCase();
+      const content = readFileSync(filePath)
+      const ext = filePath.split('.').pop()?.toLowerCase()
 
-      let contentType = 'text/plain';
+      let contentType = 'text/plain'
       switch (ext) {
         case 'html':
-          contentType = 'text/html';
-          break;
+          contentType = 'text/html'
+          break
         case 'js':
-          contentType = 'application/javascript';
-          break;
+          contentType = 'application/javascript'
+          break
         case 'css':
-          contentType = 'text/css';
-          break;
+          contentType = 'text/css'
+          break
         case 'json':
-          contentType = 'application/json';
-          break;
+          contentType = 'application/json'
+          break
         case 'png':
-          contentType = 'image/png';
-          break;
+          contentType = 'image/png'
+          break
         case 'jpg':
         case 'jpeg':
-          contentType = 'image/jpeg';
-          break;
+          contentType = 'image/jpeg'
+          break
         case 'svg':
-          contentType = 'image/svg+xml';
-          break;
+          contentType = 'image/svg+xml'
+          break
         case 'ico':
-          contentType = 'image/x-icon';
-          break;
+          contentType = 'image/x-icon'
+          break
       }
 
-      res
-        .writeStatus('200 OK')
-        .writeHeader('Content-Type', contentType)
-        .end(content);
+      res.writeStatus('200 OK').writeHeader('Content-Type', contentType).end(content)
     } catch (error) {
       res
         .writeStatus('500 Internal Server Error')
         .writeHeader('Content-Type', 'text/plain')
-        .end('Internal Server Error');
+        .end('Internal Server Error')
     }
   } else {
-    res
-      .writeStatus('404 Not Found')
-      .writeHeader('Content-Type', 'text/plain')
-      .end('Not Found');
+    res.writeStatus('404 Not Found').writeHeader('Content-Type', 'text/plain').end('Not Found')
   }
-});
+})
 
 // Start the server
 app.listen(PORT, (token) => {
   if (token) {
-    console.log(`🚀 WebSocket server listening on port ${PORT}`);
-    console.log(`   - WebSocket endpoint: ws://localhost:${PORT}/ws`);
-    console.log(`   - Health check: http://localhost:${PORT}/health`);
+    console.log(`🚀 WebSocket server listening on port ${PORT}`)
+    console.log(`   - WebSocket endpoint: ws://localhost:${PORT}/ws`)
+    console.log(`   - Health check: http://localhost:${PORT}/health`)
   } else {
-    console.error(`Failed to listen on port ${PORT}`);
-    process.exit(1);
+    console.error(`Failed to listen on port ${PORT}`)
+    process.exit(1)
   }
-});
+})
 
 // Graceful shutdown
 process.on('SIGINT', () => {
-  console.log('\n👋 Shutting down server...');
-  craneController.destroy();
-  process.exit(0);
-});
+  console.log('\n👋 Shutting down server...')
+  craneController.destroy()
+  process.exit(0)
+})
 
 process.on('SIGTERM', () => {
-  console.log('\n👋 Shutting down server...');
-  craneController.destroy();
-  process.exit(0);
-});
+  console.log('\n👋 Shutting down server...')
+  craneController.destroy()
+  process.exit(0)
+})

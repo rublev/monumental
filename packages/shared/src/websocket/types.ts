@@ -3,12 +3,7 @@
  */
 
 // Connection state
-export type ConnectionState =
-  | 'connecting'
-  | 'connected'
-  | 'disconnected'
-  | 'error'
-  | 'reconnecting';
+export type ConnectionState = 'connecting' | 'connected' | 'disconnected' | 'error' | 'reconnecting'
 
 // Message types
 export enum MessageType {
@@ -27,38 +22,38 @@ export enum MessageType {
 
 // Base message interface
 export interface BaseMessage {
-  type: MessageType;
-  timestamp: number;
-  sequence: number;
-  clientId?: string;
+  type: MessageType
+  timestamp: number
+  sequence: number
+  clientId?: string
 }
 
 // WebSocket configuration
 export interface WebSocketConfig {
-  url: string;
-  maxReconnectAttempts?: number;
-  reconnectDelay?: number;
-  heartbeatInterval?: number;
-  reconnectInterval?: number;
-  reconnectAttempts?: number;
-  connectionTimeout?: number;
+  url: string
+  maxReconnectAttempts?: number
+  reconnectDelay?: number
+  heartbeatInterval?: number
+  reconnectInterval?: number
+  reconnectAttempts?: number
+  connectionTimeout?: number
 }
 
 // Connection metrics
 export interface ConnectionMetrics {
-  connectionCount: number;
-  lastConnected: number | null;
-  reconnectAttempts: number;
-  averageLatency: number;
-  messagesReceived: number;
-  messagesSent: number;
-  lastMessageAt: number | null;
-  connectedAt: number | null;
+  connectionCount: number
+  lastConnected: number | null
+  reconnectAttempts: number
+  averageLatency: number
+  messagesReceived: number
+  messagesSent: number
+  lastMessageAt: number | null
+  connectedAt: number | null
 }
 
 // Message unions
-export type IncomingMessage = BaseMessage;
-export type OutgoingMessage = BaseMessage;
+export type IncomingMessage = BaseMessage
+export type OutgoingMessage = BaseMessage
 
 // Default configuration
 export const DEFAULT_WEBSOCKET_CONFIG: WebSocketConfig = {
@@ -69,4 +64,4 @@ export const DEFAULT_WEBSOCKET_CONFIG: WebSocketConfig = {
   reconnectInterval: 1000,
   reconnectAttempts: 5,
   connectionTimeout: 10000, // 10 seconds
-};
+}
