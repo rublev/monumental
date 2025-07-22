@@ -84,8 +84,6 @@ export function useWebSocket(config: Partial<WebSocketConfig> = {}) {
         console.log(`[WebSocket] Received client ID: ${message.clientId}`)
       }
 
-      console.log('[WebSocket] Received message:', message)
-
       // Notify message handlers
       messageHandlers.forEach((handler) => {
         try {

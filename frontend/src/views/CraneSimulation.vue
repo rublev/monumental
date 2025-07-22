@@ -6,7 +6,8 @@ import { useCrane, Crane } from '@/composables/useCrane'
 import { useWebSocket } from '@/composables/useWebSocket'
 import { SCENE_CONFIG } from '@monumental/shared/config'
 import { CRANE_DEFAULTS } from '@monumental/shared/crane'
-import { CustomAxesHelper } from '@/utils/CustomAxesHelper'
+import { ViewportGizmo } from 'three-viewport-gizmo'
+
 import { MessageType } from '@monumental/shared/websocket'
 import type {
   ManualControlCommand,
@@ -65,7 +66,6 @@ let camera: THREE.PerspectiveCamera
 let renderer: THREE.WebGLRenderer
 let controls: OrbitControls
 let crane: Crane
-let axesHelper: CustomAxesHelper
 let animationId: number
 let obstacleCylinder: THREE.Mesh
 let pathLine: THREE.Line
@@ -77,6 +77,7 @@ let mouse: THREE.Vector2
 let dragPlane: THREE.Plane
 let dragOffset: THREE.Vector3
 let dragging: 'A' | 'B' | null = null
+let viewportGizmo: ViewportGizmo
 
 // Manual control state
 const manualControl = reactive({
@@ -216,15 +217,14 @@ const initThree = () => {
   )
   scene.add(payload)
 
-  // Coordinate axes helper
-  axesHelper = new CustomAxesHelper()
-  scene.add(axesHelper)
-
   // Raycaster for dragging
   raycaster = new THREE.Raycaster()
   mouse = new THREE.Vector2()
   dragPlane = new THREE.Plane()
   dragOffset = new THREE.Vector3()
+
+  // Create viewport gizmo
+  createViewportGizmo()
 
   // Event listeners for dragging
   renderer.domElement.addEventListener('pointerdown', onPointerDown)
@@ -333,12 +333,77 @@ const updateSimStats = () => {
   stats.wristAngle = craneStats.wristYaw.toFixed(1)
 }
 
+const createViewportGizmo = () => {
+  console.log('=== VIEWPORT GIZMO DEBUG ===')
+  console.log('canvasContainer.value:', canvasContainer.value)
+  console.log('camera:', camera)
+  console.log('renderer:', renderer)
+  console.log('controls:', controls)
+
+  if (!canvasContainer.value) {
+    console.error('No canvas container available')
+    return
+  }
+
+  if (!camera) {
+    console.error('No camera available')
+    return
+  }
+
+  if (!renderer) {
+    console.error('No renderer available')
+    return
+  }
+
+  // Create viewport gizmo with proper configuration
+  try {
+    console.log('Creating ViewportGizmo...')
+    viewportGizmo = new ViewportGizmo(camera, renderer, {
+      container: canvasContainer.value,
+      size: 100,
+      placement: 'bottom-right',
+      offset: { right: 20, bottom: 20 },
+      type: 'cube',
+      animated: true,
+      speed: 2,
+    })
+
+    console.log('ViewportGizmo instance created:', viewportGizmo)
+    console.log('ViewportGizmo enabled:', viewportGizmo.enabled)
+
+    // Attach controls for automatic synchronization
+    if (controls) {
+      viewportGizmo.attachControls(controls)
+      console.log('Controls attached to gizmo')
+    } else {
+      console.warn('No controls available to attach')
+    }
+
+    // Force an initial render
+    viewportGizmo.render()
+    console.log('Initial render called')
+
+    console.log('Viewport gizmo setup complete')
+  } catch (error) {
+    console.error('Error creating viewport gizmo:', error)
+    if (error instanceof Error) {
+      console.error('Error details:', error.message)
+      console.error('Error stack:', error.stack)
+    }
+  }
+}
+
 const onWindowResize = () => {
   if (!canvasContainer.value || !camera || !renderer) return
 
   camera.aspect = canvasContainer.value.clientWidth / canvasContainer.value.clientHeight
   camera.updateProjectionMatrix()
   renderer.setSize(canvasContainer.value.clientWidth, canvasContainer.value.clientHeight)
+
+  // Update viewport gizmo on resize
+  if (viewportGizmo) {
+    viewportGizmo.update()
+  }
 }
 
 const animate = () => {
@@ -363,6 +428,15 @@ const animate = () => {
 
   if (renderer && scene && camera) {
     renderer.render(scene, camera)
+  }
+
+  // Render viewport gizmo AFTER main scene
+  if (viewportGizmo) {
+    try {
+      viewportGizmo.render()
+    } catch (error) {
+      console.error('Error rendering viewport gizmo:', error)
+    }
   }
 }
 
@@ -669,6 +743,10 @@ onUnmounted(() => {
     renderer.dispose()
   }
 
+  if (viewportGizmo) {
+    viewportGizmo.dispose()
+  }
+
   // Disconnect WebSocket
   ws.disconnect()
 })
@@ -676,29 +754,37 @@ onUnmounted(() => {
 
 <template>
   <div class="bg-gray-900 text-gray-50 h-screen w-screen overflow-hidden">
+    <!-- Monumental Logo -->
+    <div class="absolute top-4 left-4 z-10">
+      <img src="@/assets/monumental.svg" alt="Monumental" class="h-8 w-auto text-white" />
+    </div>
+
     <div ref="canvasContainer" class="w-screen h-screen" style="cursor: grab"></div>
 
     <div
-      class="absolute bottom-4 left-4 bg-gray-900/50 backdrop-blur-sm p-3 rounded-md text-xs font-mono border border-gray-600"
+      class="absolute bottom-4 left-4 bg-gray-900/50 backdrop-blur-sm p-4 rounded-lg shadow-xl w-80 border border-gray-600"
     >
-      <strong>Live Solver Output:</strong><br />
-      Lift Height: {{ stats.liftHeight }}<br />
-      Shoulder Yaw: {{ stats.shoulderAngle }}°<br />
-      Elbow Yaw: {{ stats.elbowAngle }}°<br />
-      Wrist Yaw: {{ stats.wristAngle }}°<br />
-      <div class="mt-2 flex items-center space-x-2">
-        <div
-          class="w-2 h-2 rounded-full"
-          :class="isBackendConnected ? 'bg-green-500' : 'bg-red-500'"
-        ></div>
-        <span>{{ isBackendConnected ? 'Backend Connected' : 'Backend Disconnected' }}</span>
+      <!-- Live Stats Section -->
+      <div class="mb-4">
+        <h3 class="text-sm font-bold mb-2 text-center">Live Solver Output</h3>
+        <div class="text-xs font-mono space-y-1">
+          <div>Lift Height: {{ stats.liftHeight }}</div>
+          <div>Shoulder Yaw: {{ stats.shoulderAngle }}°</div>
+          <div>Elbow Yaw: {{ stats.elbowAngle }}°</div>
+          <div>Wrist Yaw: {{ stats.wristAngle }}°</div>
+        </div>
+        <div class="mt-2 flex items-center space-x-2 text-xs">
+          <div
+            class="w-2 h-2 rounded-full"
+            :class="isBackendConnected ? 'bg-green-500' : 'bg-red-500'"
+          ></div>
+          <span>{{ isBackendConnected ? 'Backend Connected' : 'Backend Disconnected' }}</span>
+        </div>
       </div>
-    </div>
-
-    <div
-      class="absolute bottom-4 right-4 bg-gray-900/50 backdrop-blur-sm p-4 rounded-lg shadow-xl w-80 border border-gray-600"
-    >
-      <h3 class="text-md font-bold mb-3 text-center">Crane Control</h3>
+      <!-- Controls Section -->
+      <h3 class="text-sm font-bold mb-3 text-center border-t border-gray-600 pt-4">
+        Crane Control
+      </h3>
 
       <!-- Point A Controls -->
       <div class="mb-4">
