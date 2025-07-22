@@ -82,6 +82,14 @@ export const CRANE_CONFIG = {
     height: 1,
     color: 0xcccccc,
   },
+  OBSTACLE: {
+    RADIUS: 4.0,
+  },
+  HOME_POSITION: {
+    x: 5,
+    y: 5,
+    z: 5,
+  },
   base: {
     radius: 4.0,
     height: 1,
@@ -149,32 +157,5 @@ export const CRANE_CONFIG = {
     gripper: 0x374151,
     target: 0xef4444,
     brick: 0xcc4400,
-  },
-}
-
-// WebSocket configuration
-export const WS_CONFIG = {
-  url: 'ws://localhost:8080/ws',
-  port: 8080,
-  maxReconnectAttempts: 5,
-  reconnectDelay: 1000,
-  heartbeatInterval: 30000,
-  reconnectInterval: 1000,
-  reconnectAttempts: 5,
-  connectionTimeout: 10000,
-}
-
-// Physics configuration
-export const PHYSICS_CONFIG = {
-  gravity: { x: 0, y: -9.81, z: 0 },
-  timestep: 1 / 60,
-  brickMass: 1.0,
-  brickDimensions: {
-    width: 100,
-    height: 50,
-    depth: 50,
-    x: 100,
-    y: 50,
-    z: 50,
   },
 }

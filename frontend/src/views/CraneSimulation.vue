@@ -43,13 +43,13 @@ const pointB = reactive({
 
 const settings = reactive({
   craneSpeed: CRANE_DEFAULTS.SPEED,
-  pathSteps: CRANE_DEFAULTS.PATH_STEPS,
 })
 
 const stats = reactive({
   liftHeight: '0.0',
   shoulderAngle: '0.0',
   elbowAngle: '0.0',
+  wristAngle: '0.0',
 })
 
 // Animation state (now handled by backend)
@@ -261,20 +261,16 @@ const updatePositions = () => {
 
   // If point A is unreachable, find the maximum reachable point from home to A
   if (!crane.isReachable(pointA)) {
-    const homeToA = crane.calculatePath(
-      crane.getEndEffectorPosition(),
-      startPoint,
-      settings.pathSteps
-    )
+    const homeToA = crane.calculatePath(crane.getEndEffectorPosition(), startPoint)
     startPoint = crane.findMaxReachablePoint(homeToA)
   }
 
-  let path = crane.calculatePath(startPoint, endPoint, settings.pathSteps)
+  let path = crane.calculatePath(startPoint, endPoint)
 
   // If point B is unreachable, show path only to the maximum reachable point
   if (!crane.isReachable(pointB)) {
     const maxReachablePoint = crane.findMaxReachablePoint(path)
-    path = crane.calculatePath(startPoint, maxReachablePoint, settings.pathSteps)
+    path = crane.calculatePath(startPoint, maxReachablePoint)
   }
 
   pathLine.geometry.setFromPoints(path)
@@ -334,6 +330,7 @@ const updateSimStats = () => {
   stats.liftHeight = craneStats.liftHeight.toFixed(2)
   stats.shoulderAngle = craneStats.shoulderYaw.toFixed(1)
   stats.elbowAngle = craneStats.elbowYaw.toFixed(1)
+  stats.wristAngle = craneStats.wristYaw.toFixed(1)
 }
 
 const onWindowResize = () => {
@@ -589,6 +586,11 @@ const updateCraneFromBackendState = (state: {
     crane.solveIK(state.endEffectorPosition)
   }
 
+  // Update gripper animation based on backend gripper state
+  if (state.gripper !== undefined) {
+    crane.updateGripper(state.gripper)
+  }
+
   // Update payload visibility and position based on backend state
   if (animationState.mode !== 'IDLE') {
     // Show payload during cycle
@@ -616,6 +618,9 @@ const updateCraneFromBackendState = (state: {
   }
   if (state.elbow !== undefined) {
     stats.elbowAngle = ((state.elbow * 180) / Math.PI).toFixed(1)
+  }
+  if (state.wrist !== undefined) {
+    stats.wristAngle = ((state.wrist * 180) / Math.PI).toFixed(1)
   }
 }
 
@@ -680,6 +685,7 @@ onUnmounted(() => {
       Lift Height: {{ stats.liftHeight }}<br />
       Shoulder Yaw: {{ stats.shoulderAngle }}°<br />
       Elbow Yaw: {{ stats.elbowAngle }}°<br />
+      Wrist Yaw: {{ stats.wristAngle }}°<br />
       <div class="mt-2 flex items-center space-x-2">
         <div
           class="w-2 h-2 rounded-full"
@@ -774,17 +780,6 @@ onUnmounted(() => {
             min="1"
             max="50"
             step="1"
-            class="w-full px-2 py-1 bg-gray-800 border border-gray-600 rounded text-sm"
-          />
-        </div>
-        <div>
-          <label class="text-xs">Path Fidelity</label>
-          <input
-            v-model.number="settings.pathSteps"
-            type="number"
-            min="10"
-            max="500"
-            step="10"
             class="w-full px-2 py-1 bg-gray-800 border border-gray-600 rounded text-sm"
           />
         </div>

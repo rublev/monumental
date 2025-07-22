@@ -8,6 +8,8 @@ import type {
   CycleCompleteNotification,
 } from '@monumental/shared/websocket'
 import type { CraneState, CycleConfig, PathSegment } from '@monumental/shared/crane'
+import { CRANE_DEFAULTS } from '@monumental/shared/crane'
+import * as CraneMath from '@monumental/shared/crane'
 
 export class CraneController {
   private state: CraneState
@@ -26,8 +28,7 @@ export class CraneController {
   // Crane configuration from shared package
   private readonly upperArmLength = CRANE_CONFIG.ARM.UPPER_LENGTH
   private readonly lowerArmLength = CRANE_CONFIG.ARM.LOWER_LENGTH
-  private readonly wristExtLength = CRANE_CONFIG.ARM.WRIST_EXT_LENGTH
-  private readonly minRadius = CRANE_CONFIG.BASE.RADIUS
+  private readonly minRadius = CRANE_CONFIG.OBSTACLE.RADIUS
 
   constructor() {
     this.state = this.createInitialState()
@@ -35,7 +36,7 @@ export class CraneController {
   }
 
   private createInitialState(): CraneState {
-    const homePosition = { x: 8, y: 12, z: 8 }
+    const homePosition = CRANE_CONFIG.HOME_POSITION
     const endEffectorPos = homePosition
 
     return {
@@ -86,7 +87,12 @@ export class CraneController {
     }
 
     // Update crane state using inverse kinematics
-    this.solveIK(newPos)
+    const ikSolution = CraneMath.solveIK(newPos)
+    this.state.swing = ikSolution.swing
+    this.state.lift = ikSolution.lift
+    this.state.elbow = ikSolution.elbow
+    this.state.wrist = ikSolution.wrist
+    this.state.endEffectorPosition = newPos
     this.state.isMoving = true
     this.state.hasTarget = true
     this.state.timestamp = Date.now()
@@ -103,7 +109,6 @@ export class CraneController {
       pointA: command.command.pointA,
       pointB: command.command.pointB,
       speed: command.command.speed || 10,
-      pathSteps: 200,
     }
 
     // Initialize payload at point A
@@ -130,7 +135,6 @@ export class CraneController {
           pointA: { x: 0, y: 0, z: 0 },
           pointB: { x: 0, y: 0, z: 0 },
           speed: 10,
-          pathSteps: 200,
         }
       }
 
@@ -200,17 +204,34 @@ export class CraneController {
           const startPoint = this.state.endEffectorPosition
           let endPoint = this.cycleConfig.pointA
 
-          // Check if point A is reachable, if not, find the maximum reachable point
-          if (!this.isReachable(endPoint)) {
-            const pathToA = this.calculatePath(startPoint, endPoint, this.cycleConfig.pathSteps)
-            endPoint = this.findMaxReachablePoint(pathToA)
+          // Create approach point - target height + 2 target radii (stack two targets)
+          const targetRadius = 0.5 // From SCENE_CONFIG.TARGET.RADIUS
+          const approachHeight = Math.max(startPoint.y, endPoint.y + 2 * targetRadius)
+          const approachPoint = {
+            x: endPoint.x,
+            y: approachHeight,
+            z: endPoint.z,
           }
 
-          this.currentPath = this.calculatePath(startPoint, endPoint, this.cycleConfig.pathSteps)
+          // Check if approach point is reachable, if not, find the maximum reachable point
+          if (!CraneMath.isReachable(approachPoint)) {
+            const pathToApproach = CraneMath.calculatePath(startPoint, approachPoint)
+            const maxReachableApproach = CraneMath.findMaxReachablePoint(pathToApproach)
+            // Use the reachable approach point, but keep the target coordinates for X and Z
+            approachPoint.x = maxReachableApproach.x
+            approachPoint.z = maxReachableApproach.z
+          }
+
+          // Create two-stage path: 1) to approach point, 2) descend to target
+          const pathToApproach = CraneMath.calculatePath(startPoint, approachPoint)
+          const pathToTarget = CraneMath.calculatePath(approachPoint, endPoint)
+
+          // Combine both paths
+          this.currentPath = [...pathToApproach, ...pathToTarget]
 
           // Calculate phase duration based on path length and speed
           const totalLength = this.currentPath.reduce((acc, point, i, arr) => {
-            if (i > 0) acc += this.distance3D(point, arr[i - 1])
+            if (i > 0) acc += CraneMath.distance3D(point, arr[i - 1])
             return acc
           }, 0)
           this.phaseDuration = totalLength / this.cycleConfig.speed
@@ -220,7 +241,7 @@ export class CraneController {
         // Calculate eased progress
         const elapsedTime = (now - this.phaseStartTime) / 1000
         const progress = Math.min(elapsedTime / this.phaseDuration, 1)
-        const easedProgress = this.easeInOutCubic(progress)
+        const easedProgress = CraneMath.easeInOutCubic(progress)
         const pathIndex = easedProgress * (this.currentPath.length - 1)
 
         if (progress >= 1) {
@@ -236,12 +257,17 @@ export class CraneController {
           const t = pathIndex - lowerIndex
 
           if (this.currentPath[lowerIndex] && this.currentPath[upperIndex]) {
-            const newPos = this.lerp3D(
+            const newPos = CraneMath.lerp3D(
               this.currentPath[lowerIndex],
               this.currentPath[upperIndex],
               t
             )
-            this.solveIK(newPos)
+            const ikSolution = CraneMath.solveIK(newPos)
+            this.state.swing = ikSolution.swing
+            this.state.lift = ikSolution.lift
+            this.state.elbow = ikSolution.elbow
+            this.state.wrist = ikSolution.wrist
+            this.state.endEffectorPosition = newPos
             this.state.isMoving = true
             this.state.hasTarget = true
           }
@@ -267,16 +293,16 @@ export class CraneController {
           let endPoint = this.cycleConfig.pointB
 
           // Check if point B is reachable, if not, find the maximum reachable point
-          if (!this.isReachable(endPoint)) {
-            const pathToB = this.calculatePath(startPoint, endPoint, this.cycleConfig.pathSteps)
-            endPoint = this.findMaxReachablePoint(pathToB)
+          if (!CraneMath.isReachable(endPoint)) {
+            const pathToB = CraneMath.calculatePath(startPoint, endPoint)
+            endPoint = CraneMath.findMaxReachablePoint(pathToB)
           }
 
-          this.currentPath = this.calculatePath(startPoint, endPoint, this.cycleConfig.pathSteps)
+          this.currentPath = CraneMath.calculatePath(startPoint, endPoint)
 
           // Calculate phase duration based on path length and speed
           const totalLength = this.currentPath.reduce((acc, point, i, arr) => {
-            if (i > 0) acc += this.distance3D(point, arr[i - 1])
+            if (i > 0) acc += CraneMath.distance3D(point, arr[i - 1])
             return acc
           }, 0)
           this.phaseDuration = totalLength / this.cycleConfig.speed
@@ -286,7 +312,7 @@ export class CraneController {
         // Calculate eased progress
         const elapsedTimeB = (now - this.phaseStartTime) / 1000
         const progressB = Math.min(elapsedTimeB / this.phaseDuration, 1)
-        const easedProgressB = this.easeInOutCubic(progressB)
+        const easedProgressB = CraneMath.easeInOutCubic(progressB)
         const pathIndexB = easedProgressB * (this.currentPath.length - 1)
 
         if (progressB >= 1) {
@@ -302,12 +328,17 @@ export class CraneController {
           const t = pathIndexB - lowerIndex
 
           if (this.currentPath[lowerIndex] && this.currentPath[upperIndex]) {
-            const newPos = this.lerp3D(
+            const newPos = CraneMath.lerp3D(
               this.currentPath[lowerIndex],
               this.currentPath[upperIndex],
               t
             )
-            this.solveIK(newPos)
+            const ikSolution = CraneMath.solveIK(newPos)
+            this.state.swing = ikSolution.swing
+            this.state.lift = ikSolution.lift
+            this.state.elbow = ikSolution.elbow
+            this.state.wrist = ikSolution.wrist
+            this.state.endEffectorPosition = newPos
             this.state.isMoving = true
             this.state.hasTarget = true
           }
@@ -331,13 +362,27 @@ export class CraneController {
         // Initialize path if not already set
         if (this.currentPath.length === 0) {
           const startPoint = this.state.endEffectorPosition
-          const homePos = { x: 8, y: 12, z: 8 }
+          const homePosition = CRANE_CONFIG.HOME_POSITION
 
-          this.currentPath = this.calculatePath(startPoint, homePos, this.cycleConfig.pathSteps)
+          // Create lift-off point - target height + 2 target radii (stack two targets)
+          const targetRadius = 0.5 // From SCENE_CONFIG.TARGET.RADIUS
+          const liftOffHeight = this.cycleConfig.pointB.y + 2 * targetRadius
+          const liftOffPoint = {
+            x: startPoint.x,
+            y: liftOffHeight,
+            z: startPoint.z,
+          }
+
+          // Create two-stage path: 1) lift off from point B, 2) return to home
+          const pathToLiftOff = CraneMath.calculatePath(startPoint, liftOffPoint)
+          const pathToHome = CraneMath.calculatePath(liftOffPoint, homePosition)
+
+          // Combine both paths
+          this.currentPath = [...pathToLiftOff, ...pathToHome]
 
           // Calculate phase duration based on path length and speed
           const totalLength = this.currentPath.reduce((acc, point, i, arr) => {
-            if (i > 0) acc += this.distance3D(point, arr[i - 1])
+            if (i > 0) acc += CraneMath.distance3D(point, arr[i - 1])
             return acc
           }, 0)
           this.phaseDuration = totalLength / this.cycleConfig.speed
@@ -347,7 +392,7 @@ export class CraneController {
         // Calculate eased progress
         const elapsedTimeHome = (now - this.phaseStartTime) / 1000
         const progressHome = Math.min(elapsedTimeHome / this.phaseDuration, 1)
-        const easedProgressHome = this.easeInOutCubic(progressHome)
+        const easedProgressHome = CraneMath.easeInOutCubic(progressHome)
         const pathIndexHome = easedProgressHome * (this.currentPath.length - 1)
 
         if (progressHome >= 1) {
@@ -382,54 +427,23 @@ export class CraneController {
           const t = pathIndexHome - lowerIndex
 
           if (this.currentPath[lowerIndex] && this.currentPath[upperIndex]) {
-            const newPos = this.lerp3D(
+            const newPos = CraneMath.lerp3D(
               this.currentPath[lowerIndex],
               this.currentPath[upperIndex],
               t
             )
-            this.solveIK(newPos)
+            const ikSolution = CraneMath.solveIK(newPos)
+            this.state.swing = ikSolution.swing
+            this.state.lift = ikSolution.lift
+            this.state.elbow = ikSolution.elbow
+            this.state.wrist = ikSolution.wrist
+            this.state.endEffectorPosition = newPos
             this.state.isMoving = true
             this.state.hasTarget = true
           }
         }
         break
     }
-  }
-
-  private solveIK(targetPosition: { x: number; y: number; z: number }): void {
-    // Calculate swing angle
-    const swingAngle = Math.atan2(targetPosition.x, targetPosition.z) - Math.PI / 2
-    this.state.swing = swingAngle
-
-    // Set lift position (compensate for wrist extension)
-    this.state.lift = targetPosition.y + this.wristExtLength + 1.0
-
-    // Calculate horizontal distance
-    const horizontalDist = Math.sqrt(targetPosition.x ** 2 + targetPosition.z ** 2)
-    const dist = horizontalDist
-    const distSq = dist * dist
-
-    const l1 = this.upperArmLength
-    const l2 = this.lowerArmLength
-
-    if (dist > l1 + l2) {
-      // Set joints to fully extended position
-      this.state.elbow = 0
-      this.state.wrist = 0
-    } else {
-      // Calculate elbow and wrist angles
-      const elbowAngle = -Math.acos((distSq - l1 * l1 - l2 * l2) / (2 * l1 * l2))
-      const shoulderAngle =
-        Math.atan2(0, horizontalDist) + Math.acos((distSq + l1 * l1 - l2 * l2) / (2 * dist * l1))
-
-      if (!isNaN(shoulderAngle) && !isNaN(elbowAngle)) {
-        this.state.elbow = elbowAngle
-        this.state.wrist = -shoulderAngle - elbowAngle
-      }
-    }
-
-    // Update end effector position
-    this.state.endEffectorPosition = targetPosition
   }
 
   private broadcastState(): void {
@@ -464,174 +478,6 @@ export class CraneController {
 
       this.broadcastCallback(message)
     }
-  }
-
-  public calculatePath(
-    startPoint: { x: number; y: number; z: number },
-    endPoint: { x: number; y: number; z: number },
-    pathSteps: number = 200
-  ): { x: number; y: number; z: number }[] {
-    const pathPoints: { x: number; y: number; z: number }[] = []
-    const pA_2d = { x: startPoint.x, z: startPoint.z }
-    const pB_2d = { x: endPoint.x, z: endPoint.z }
-    const lineVec_2d = { x: pB_2d.x - pA_2d.x, z: pB_2d.z - pA_2d.z }
-
-    const a = lineVec_2d.x * lineVec_2d.x + lineVec_2d.z * lineVec_2d.z
-    const b = 2 * (pA_2d.x * lineVec_2d.x + pA_2d.z * lineVec_2d.z)
-    const c = pA_2d.x * pA_2d.x + pA_2d.z * pA_2d.z - this.minRadius * this.minRadius
-
-    const discriminant = b * b - 4 * a * c
-
-    let intersections_t: number[] = []
-    if (discriminant >= 0) {
-      const sqrtDiscriminant = Math.sqrt(discriminant)
-      const t1 = (-b - sqrtDiscriminant) / (2 * a)
-      const t2 = (-b + sqrtDiscriminant) / (2 * a)
-      if (t1 > 0.001 && t1 < 0.999) intersections_t.push(t1)
-      if (t2 > 0.001 && t2 < 0.999) intersections_t.push(t2)
-    }
-    intersections_t.sort()
-
-    const pathSegments: PathSegment[] = []
-    if (intersections_t.length < 2) {
-      pathSegments.push({
-        type: 'line',
-        start: startPoint,
-        end: endPoint,
-        length: this.distance3D(startPoint, endPoint),
-      })
-    } else {
-      const t1 = intersections_t[0]
-      const t2 = intersections_t[1]
-
-      const I1 = this.lerp3D(startPoint, endPoint, t1)
-      const I2 = this.lerp3D(startPoint, endPoint, t2)
-
-      pathSegments.push({
-        type: 'line',
-        start: startPoint,
-        end: I1,
-        length: this.distance3D(startPoint, I1),
-      })
-
-      const I1_2d = { x: I1.x, z: I1.z }
-      const I2_2d = { x: I2.x, z: I2.z }
-      const startAngle = Math.atan2(I1_2d.z, I1_2d.x)
-      let endAngle = Math.atan2(I2_2d.z, I2_2d.x)
-
-      let angleDiff = endAngle - startAngle
-      if (angleDiff > Math.PI) angleDiff -= 2 * Math.PI
-      if (angleDiff < -Math.PI) angleDiff += 2 * Math.PI
-
-      pathSegments.push({
-        type: 'arc',
-        start: I1,
-        end: I2,
-        radius: this.minRadius,
-        startAngle,
-        angleDiff,
-        length: Math.abs(angleDiff) * this.minRadius,
-      })
-
-      pathSegments.push({
-        type: 'line',
-        start: I2,
-        end: endPoint,
-        length: this.distance3D(I2, endPoint),
-      })
-    }
-
-    const totalLength = pathSegments.reduce((sum, seg) => sum + seg.length, 0)
-
-    if (totalLength > 0) {
-      const numSteps = Math.max(pathSteps, 2)
-      for (let i = 0; i <= numSteps; i++) {
-        const t = i / numSteps
-        let distAlongPath = t * totalLength
-        let distRemaining = distAlongPath
-
-        for (const segment of pathSegments) {
-          if (distRemaining <= segment.length + 0.001) {
-            const p_t = segment.length === 0 ? 0 : distRemaining / segment.length
-
-            if (segment.type === 'line') {
-              pathPoints.push(this.lerp3D(segment.start, segment.end, p_t))
-            } else {
-              // arc - fix precision issues at segment boundaries
-              if (p_t >= 1.0) {
-                // At the end of the arc, use the exact end point to prevent drift
-                pathPoints.push({ ...segment.end })
-              } else {
-                const currentAngle = segment.startAngle! + segment.angleDiff! * p_t
-                const x = segment.radius! * Math.cos(currentAngle)
-                const z = segment.radius! * Math.sin(currentAngle)
-                const y = this.lerp(segment.start.y, segment.end.y, p_t)
-                pathPoints.push({ x, y, z })
-              }
-            }
-            break
-          }
-          distRemaining -= segment.length
-        }
-      }
-    } else {
-      pathPoints.push({ ...startPoint })
-    }
-
-    return pathPoints
-  }
-
-  private distance3D(
-    a: { x: number; y: number; z: number },
-    b: { x: number; y: number; z: number }
-  ): number {
-    return Math.sqrt((a.x - b.x) ** 2 + (a.y - b.y) ** 2 + (a.z - b.z) ** 2)
-  }
-
-  private lerp3D(
-    a: { x: number; y: number; z: number },
-    b: { x: number; y: number; z: number },
-    t: number
-  ): { x: number; y: number; z: number } {
-    return {
-      x: a.x + (b.x - a.x) * t,
-      y: a.y + (b.y - a.y) * t,
-      z: a.z + (b.z - a.z) * t,
-    }
-  }
-
-  private lerp(a: number, b: number, t: number): number {
-    return a + (b - a) * t
-  }
-
-  private easeInOutCubic(x: number): number {
-    return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
-  }
-
-  public isReachable(targetPosition: { x: number; y: number; z: number }): boolean {
-    const horizontalDist = Math.sqrt(targetPosition.x ** 2 + targetPosition.z ** 2)
-    const maxReach = this.upperArmLength + this.lowerArmLength
-    return horizontalDist <= maxReach
-  }
-
-  public findMaxReachablePoint(path: { x: number; y: number; z: number }[]): {
-    x: number
-    y: number
-    z: number
-  } {
-    const maxReach = this.upperArmLength + this.lowerArmLength
-
-    // Find the last reachable point in the path
-    for (let i = path.length - 1; i >= 0; i--) {
-      const point = path[i]
-      const horizontalDist = Math.sqrt(point.x ** 2 + point.z ** 2)
-      if (horizontalDist <= maxReach) {
-        return { ...point }
-      }
-    }
-
-    // If no point is reachable, return the first point (shouldn't happen in normal usage)
-    return path[0] ? { ...path[0] } : { x: 0, y: 0, z: 0 }
   }
 
   public destroy(): void {

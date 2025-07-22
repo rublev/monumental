@@ -15,6 +15,7 @@ export interface CraneStats {
   liftHeight: number
   shoulderYaw: number
   elbowYaw: number
+  wristYaw: number
 }
 
 // Target position for crane operations
@@ -58,7 +59,6 @@ export interface CycleConfig {
   pointA: { x: number; y: number; z: number }
   pointB: { x: number; y: number; z: number }
   speed: number
-  pathSteps: number
 }
 
 // Path segment for crane movement planning

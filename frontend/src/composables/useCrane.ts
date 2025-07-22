@@ -1,6 +1,20 @@
 import * as THREE from 'three'
-import { CRANE_CONFIG } from '@monumental/shared/config'
+import { CRANE_CONFIG, SCENE_CONFIG } from '@monumental/shared/config'
 import type { CraneStats, TargetPosition, AnimationState } from '@monumental/shared/crane'
+import * as CraneMath from '@monumental/shared/crane'
+
+// Helper functions to convert between THREE.Vector3 and Point3D
+function vectorToPoint(v: THREE.Vector3): CraneMath.Point3D {
+  return { x: v.x, y: v.y, z: v.z }
+}
+
+function pointToVector(p: CraneMath.Point3D): THREE.Vector3 {
+  return new THREE.Vector3(p.x, p.y, p.z)
+}
+
+function pointsToVectors(points: CraneMath.Point3D[]): THREE.Vector3[] {
+  return points.map(pointToVector)
+}
 
 // Frontend-specific path segment using THREE.Vector3 for 3D rendering
 export interface ThreePathSegment {
@@ -19,11 +33,8 @@ export interface ThreeAnimationState extends AnimationState {
 }
 
 export class Crane {
-  private upperArmLength: number
-  private lowerArmLength: number
   private wristExtLength: number
-  private baseRadius: number
-  private minRadius: number = 4.0 // Using baseRadius as the obstacle radius
+  private minRadius: number
 
   public base: THREE.Object3D
   public swingJoint: THREE.Object3D
@@ -33,6 +44,7 @@ export class Crane {
   public wristJoint: THREE.Object3D
   public endEffector: THREE.Object3D
   private towerGroup!: THREE.Group
+  private movingJaw!: THREE.Mesh
 
   public animation: ThreeAnimationState = {
     mode: 'IDLE',
@@ -44,11 +56,8 @@ export class Crane {
   }
 
   constructor() {
-    this.upperArmLength = CRANE_CONFIG.ARM.UPPER_LENGTH
-    this.lowerArmLength = CRANE_CONFIG.ARM.LOWER_LENGTH
     this.wristExtLength = CRANE_CONFIG.ARM.WRIST_EXT_LENGTH
-    this.baseRadius = CRANE_CONFIG.BASE.RADIUS
-    this.minRadius = this.baseRadius // Use base radius as obstacle radius
+    this.minRadius = CRANE_CONFIG.OBSTACLE.RADIUS
 
     this.base = new THREE.Object3D()
     this.swingJoint = new THREE.Object3D()
@@ -138,10 +147,10 @@ export class Crane {
     // Tower will be added to swing joint in setupHierarchy() to remain static vertically
 
     const upperArm = new THREE.Mesh(
-      new THREE.BoxGeometry(this.upperArmLength, 0.4, 0.6),
+      new THREE.BoxGeometry(CRANE_CONFIG.ARM.UPPER_LENGTH, 0.4, 0.6),
       materials.arm
     )
-    upperArm.position.x = this.upperArmLength / 2
+    upperArm.position.x = CRANE_CONFIG.ARM.UPPER_LENGTH / 2
     this.shoulderJoint.add(upperArm)
   }
 
@@ -150,10 +159,10 @@ export class Crane {
     this.elbowJoint.add(elbowCyl)
 
     const lowerArm = new THREE.Mesh(
-      new THREE.BoxGeometry(this.lowerArmLength, 0.4, 0.6),
+      new THREE.BoxGeometry(CRANE_CONFIG.ARM.LOWER_LENGTH, 0.4, 0.6),
       materials.arm
     )
-    lowerArm.position.x = this.lowerArmLength / 2
+    lowerArm.position.x = CRANE_CONFIG.ARM.LOWER_LENGTH / 2
     this.elbowJoint.add(lowerArm)
   }
 
@@ -170,24 +179,27 @@ export class Crane {
   }
 
   private buildGripper(materials: ReturnType<typeof this.createMaterials>): void {
-    const gripperBase = new THREE.Mesh(new THREE.BoxGeometry(1, 0.5, 1), materials.gripper)
+    // Position gripper base at the END of the wrist extension to create "L" shape
+    const gripperBase = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.5, 0.8), materials.gripper)
+    gripperBase.position.x = 1.0 // Offset horizontally to create "L" shape
     gripperBase.position.y = -this.wristExtLength - 0.25
     this.wristJoint.add(gripperBase)
 
-    const jaw1 = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.8, 0.2), materials.gripper)
-    jaw1.position.set(0, -0.65, -0.6)
-    gripperBase.add(jaw1)
+    // Position jaws at the far ends of the gripper base for proper gripping
+    // Moving jaw (will slide along the base length when opening/closing)
+    this.movingJaw = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.8, 1.0), materials.gripper)
+    this.movingJaw.position.set(-0.9, -0.65, 0) // Moving jaw starts at far left end
+    gripperBase.add(this.movingJaw)
 
-    const jaw2 = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.8, 0.2), materials.gripper)
-    jaw2.position.set(0, -0.65, 0.6)
+    // Fixed jaw at one end
+    const jaw2 = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.8, 1.0), materials.gripper)
+    jaw2.position.set(0.9, -0.65, 0) // Fixed jaw at far right end
     gripperBase.add(jaw2)
 
-    // Position end effector at the gripping point (between the jaws)
-    // The gripper base is at -wristExtLength - 0.25
-    // The gripper base extends down by 0.25 (half its height)
-    // We want the payload sphere (radius 0.5) to touch the bottom of the gripper base
-    // So the end effector should be at -wristExtLength - 0.5 - 0.5 = -wristExtLength - 1.0
-    this.endEffector.position.y = -this.wristExtLength - 1.0
+    // Position end effector next to the outermost jaw where objects would be picked up
+    this.endEffector.position.x = 1.0 + 5.5 // Horizontal offset + beyond the far jaw
+    this.endEffector.position.y = -this.wristExtLength - 0.65 // Same level as the jaws
+    this.endEffector.position.z = 0 // Centered on the jaw axis
     this.wristJoint.add(this.endEffector)
   }
 
@@ -206,147 +218,26 @@ export class Crane {
     // this.shoulderJoint.position.x = 0 // Scaled down from 10 to match our smaller crane scale
     // this.shoulderJoint.position.z = 0 // Scaled down from 10 to match our smaller crane scale
     this.shoulderJoint.add(this.elbowJoint)
-    this.elbowJoint.position.x = this.upperArmLength
+    this.elbowJoint.position.x = CRANE_CONFIG.ARM.UPPER_LENGTH
     this.elbowJoint.add(this.wristJoint)
-    this.wristJoint.position.x = this.lowerArmLength
+    this.wristJoint.position.x = CRANE_CONFIG.ARM.LOWER_LENGTH
   }
 
-  public calculatePath(
-    startPoint: THREE.Vector3,
-    endPoint: THREE.Vector3,
-    pathSteps: number = 200
-  ): THREE.Vector3[] {
-    const pathPoints: THREE.Vector3[] = []
-    const pA_2d = new THREE.Vector2(startPoint.x, startPoint.z)
-    const pB_2d = new THREE.Vector2(endPoint.x, endPoint.z)
-    const lineVec_2d = new THREE.Vector2().subVectors(pB_2d, pA_2d)
-
-    const a = lineVec_2d.dot(lineVec_2d)
-    const b = 2 * pA_2d.dot(lineVec_2d)
-    const c = pA_2d.dot(pA_2d) - this.minRadius * this.minRadius
-
-    const discriminant = b * b - 4 * a * c
-
-    const intersections_t: number[] = []
-    if (discriminant >= 0) {
-      const sqrtDiscriminant = Math.sqrt(discriminant)
-      const t1 = (-b - sqrtDiscriminant) / (2 * a)
-      const t2 = (-b + sqrtDiscriminant) / (2 * a)
-      if (t1 > 0.001 && t1 < 0.999) intersections_t.push(t1)
-      if (t2 > 0.001 && t2 < 0.999) intersections_t.push(t2)
-    }
-    intersections_t.sort()
-
-    const pathSegments: ThreePathSegment[] = []
-    if (intersections_t.length < 2) {
-      pathSegments.push({
-        type: 'line',
-        start: startPoint,
-        end: endPoint,
-        length: startPoint.distanceTo(endPoint),
-      })
-    } else {
-      const t1 = intersections_t[0]
-      const t2 = intersections_t[1]
-
-      const I1 = new THREE.Vector3().lerpVectors(startPoint, endPoint, t1)
-      const I2 = new THREE.Vector3().lerpVectors(startPoint, endPoint, t2)
-
-      pathSegments.push({
-        type: 'line',
-        start: startPoint,
-        end: I1,
-        length: startPoint.distanceTo(I1),
-      })
-
-      const I1_2d = new THREE.Vector2(I1.x, I1.z)
-      const I2_2d = new THREE.Vector2(I2.x, I2.z)
-      const startAngle = Math.atan2(I1_2d.y, I1_2d.x)
-      const endAngle = Math.atan2(I2_2d.y, I2_2d.x)
-
-      let angleDiff = endAngle - startAngle
-      if (angleDiff > Math.PI) angleDiff -= 2 * Math.PI
-      if (angleDiff < -Math.PI) angleDiff += 2 * Math.PI
-
-      pathSegments.push({
-        type: 'arc',
-        start: I1,
-        end: I2,
-        radius: this.minRadius,
-        startAngle,
-        angleDiff,
-        length: Math.abs(angleDiff) * this.minRadius,
-      })
-
-      pathSegments.push({
-        type: 'line',
-        start: I2,
-        end: endPoint,
-        length: I2.distanceTo(endPoint),
-      })
-    }
-
-    const totalLength = pathSegments.reduce((sum, seg) => sum + seg.length, 0)
-
-    if (totalLength > 0) {
-      const numSteps = Math.max(pathSteps, 2)
-      for (let i = 0; i <= numSteps; i++) {
-        const t = i / numSteps
-        const distAlongPath = t * totalLength
-        let distRemaining = distAlongPath
-
-        for (const segment of pathSegments) {
-          if (distRemaining <= segment.length + 0.001) {
-            const p_t = segment.length === 0 ? 0 : distRemaining / segment.length
-
-            if (segment.type === 'line') {
-              pathPoints.push(new THREE.Vector3().lerpVectors(segment.start, segment.end, p_t))
-            } else {
-              // arc - fix precision issues at segment boundaries
-              if (p_t >= 1.0) {
-                // At the end of the arc, use the exact end point to prevent drift
-                pathPoints.push(segment.end.clone())
-              } else {
-                const currentAngle = segment.startAngle! + segment.angleDiff! * p_t
-                const x = segment.radius! * Math.cos(currentAngle)
-                const z = segment.radius! * Math.sin(currentAngle)
-                const y = THREE.MathUtils.lerp(segment.start.y, segment.end.y, p_t)
-                pathPoints.push(new THREE.Vector3(x, y, z))
-              }
-            }
-            break
-          }
-          distRemaining -= segment.length
-        }
-      }
-    } else {
-      pathPoints.push(startPoint)
-    }
-
-    return pathPoints
+  public calculatePath(startPoint: THREE.Vector3, endPoint: THREE.Vector3): THREE.Vector3[] {
+    // Use shared crane math utility and convert back to THREE.Vector3 array
+    const pathPoints = CraneMath.calculatePath(vectorToPoint(startPoint), vectorToPoint(endPoint))
+    return pointsToVectors(pathPoints)
   }
 
   public isReachable(targetPosition: TargetPosition): boolean {
-    const targetPos = new THREE.Vector3(targetPosition.x, targetPosition.y, targetPosition.z)
-    const horizontalDist = new THREE.Vector2(targetPos.x, targetPos.z).length()
-    const maxReach = this.upperArmLength + this.lowerArmLength
-    return horizontalDist <= maxReach
+    return CraneMath.isReachable(targetPosition)
   }
 
   public findMaxReachablePoint(path: THREE.Vector3[]): THREE.Vector3 {
-    const maxReach = this.upperArmLength + this.lowerArmLength
-
-    // Find the last reachable point in the path
-    for (let i = path.length - 1; i >= 0; i--) {
-      const point = path[i]
-      const horizontalDist = new THREE.Vector2(point.x, point.z).length()
-      if (horizontalDist <= maxReach) {
-        return point.clone()
-      }
-    }
-
-    // If no point is reachable, return the first point (shouldn't happen in normal usage)
-    return path[0]?.clone() || new THREE.Vector3()
+    // Convert to Point3D array, use shared utility, convert back to THREE.Vector3
+    const plainPoints = path.map(vectorToPoint)
+    const maxReachablePoint = CraneMath.findMaxReachablePoint(plainPoints)
+    return pointToVector(maxReachablePoint)
   }
 
   public solveIK(targetPosition: TargetPosition): void {
@@ -362,13 +253,19 @@ export class Crane {
     this.liftJoint.position.y = targetPos.y + this.wristExtLength + 1.0
 
     // Calculate horizontal distance
-    const horizontalDist = new THREE.Vector2(targetPos.x, targetPos.z).length()
+    // Since the end effector (target position) is offset by 2.2 units forward from the wrist,
+    // we need to solve IK for the wrist position that puts the end effector at the target
+    const endEffectorOffset = 1.25 // 1.0 (gripper base) + 1.2 (jaw offset)
+    const adjustedHorizontalDist = Math.max(
+      0,
+      new THREE.Vector2(targetPos.x, targetPos.z).length() - endEffectorOffset
+    )
 
-    const dist = horizontalDist
+    const dist = adjustedHorizontalDist
     const distSq = dist * dist
 
-    const l1 = this.upperArmLength
-    const l2 = this.lowerArmLength
+    const l1 = CRANE_CONFIG.ARM.UPPER_LENGTH
+    const l2 = CRANE_CONFIG.ARM.LOWER_LENGTH
 
     if (dist > l1 + l2) {
       // Set joints to fully extended position
@@ -379,7 +276,8 @@ export class Crane {
 
     const elbowAngle = -Math.acos((distSq - l1 * l1 - l2 * l2) / (2 * l1 * l2))
     const shoulderAngle =
-      Math.atan2(0, horizontalDist) + Math.acos((distSq + l1 * l1 - l2 * l2) / (2 * dist * l1))
+      Math.atan2(0, adjustedHorizontalDist) +
+      Math.acos((distSq + l1 * l1 - l2 * l2) / (2 * dist * l1))
 
     if (!isNaN(shoulderAngle) && !isNaN(elbowAngle)) {
       this.shoulderJoint.rotation.y = shoulderAngle
@@ -397,6 +295,10 @@ export class Crane {
     const elbowYawRadians = this.elbowJoint.rotation.y
     const elbowYawDegrees = (elbowYawRadians * 180) / Math.PI
 
+    // Calculate wrist yaw (wrist joint rotation)
+    const wristYawRadians = this.wristJoint.rotation.y
+    const wristYawDegrees = (wristYawRadians * 180) / Math.PI
+
     return {
       position: {
         x: this.liftJoint.position.x,
@@ -409,11 +311,12 @@ export class Crane {
       liftHeight: this.liftJoint.position.y,
       shoulderYaw: shoulderYawDegrees,
       elbowYaw: elbowYawDegrees,
+      wristYaw: wristYawDegrees,
     }
   }
 
   public get getBaseRadius(): number {
-    return this.baseRadius
+    return CRANE_CONFIG.BASE.RADIUS
   }
 
   public get getMinRadius(): number {
@@ -424,6 +327,16 @@ export class Crane {
     const worldPos = new THREE.Vector3()
     this.endEffector.getWorldPosition(worldPos)
     return worldPos
+  }
+
+  public updateGripper(gripperValue: number): void {
+    // Animate moving jaw: when gripperValue = 0 (closed), left jaw moves toward center
+    // but stops at target's edge to avoid going through it
+    const openPosition = -0.9 // Far left when open
+    const targetRadius = SCENE_CONFIG.TARGET.RADIUS // 0.5
+    const closedPosition = -targetRadius // Stop at target edge when gripping
+    const jawX = openPosition + (closedPosition - openPosition) * (1 - gripperValue)
+    this.movingJaw.position.x = jawX
   }
 }
 
