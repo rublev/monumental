@@ -68,16 +68,16 @@ export class CraneController {
 
   // Current path and navigation
   private currentPath: { x: number; y: number; z: number }[] = [];
-  private pathProgress = 0;
+
+  // Animation timing for easing
+  private phaseStartTime = 0;
+  private phaseDuration = 0;
 
   // Crane configuration from shared package
   private readonly upperArmLength = CRANE_CONFIG.ARM.UPPER_LENGTH;
   private readonly lowerArmLength = CRANE_CONFIG.ARM.LOWER_LENGTH;
   private readonly wristExtLength = CRANE_CONFIG.ARM.WRIST_EXT_LENGTH;
-  private readonly baseRadius = CRANE_CONFIG.BASE.RADIUS;
   private readonly minRadius = CRANE_CONFIG.BASE.RADIUS;
-  private readonly liftMin = CRANE_CONFIG.LIFT.MIN;
-  private readonly liftMax = CRANE_CONFIG.LIFT.MAX;
 
   constructor() {
     this.state = this.createInitialState();
@@ -249,7 +249,6 @@ export class CraneController {
     if (!this.cycleConfig || !this.state.cycleProgress) return;
 
     const now = Date.now();
-    const deltaTime = 16 / 1000; // 16ms in seconds
 
     switch (this.state.mode) {
       case 'MOVING_TO_A':
@@ -273,27 +272,36 @@ export class CraneController {
             endPoint,
             this.cycleConfig.pathSteps
           );
-          this.pathProgress = 0;
+
+          // Calculate phase duration based on path length and speed
+          const totalLength = this.currentPath.reduce((acc, point, i, arr) => {
+            if (i > 0) acc += this.distance3D(point, arr[i - 1]);
+            return acc;
+          }, 0);
+          this.phaseDuration = totalLength / this.cycleConfig.speed;
+          this.phaseStartTime = now;
         }
 
-        // Move along the calculated path
-        const pathSpeedA = this.cycleConfig.speed * deltaTime;
-        const pathLengthA = this.currentPath.length;
-        const progressIncrementA = pathSpeedA * 2; // Increase speed significantly
+        // Calculate eased progress
+        const elapsedTime = (now - this.phaseStartTime) / 1000;
+        const progress = Math.min(elapsedTime / this.phaseDuration, 1);
+        const easedProgress = this.easeInOutCubic(progress);
+        const pathIndex = easedProgress * (this.currentPath.length - 1);
 
-        this.pathProgress += progressIncrementA;
-
-        if (this.pathProgress >= pathLengthA - 1) {
+        if (progress >= 1) {
           // Reached point A
           this.state.mode = 'GRIPPING';
           this.state.cycleProgress.currentPhase = 'at_a';
           this.state.cycleProgress.progressPercent = 25;
           this.currentPath = [];
         } else {
-          // Interpolate between path points
-          const lowerIndex = Math.floor(this.pathProgress);
-          const upperIndex = Math.min(lowerIndex + 1, pathLengthA - 1);
-          const t = this.pathProgress - lowerIndex;
+          // Interpolate between path points using eased progress
+          const lowerIndex = Math.floor(pathIndex);
+          const upperIndex = Math.min(
+            lowerIndex + 1,
+            this.currentPath.length - 1
+          );
+          const t = pathIndex - lowerIndex;
 
           if (this.currentPath[lowerIndex] && this.currentPath[upperIndex]) {
             const newPos = this.lerp3D(
@@ -341,27 +349,36 @@ export class CraneController {
             endPoint,
             this.cycleConfig.pathSteps
           );
-          this.pathProgress = 0;
+
+          // Calculate phase duration based on path length and speed
+          const totalLength = this.currentPath.reduce((acc, point, i, arr) => {
+            if (i > 0) acc += this.distance3D(point, arr[i - 1]);
+            return acc;
+          }, 0);
+          this.phaseDuration = totalLength / this.cycleConfig.speed;
+          this.phaseStartTime = now;
         }
 
-        // Move along the calculated path
-        const pathSpeedB = this.cycleConfig.speed * deltaTime;
-        const pathLengthB = this.currentPath.length;
-        const progressIncrementB = pathSpeedB * 2; // Increase speed significantly
+        // Calculate eased progress
+        const elapsedTimeB = (now - this.phaseStartTime) / 1000;
+        const progressB = Math.min(elapsedTimeB / this.phaseDuration, 1);
+        const easedProgressB = this.easeInOutCubic(progressB);
+        const pathIndexB = easedProgressB * (this.currentPath.length - 1);
 
-        this.pathProgress += progressIncrementB;
-
-        if (this.pathProgress >= pathLengthB - 1) {
+        if (progressB >= 1) {
           // Reached point B
           this.state.mode = 'RELEASING';
           this.state.cycleProgress.currentPhase = 'at_b';
           this.state.cycleProgress.progressPercent = 75;
           this.currentPath = [];
         } else {
-          // Interpolate between path points
-          const lowerIndex = Math.floor(this.pathProgress);
-          const upperIndex = Math.min(lowerIndex + 1, pathLengthB - 1);
-          const t = this.pathProgress - lowerIndex;
+          // Interpolate between path points using eased progress
+          const lowerIndex = Math.floor(pathIndexB);
+          const upperIndex = Math.min(
+            lowerIndex + 1,
+            this.currentPath.length - 1
+          );
+          const t = pathIndexB - lowerIndex;
 
           if (this.currentPath[lowerIndex] && this.currentPath[upperIndex]) {
             const newPos = this.lerp3D(
@@ -400,17 +417,23 @@ export class CraneController {
             homePos,
             this.cycleConfig.pathSteps
           );
-          this.pathProgress = 0;
+
+          // Calculate phase duration based on path length and speed
+          const totalLength = this.currentPath.reduce((acc, point, i, arr) => {
+            if (i > 0) acc += this.distance3D(point, arr[i - 1]);
+            return acc;
+          }, 0);
+          this.phaseDuration = totalLength / this.cycleConfig.speed;
+          this.phaseStartTime = now;
         }
 
-        // Move along the calculated path
-        const pathSpeedHome = this.cycleConfig.speed * deltaTime;
-        const pathLengthHome = this.currentPath.length;
-        const progressIncrementHome = pathSpeedHome * 2; // Increase speed significantly
+        // Calculate eased progress
+        const elapsedTimeHome = (now - this.phaseStartTime) / 1000;
+        const progressHome = Math.min(elapsedTimeHome / this.phaseDuration, 1);
+        const easedProgressHome = this.easeInOutCubic(progressHome);
+        const pathIndexHome = easedProgressHome * (this.currentPath.length - 1);
 
-        this.pathProgress += progressIncrementHome;
-
-        if (this.pathProgress >= pathLengthHome - 1) {
+        if (progressHome >= 1) {
           // Reached home - cycle complete
           this.stopCycle();
           this.state.cycleProgress = {
@@ -436,10 +459,13 @@ export class CraneController {
           }
           this.currentPath = [];
         } else {
-          // Interpolate between path points
-          const lowerIndex = Math.floor(this.pathProgress);
-          const upperIndex = Math.min(lowerIndex + 1, pathLengthHome - 1);
-          const t = this.pathProgress - lowerIndex;
+          // Interpolate between path points using eased progress
+          const lowerIndex = Math.floor(pathIndexHome);
+          const upperIndex = Math.min(
+            lowerIndex + 1,
+            this.currentPath.length - 1
+          );
+          const t = pathIndexHome - lowerIndex;
 
           if (this.currentPath[lowerIndex] && this.currentPath[upperIndex]) {
             const newPos = this.lerp3D(
@@ -670,6 +696,10 @@ export class CraneController {
 
   private lerp(a: number, b: number, t: number): number {
     return a + (b - a) * t;
+  }
+
+  private easeInOutCubic(x: number): number {
+    return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
   }
 
   public isReachable(targetPosition: {

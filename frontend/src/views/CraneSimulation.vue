@@ -41,7 +41,7 @@ const pointB = reactive({
 })
 
 const settings = reactive({
-  craneSpeed: 40.0, // units per second
+  craneSpeed: 10.0, // units per second
   pathSteps: 200,
 })
 
@@ -51,14 +51,9 @@ const stats = reactive({
   elbowAngle: '0.0',
 })
 
-// Animation state
+// Animation state (now handled by backend)
 const animationState = reactive({
   mode: 'IDLE' as 'IDLE' | 'MOVING_TO_A' | 'GRIPPING' | 'MOVING_TO_B' | 'RELEASING' | 'RETURNING',
-  startTime: 0,
-  duration: 0,
-  progress: 0,
-  path: [] as THREE.Vector3[],
-  payloadAttached: false,
 })
 
 const homePosition = { x: 8, y: 12, z: 8 }
@@ -95,13 +90,6 @@ const manualControl = reactive({
 
 // Pressed keys tracking
 const pressedKeys = reactive(new Set<string>())
-
-// Gripper settings
-const gripperSettings = {
-  openPos: 0.3,
-  closedPos: 0.1,
-  duration: 0.5,
-}
 
 // Methods
 const initThree = () => {
@@ -314,25 +302,7 @@ const startCycle = () => {
       console.error('Failed to send command')
     }
   } else {
-    // Fallback to local animation if backend is not connected
-    console.warn('Backend not connected, running local animation')
-
-    // Calculate the effective pickup location (either A or max reachable point toward A)
-    let effectivePickupPoint = new THREE.Vector3(pointA.x, pointA.y, pointA.z)
-    if (!crane.isReachable(pointA)) {
-      const homeToA = crane.calculatePath(
-        crane.getEndEffectorPosition(),
-        effectivePickupPoint,
-        settings.pathSteps,
-      )
-      effectivePickupPoint = crane.findMaxReachablePoint(homeToA)
-    }
-
-    // Position payload at the effective pickup location and make it visible
-    payload.position.copy(effectivePickupPoint)
-    payload.visible = true
-
-    startAnimationPhase('MOVING_TO_A')
+    console.warn('Backend not connected, cannot start cycle')
   }
 }
 
@@ -352,83 +322,7 @@ const stopCycle = () => {
       console.error('Failed to send stop command')
     }
   } else {
-    // Fallback to local animation stop
-    console.warn('Backend not connected, stopping local animation')
-    animationState.mode = 'IDLE'
-    animationState.payloadAttached = false
-    // payload.visible = false // Hide payload when stopping
-  }
-}
-
-const startAnimationPhase = (
-  mode: 'IDLE' | 'MOVING_TO_A' | 'GRIPPING' | 'MOVING_TO_B' | 'RELEASING' | 'RETURNING',
-) => {
-  animationState.mode = mode
-  animationState.startTime = performance.now()
-  animationState.progress = 0
-
-  let startPoint = new THREE.Vector3()
-  const endPoint = new THREE.Vector3()
-
-  switch (mode) {
-    case 'MOVING_TO_A':
-      // For initial movement, we do need to start from current position
-      startPoint = crane.getEndEffectorPosition()
-      endPoint.set(pointA.x, pointA.y, pointA.z)
-      const pathToA = crane.calculatePath(startPoint, endPoint, settings.pathSteps)
-
-      // Check if point A is reachable, if not, find the maximum reachable point
-      if (!crane.isReachable(pointA)) {
-        const maxReachablePoint = crane.findMaxReachablePoint(pathToA)
-        // Recalculate path to only go to the reachable point
-        animationState.path = crane.calculatePath(startPoint, maxReachablePoint, settings.pathSteps)
-      } else {
-        animationState.path = pathToA
-      }
-      animationState.payloadAttached = false
-      break
-
-    case 'GRIPPING':
-      animationState.duration = gripperSettings.duration
-      break
-
-    case 'MOVING_TO_B':
-      // Use the exact points A and B for the path
-      startPoint.set(pointA.x, pointA.y, pointA.z)
-      endPoint.set(pointB.x, pointB.y, pointB.z)
-      const fullPath = crane.calculatePath(startPoint, endPoint, settings.pathSteps)
-
-      // Check if point B is reachable, if not, find the maximum reachable point
-      if (!crane.isReachable(pointB)) {
-        const maxReachablePoint = crane.findMaxReachablePoint(fullPath)
-        // Recalculate path to only go to the reachable point
-        animationState.path = crane.calculatePath(startPoint, maxReachablePoint, settings.pathSteps)
-      } else {
-        animationState.path = fullPath
-      }
-      animationState.payloadAttached = true
-      break
-
-    case 'RELEASING':
-      animationState.duration = gripperSettings.duration
-      break
-
-    case 'RETURNING':
-      // From point B back to home (or from max reachable point if B was unreachable)
-      startPoint = crane.getEndEffectorPosition()
-      endPoint.set(homePosition.x, homePosition.y, homePosition.z)
-      animationState.path = crane.calculatePath(startPoint, endPoint, settings.pathSteps)
-      animationState.payloadAttached = false
-      break
-  }
-
-  if (mode === 'MOVING_TO_A' || mode === 'MOVING_TO_B' || mode === 'RETURNING') {
-    const totalLength = animationState.path.reduce((acc, point, i, arr) => {
-      if (i > 0) acc += point.distanceTo(arr[i - 1])
-      return acc
-    }, 0)
-    animationState.duration = settings.craneSpeed > 0 ? totalLength / settings.craneSpeed : 0
-    animationState.duration = Math.max(animationState.duration, 0.25)
+    console.warn('Backend not connected, cannot stop cycle')
   }
 }
 
@@ -449,10 +343,6 @@ const onWindowResize = () => {
   renderer.setSize(canvasContainer.value.clientWidth, canvasContainer.value.clientHeight)
 }
 
-const easeInOutCubic = (x: number): number => {
-  return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
-}
-
 const animate = () => {
   animationId = requestAnimationFrame(animate)
 
@@ -467,93 +357,7 @@ const animate = () => {
     }
   }
 
-  // If connected to backend, skip local animation logic
-  if (isBackendConnected.value) {
-    if (controls) controls.update()
-    if (renderer && scene && camera) {
-      renderer.render(scene, camera)
-    }
-    return
-  }
-
-  // Local animation logic (fallback when backend is disconnected)
-  const { mode, startTime, duration, path } = animationState
-
-  if (mode !== 'IDLE') {
-    const elapsedTime = (performance.now() - startTime) / 1000
-    let progress = duration > 0 ? elapsedTime / duration : 1
-
-    const isPhaseComplete = progress >= 1
-    progress = Math.min(progress, 1)
-
-    const easedProgress = easeInOutCubic(progress)
-
-    switch (mode) {
-      case 'MOVING_TO_A':
-      case 'MOVING_TO_B':
-      case 'RETURNING':
-        // Use linear interpolation between path points for smoother movement
-        const exactIndex = easedProgress * (path.length - 1)
-        const lowerIndex = Math.floor(exactIndex)
-        const upperIndex = Math.min(lowerIndex + 1, path.length - 1)
-        const t = exactIndex - lowerIndex
-
-        if (path[lowerIndex] && path[upperIndex]) {
-          const interpolatedPos = new THREE.Vector3().lerpVectors(
-            path[lowerIndex],
-            path[upperIndex],
-            t,
-          )
-          crane.solveIK(interpolatedPos)
-        } else if (path[lowerIndex]) {
-          crane.solveIK(path[lowerIndex])
-        }
-
-        if (isPhaseComplete) {
-          if (mode === 'MOVING_TO_A') startAnimationPhase('GRIPPING')
-          else if (mode === 'MOVING_TO_B') startAnimationPhase('RELEASING')
-          else if (mode === 'RETURNING') {
-            animationState.mode = 'IDLE'
-            // payload.visible = false // Hide payload when returning to idle
-          }
-        }
-        break
-
-      case 'GRIPPING':
-        // TODO: Animate gripper closing
-        animationState.payloadAttached = true // Attach payload during gripping
-        if (isPhaseComplete) startAnimationPhase('MOVING_TO_B')
-        break
-
-      case 'RELEASING':
-        // TODO: Animate gripper opening
-        animationState.payloadAttached = false // Detach payload during releasing
-        if (isPhaseComplete) startAnimationPhase('RETURNING')
-        break
-    }
-  }
-
-  // Update payload position
-  if (animationState.payloadAttached) {
-    payload.position.copy(crane.getEndEffectorPosition())
-  } else if (mode === 'RELEASING' || mode === 'RETURNING') {
-    // Position payload at the effective drop location
-    let effectiveDropPoint = new THREE.Vector3(pointB.x, pointB.y, pointB.z)
-    if (!crane.isReachable(pointB)) {
-      let startPoint = new THREE.Vector3(pointA.x, pointA.y, pointA.z)
-      if (!crane.isReachable(pointA)) {
-        const homeToA = crane.calculatePath(
-          crane.getEndEffectorPosition(),
-          startPoint,
-          settings.pathSteps,
-        )
-        startPoint = crane.findMaxReachablePoint(homeToA)
-      }
-      const pathToB = crane.calculatePath(startPoint, effectiveDropPoint, settings.pathSteps)
-      effectiveDropPoint = crane.findMaxReachablePoint(pathToB)
-    }
-    payload.position.copy(effectiveDropPoint)
-  }
+  // All animation is now handled by the backend
 
   if (controls) controls.update()
 
@@ -869,24 +673,19 @@ onUnmounted(() => {
     <div ref="canvasContainer" class="w-screen h-screen" style="cursor: grab"></div>
 
     <div
-      class="absolute bottom-4 left-4 bg-gray-900/50 backdrop-blur-sm p-3 rounded-md text-xs font-mono border border-gray-600"
-    >
+      class="absolute bottom-4 left-4 bg-gray-900/50 backdrop-blur-sm p-3 rounded-md text-xs font-mono border border-gray-600">
       <strong>Live Solver Output:</strong><br />
       Lift Height: {{ stats.liftHeight }}<br />
       Shoulder Yaw: {{ stats.shoulderAngle }}°<br />
       Elbow Yaw: {{ stats.elbowAngle }}°<br />
       <div class="mt-2 flex items-center space-x-2">
-        <div
-          class="w-2 h-2 rounded-full"
-          :class="isBackendConnected ? 'bg-green-500' : 'bg-red-500'"
-        ></div>
+        <div class="w-2 h-2 rounded-full" :class="isBackendConnected ? 'bg-green-500' : 'bg-red-500'"></div>
         <span>{{ isBackendConnected ? 'Backend Connected' : 'Backend Disconnected' }}</span>
       </div>
     </div>
 
     <div
-      class="absolute bottom-4 right-4 bg-gray-900/50 backdrop-blur-sm p-4 rounded-lg shadow-xl w-80 border border-gray-600"
-    >
+      class="absolute bottom-4 right-4 bg-gray-900/50 backdrop-blur-sm p-4 rounded-lg shadow-xl w-80 border border-gray-600">
       <h3 class="text-md font-bold mb-3 text-center">Crane Control</h3>
 
       <!-- Point A Controls -->
@@ -895,31 +694,18 @@ onUnmounted(() => {
         <div class="grid grid-cols-3 gap-2">
           <div>
             <label class="text-xs">X</label>
-            <input
-              v-model.number="pointA.x"
-              type="number"
-              :step="SIMULATION_BOUNDS.STEP"
-              class="w-full px-2 py-1 bg-gray-800 border border-gray-600 rounded text-sm"
-            />
+            <input v-model.number="pointA.x" type="number" :step="SIMULATION_BOUNDS.STEP"
+              class="w-full px-2 py-1 bg-gray-800 border border-gray-600 rounded text-sm" />
           </div>
           <div>
             <label class="text-xs">Y</label>
-            <input
-              v-model.number="pointA.y"
-              type="number"
-              :step="SIMULATION_BOUNDS.STEP"
-              :min="0"
-              class="w-full px-2 py-1 bg-gray-800 border border-gray-600 rounded text-sm"
-            />
+            <input v-model.number="pointA.y" type="number" :step="SIMULATION_BOUNDS.STEP" :min="0"
+              class="w-full px-2 py-1 bg-gray-800 border border-gray-600 rounded text-sm" />
           </div>
           <div>
             <label class="text-xs">Z</label>
-            <input
-              v-model.number="pointA.z"
-              type="number"
-              :step="SIMULATION_BOUNDS.STEP"
-              class="w-full px-2 py-1 bg-gray-800 border border-gray-600 rounded text-sm"
-            />
+            <input v-model.number="pointA.z" type="number" :step="SIMULATION_BOUNDS.STEP"
+              class="w-full px-2 py-1 bg-gray-800 border border-gray-600 rounded text-sm" />
           </div>
         </div>
       </div>
@@ -930,31 +716,18 @@ onUnmounted(() => {
         <div class="grid grid-cols-3 gap-2">
           <div>
             <label class="text-xs">X</label>
-            <input
-              v-model.number="pointB.x"
-              type="number"
-              :step="SIMULATION_BOUNDS.STEP"
-              class="w-full px-2 py-1 bg-gray-800 border border-gray-600 rounded text-sm"
-            />
+            <input v-model.number="pointB.x" type="number" :step="SIMULATION_BOUNDS.STEP"
+              class="w-full px-2 py-1 bg-gray-800 border border-gray-600 rounded text-sm" />
           </div>
           <div>
             <label class="text-xs">Y</label>
-            <input
-              v-model.number="pointB.y"
-              type="number"
-              :step="SIMULATION_BOUNDS.STEP"
-              :min="0"
-              class="w-full px-2 py-1 bg-gray-800 border border-gray-600 rounded text-sm"
-            />
+            <input v-model.number="pointB.y" type="number" :step="SIMULATION_BOUNDS.STEP" :min="0"
+              class="w-full px-2 py-1 bg-gray-800 border border-gray-600 rounded text-sm" />
           </div>
           <div>
             <label class="text-xs">Z</label>
-            <input
-              v-model.number="pointB.z"
-              type="number"
-              :step="SIMULATION_BOUNDS.STEP"
-              class="w-full px-2 py-1 bg-gray-800 border border-gray-600 rounded text-sm"
-            />
+            <input v-model.number="pointB.z" type="number" :step="SIMULATION_BOUNDS.STEP"
+              class="w-full px-2 py-1 bg-gray-800 border border-gray-600 rounded text-sm" />
           </div>
         </div>
       </div>
@@ -963,37 +736,21 @@ onUnmounted(() => {
       <div class="mb-4 space-y-2">
         <div>
           <label class="text-xs">Crane Speed (units/s)</label>
-          <input
-            v-model.number="settings.craneSpeed"
-            type="number"
-            min="1"
-            max="50"
-            step="1"
-            class="w-full px-2 py-1 bg-gray-800 border border-gray-600 rounded text-sm"
-          />
+          <input v-model.number="settings.craneSpeed" type="number" min="1" max="50" step="1"
+            class="w-full px-2 py-1 bg-gray-800 border border-gray-600 rounded text-sm" />
         </div>
         <div>
           <label class="text-xs">Path Fidelity</label>
-          <input
-            v-model.number="settings.pathSteps"
-            type="number"
-            min="10"
-            max="500"
-            step="10"
-            class="w-full px-2 py-1 bg-gray-800 border border-gray-600 rounded text-sm"
-          />
+          <input v-model.number="settings.pathSteps" type="number" min="10" max="500" step="10"
+            class="w-full px-2 py-1 bg-gray-800 border border-gray-600 rounded text-sm" />
         </div>
       </div>
 
       <!-- Manual Control Toggle -->
       <div class="mb-4">
         <label class="flex items-center space-x-2">
-          <input
-            v-model="manualControl.enabled"
-            type="checkbox"
-            :disabled="animationState.mode !== 'IDLE'"
-            class="w-4 h-4 text-blue-600 bg-gray-800 border-gray-600 rounded focus:ring-blue-500"
-          />
+          <input v-model="manualControl.enabled" type="checkbox" :disabled="animationState.mode !== 'IDLE'"
+            class="w-4 h-4 text-blue-600 bg-gray-800 border-gray-600 rounded focus:ring-blue-500" />
           <span class="text-sm font-medium">Manual Control (WASD + Q/E)</span>
         </label>
         <div v-if="manualControl.enabled" class="mt-2 text-xs text-gray-400">
@@ -1005,18 +762,12 @@ onUnmounted(() => {
 
       <!-- Start/Stop Buttons -->
       <div class="flex gap-2">
-        <button
-          @click="startCycle"
-          :disabled="animationState.mode !== 'IDLE' || manualControl.enabled"
-          class="flex-1 bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        >
+        <button @click="startCycle" :disabled="animationState.mode !== 'IDLE' || manualControl.enabled"
+          class="flex-1 bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
           {{ animationState.mode === 'IDLE' ? 'Start Cycle' : 'Running...' }}
         </button>
-        <button
-          @click="stopCycle"
-          :disabled="animationState.mode === 'IDLE' || manualControl.enabled"
-          class="flex-1 bg-red-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        >
+        <button @click="stopCycle" :disabled="animationState.mode === 'IDLE' || manualControl.enabled"
+          class="flex-1 bg-red-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
           Stop Cycle
         </button>
       </div>
