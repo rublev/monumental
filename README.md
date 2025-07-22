@@ -35,7 +35,7 @@ If you prefer to install manually:
 ```bash
 # 1. Clone/download this repository
 # 2. Navigate to the project directory
-cd demo_trimmed
+cd <repo_root>
 
 # 3. Build and run with Docker Compose (Development Mode)
 docker compose -f docker-compose.dev.yml up --build
