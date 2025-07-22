@@ -4,7 +4,7 @@
 
 > **⚠️ Platform Support**: This Docker setup has been tested on **macOS (Apple Silicon)** only. It may work on Linux and Windows, but is currently untested on those platforms.
 
-### Automatic Installation (Recommended)
+### Running the Application
 
 ```bash
 # For Linux/Mac:
@@ -14,12 +14,14 @@
 install.bat
 ```
 
-The installation script will:
+**Note**: Despite its name, `install.sh` is the main script to run the application. It will:
 
 1. Check for Docker and install it if needed (Linux only)
 2. Verify Docker is running
 3. Build and start the application in development mode
 4. Open the app at http://localhost:5173 (with backend on :8080)
+
+Run `./install.sh` every time you want to start the application.
 
 ### Manual Installation
 
