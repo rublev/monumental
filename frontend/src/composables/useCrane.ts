@@ -1,8 +1,9 @@
 import * as THREE from 'three'
-import { CRANE_CONFIG } from '@monumental/shared'
-import type { CraneStats, TargetPosition } from '@monumental/shared'
+import { CRANE_CONFIG } from '@monumental/shared/config'
+import type { CraneStats, TargetPosition, AnimationState } from '@monumental/shared/crane'
 
-export interface PathSegment {
+// Frontend-specific path segment using THREE.Vector3 for 3D rendering
+export interface ThreePathSegment {
   type: 'line' | 'arc'
   start: THREE.Vector3
   end: THREE.Vector3
@@ -12,13 +13,9 @@ export interface PathSegment {
   angleDiff?: number
 }
 
-export interface AnimationState {
-  mode: 'IDLE' | 'MOVING_TO_A' | 'GRIPPING' | 'MOVING_TO_B' | 'RELEASING' | 'RETURNING'
-  startTime: number
-  duration: number
-  progress: number
+// Frontend-specific animation state with THREE.js path array
+export interface ThreeAnimationState extends AnimationState {
   path: THREE.Vector3[]
-  payloadAttached: boolean
 }
 
 export class Crane {
@@ -37,7 +34,7 @@ export class Crane {
   public endEffector: THREE.Object3D
   private towerGroup!: THREE.Group
 
-  public animation: AnimationState = {
+  public animation: ThreeAnimationState = {
     mode: 'IDLE',
     startTime: 0,
     duration: 0,
@@ -240,7 +237,7 @@ export class Crane {
     }
     intersections_t.sort()
 
-    const pathSegments: PathSegment[] = []
+    const pathSegments: ThreePathSegment[] = []
     if (intersections_t.length < 2) {
       pathSegments.push({
         type: 'line',

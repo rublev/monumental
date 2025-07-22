@@ -6,7 +6,7 @@
  */
 
 import type { BaseMessage, MessageType } from './types';
-import type { CraneState } from './messages';
+import type { CraneState } from '../crane/types';
 
 // =============================================================================
 // FRONTEND -> BACKEND EVENTS

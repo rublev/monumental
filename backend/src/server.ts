@@ -1,11 +1,11 @@
 import uWS from 'uWebSockets.js';
 import { CraneController } from './crane/CraneController.js';
-import { MessageType } from '@monumental/shared';
+import { MessageType } from '@monumental/shared/websocket';
 import type {
   ManualControlCommand,
   StartCycleCommand,
   BackendToFrontendMessage,
-} from '@monumental/shared';
+} from '@monumental/shared/websocket';
 import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 

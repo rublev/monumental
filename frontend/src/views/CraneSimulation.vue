@@ -4,15 +4,16 @@ import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { useCrane, Crane } from '@/composables/useCrane'
 import { useWebSocket } from '@/composables/useWebSocket'
-import { SCENE_CONFIG } from '@monumental/shared'
+import { SCENE_CONFIG } from '@monumental/shared/config'
+import { CRANE_DEFAULTS } from '@monumental/shared/crane'
 import { CustomAxesHelper } from '@/utils/CustomAxesHelper'
-import { MessageType } from '@monumental/shared'
+import { MessageType } from '@monumental/shared/websocket'
 import type {
   ManualControlCommand,
   StartCycleCommand,
   CraneStateUpdate,
   IncomingMessage,
-} from '@monumental/shared'
+} from '@monumental/shared/websocket'
 
 // Use constants from shared package
 const SIMULATION_BOUNDS = SCENE_CONFIG.SIMULATION_BOUNDS
@@ -30,23 +31,23 @@ const isBackendConnected = ref(false)
 // Reactive data
 const canvasContainer = ref<HTMLDivElement | null>(null)
 const pointA = reactive({
-  x: -5.0,
-  y: 2.0,
-  z: -2.0,
+  x: CRANE_DEFAULTS.DEFAULT_POINT_A.x,
+  y: CRANE_DEFAULTS.DEFAULT_POINT_A.y,
+  z: CRANE_DEFAULTS.DEFAULT_POINT_A.z,
 })
 const pointB = reactive({
-  x: 5.0,
-  y: 3.0,
-  z: 3.0,
+  x: CRANE_DEFAULTS.DEFAULT_POINT_B.x,
+  y: CRANE_DEFAULTS.DEFAULT_POINT_B.y,
+  z: CRANE_DEFAULTS.DEFAULT_POINT_B.z,
 })
 
 const settings = reactive({
-  craneSpeed: 10.0, // units per second
-  pathSteps: 200,
+  craneSpeed: CRANE_DEFAULTS.SPEED,
+  pathSteps: CRANE_DEFAULTS.PATH_STEPS,
 })
 
 const stats = reactive({
-  liftHeight: '8.00',
+  liftHeight: '0.0',
   shoulderAngle: '0.0',
   elbowAngle: '0.0',
 })
@@ -56,7 +57,7 @@ const animationState = reactive({
   mode: 'IDLE' as 'IDLE' | 'MOVING_TO_A' | 'GRIPPING' | 'MOVING_TO_B' | 'RELEASING' | 'RETURNING',
 })
 
-const homePosition = { x: 8, y: 12, z: 8 }
+const homePosition = CRANE_DEFAULTS.HOME_POSITION
 
 // Three.js objects
 let scene: THREE.Scene
@@ -84,7 +85,7 @@ const manualControl = reactive({
   endActuatorY: 0, // -1 to 1 for forward/backward
   liftDirection: 0, // -1 for down, 1 for up, 0 for stop
   gripperAction: 'stop' as 'open' | 'close' | 'stop',
-  controlSpeed: 0.1, // Movement speed multiplier
+  controlSpeed: CRANE_DEFAULTS.CONTROL_SPEED,
   lastSentTime: 0, // Throttle WebSocket messages
 })
 
@@ -502,8 +503,8 @@ const applyManualControl = () => {
   // Send manual control command to backend via websocket (throttled)
   if (isBackendConnected.value) {
     const now = Date.now()
-    // Throttle to 30fps (33ms) to prevent flooding
-    if (now - manualControl.lastSentTime > 33) {
+    // Throttle using shared constant to prevent flooding
+    if (now - manualControl.lastSentTime > CRANE_DEFAULTS.WEBSOCKET_THROTTLE_MS) {
       manualControl.lastSentTime = now
       const command: ManualControlCommand = {
         type: MessageType.MANUAL_CONTROL,
@@ -673,19 +674,24 @@ onUnmounted(() => {
     <div ref="canvasContainer" class="w-screen h-screen" style="cursor: grab"></div>
 
     <div
-      class="absolute bottom-4 left-4 bg-gray-900/50 backdrop-blur-sm p-3 rounded-md text-xs font-mono border border-gray-600">
+      class="absolute bottom-4 left-4 bg-gray-900/50 backdrop-blur-sm p-3 rounded-md text-xs font-mono border border-gray-600"
+    >
       <strong>Live Solver Output:</strong><br />
       Lift Height: {{ stats.liftHeight }}<br />
       Shoulder Yaw: {{ stats.shoulderAngle }}°<br />
       Elbow Yaw: {{ stats.elbowAngle }}°<br />
       <div class="mt-2 flex items-center space-x-2">
-        <div class="w-2 h-2 rounded-full" :class="isBackendConnected ? 'bg-green-500' : 'bg-red-500'"></div>
+        <div
+          class="w-2 h-2 rounded-full"
+          :class="isBackendConnected ? 'bg-green-500' : 'bg-red-500'"
+        ></div>
         <span>{{ isBackendConnected ? 'Backend Connected' : 'Backend Disconnected' }}</span>
       </div>
     </div>
 
     <div
-      class="absolute bottom-4 right-4 bg-gray-900/50 backdrop-blur-sm p-4 rounded-lg shadow-xl w-80 border border-gray-600">
+      class="absolute bottom-4 right-4 bg-gray-900/50 backdrop-blur-sm p-4 rounded-lg shadow-xl w-80 border border-gray-600"
+    >
       <h3 class="text-md font-bold mb-3 text-center">Crane Control</h3>
 
       <!-- Point A Controls -->
@@ -694,18 +700,31 @@ onUnmounted(() => {
         <div class="grid grid-cols-3 gap-2">
           <div>
             <label class="text-xs">X</label>
-            <input v-model.number="pointA.x" type="number" :step="SIMULATION_BOUNDS.STEP"
-              class="w-full px-2 py-1 bg-gray-800 border border-gray-600 rounded text-sm" />
+            <input
+              v-model.number="pointA.x"
+              type="number"
+              :step="SIMULATION_BOUNDS.STEP"
+              class="w-full px-2 py-1 bg-gray-800 border border-gray-600 rounded text-sm"
+            />
           </div>
           <div>
             <label class="text-xs">Y</label>
-            <input v-model.number="pointA.y" type="number" :step="SIMULATION_BOUNDS.STEP" :min="0"
-              class="w-full px-2 py-1 bg-gray-800 border border-gray-600 rounded text-sm" />
+            <input
+              v-model.number="pointA.y"
+              type="number"
+              :step="SIMULATION_BOUNDS.STEP"
+              :min="0"
+              class="w-full px-2 py-1 bg-gray-800 border border-gray-600 rounded text-sm"
+            />
           </div>
           <div>
             <label class="text-xs">Z</label>
-            <input v-model.number="pointA.z" type="number" :step="SIMULATION_BOUNDS.STEP"
-              class="w-full px-2 py-1 bg-gray-800 border border-gray-600 rounded text-sm" />
+            <input
+              v-model.number="pointA.z"
+              type="number"
+              :step="SIMULATION_BOUNDS.STEP"
+              class="w-full px-2 py-1 bg-gray-800 border border-gray-600 rounded text-sm"
+            />
           </div>
         </div>
       </div>
@@ -716,18 +735,31 @@ onUnmounted(() => {
         <div class="grid grid-cols-3 gap-2">
           <div>
             <label class="text-xs">X</label>
-            <input v-model.number="pointB.x" type="number" :step="SIMULATION_BOUNDS.STEP"
-              class="w-full px-2 py-1 bg-gray-800 border border-gray-600 rounded text-sm" />
+            <input
+              v-model.number="pointB.x"
+              type="number"
+              :step="SIMULATION_BOUNDS.STEP"
+              class="w-full px-2 py-1 bg-gray-800 border border-gray-600 rounded text-sm"
+            />
           </div>
           <div>
             <label class="text-xs">Y</label>
-            <input v-model.number="pointB.y" type="number" :step="SIMULATION_BOUNDS.STEP" :min="0"
-              class="w-full px-2 py-1 bg-gray-800 border border-gray-600 rounded text-sm" />
+            <input
+              v-model.number="pointB.y"
+              type="number"
+              :step="SIMULATION_BOUNDS.STEP"
+              :min="0"
+              class="w-full px-2 py-1 bg-gray-800 border border-gray-600 rounded text-sm"
+            />
           </div>
           <div>
             <label class="text-xs">Z</label>
-            <input v-model.number="pointB.z" type="number" :step="SIMULATION_BOUNDS.STEP"
-              class="w-full px-2 py-1 bg-gray-800 border border-gray-600 rounded text-sm" />
+            <input
+              v-model.number="pointB.z"
+              type="number"
+              :step="SIMULATION_BOUNDS.STEP"
+              class="w-full px-2 py-1 bg-gray-800 border border-gray-600 rounded text-sm"
+            />
           </div>
         </div>
       </div>
@@ -736,21 +768,37 @@ onUnmounted(() => {
       <div class="mb-4 space-y-2">
         <div>
           <label class="text-xs">Crane Speed (units/s)</label>
-          <input v-model.number="settings.craneSpeed" type="number" min="1" max="50" step="1"
-            class="w-full px-2 py-1 bg-gray-800 border border-gray-600 rounded text-sm" />
+          <input
+            v-model.number="settings.craneSpeed"
+            type="number"
+            min="1"
+            max="50"
+            step="1"
+            class="w-full px-2 py-1 bg-gray-800 border border-gray-600 rounded text-sm"
+          />
         </div>
         <div>
           <label class="text-xs">Path Fidelity</label>
-          <input v-model.number="settings.pathSteps" type="number" min="10" max="500" step="10"
-            class="w-full px-2 py-1 bg-gray-800 border border-gray-600 rounded text-sm" />
+          <input
+            v-model.number="settings.pathSteps"
+            type="number"
+            min="10"
+            max="500"
+            step="10"
+            class="w-full px-2 py-1 bg-gray-800 border border-gray-600 rounded text-sm"
+          />
         </div>
       </div>
 
       <!-- Manual Control Toggle -->
       <div class="mb-4">
         <label class="flex items-center space-x-2">
-          <input v-model="manualControl.enabled" type="checkbox" :disabled="animationState.mode !== 'IDLE'"
-            class="w-4 h-4 text-blue-600 bg-gray-800 border-gray-600 rounded focus:ring-blue-500" />
+          <input
+            v-model="manualControl.enabled"
+            type="checkbox"
+            :disabled="animationState.mode !== 'IDLE'"
+            class="w-4 h-4 text-blue-600 bg-gray-800 border-gray-600 rounded focus:ring-blue-500"
+          />
           <span class="text-sm font-medium">Manual Control (WASD + Q/E)</span>
         </label>
         <div v-if="manualControl.enabled" class="mt-2 text-xs text-gray-400">
@@ -762,12 +810,18 @@ onUnmounted(() => {
 
       <!-- Start/Stop Buttons -->
       <div class="flex gap-2">
-        <button @click="startCycle" :disabled="animationState.mode !== 'IDLE' || manualControl.enabled"
-          class="flex-1 bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+        <button
+          @click="startCycle"
+          :disabled="animationState.mode !== 'IDLE' || manualControl.enabled"
+          class="flex-1 bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
           {{ animationState.mode === 'IDLE' ? 'Start Cycle' : 'Running...' }}
         </button>
-        <button @click="stopCycle" :disabled="animationState.mode === 'IDLE' || manualControl.enabled"
-          class="flex-1 bg-red-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+        <button
+          @click="stopCycle"
+          :disabled="animationState.mode === 'IDLE' || manualControl.enabled"
+          class="flex-1 bg-red-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
           Stop Cycle
         </button>
       </div>

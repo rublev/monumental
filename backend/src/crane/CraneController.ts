@@ -1,61 +1,17 @@
-import { CRANE_CONFIG, MessageType } from '@monumental/shared';
+import { CRANE_CONFIG } from '@monumental/shared/config';
+import { MessageType } from '@monumental/shared/websocket';
 import type {
   ManualControlCommand,
   StartCycleCommand,
   CraneStateUpdate,
   BackendToFrontendMessage,
   CycleCompleteNotification,
-} from '@monumental/shared';
-
-export interface CraneState {
-  // Joint positions
-  swing: number; // radians
-  lift: number; // mm
-  elbow: number; // radians
-  wrist: number; // radians
-  gripper: number; // mm (0 = closed, 1 = open)
-
-  // Derived values
-  endEffectorPosition: { x: number; y: number; z: number };
-  payloadPosition: { x: number; y: number; z: number };
-  payloadAttached: boolean;
-  isMoving: boolean;
-  hasTarget: boolean;
-  timestamp: number;
-  sequence: number;
-
-  // Animation state
-  mode:
-    | 'IDLE'
-    | 'MOVING_TO_A'
-    | 'GRIPPING'
-    | 'MOVING_TO_B'
-    | 'RELEASING'
-    | 'RETURNING';
-  cycleProgress?: {
-    isActive: boolean;
-    currentPhase: 'moving_to_a' | 'at_a' | 'moving_to_b' | 'at_b' | 'idle';
-    progressPercent: number;
-    estimatedTimeRemaining: number;
-  };
-}
-
-export interface CycleConfig {
-  pointA: { x: number; y: number; z: number };
-  pointB: { x: number; y: number; z: number };
-  speed: number;
-  pathSteps: number;
-}
-
-export interface PathSegment {
-  type: 'line' | 'arc';
-  start: { x: number; y: number; z: number };
-  end: { x: number; y: number; z: number };
-  length: number;
-  radius?: number;
-  startAngle?: number;
-  angleDiff?: number;
-}
+} from '@monumental/shared/websocket';
+import type {
+  CraneState,
+  CycleConfig,
+  PathSegment,
+} from '@monumental/shared/crane';
 
 export class CraneController {
   private state: CraneState;
@@ -549,6 +505,7 @@ export class CraneController {
           isGripperOpen: this.state.gripper > 0.5,
           payloadPosition: this.state.payloadPosition,
           payloadAttached: this.state.payloadAttached,
+          mode: this.state.mode,
         },
         cycleProgress: this.state.cycleProgress,
       };
