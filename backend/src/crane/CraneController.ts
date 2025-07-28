@@ -7,8 +7,7 @@ import type {
   BackendToFrontendMessage,
   CycleCompleteNotification,
 } from '@monumental/shared/websocket'
-import type { CraneState, CycleConfig, PathSegment } from '@monumental/shared/crane'
-import { CRANE_DEFAULTS } from '@monumental/shared/crane'
+import type { CraneState, CycleConfig } from '@monumental/shared/crane'
 import * as CraneMath from '@monumental/shared/crane'
 
 export class CraneController {
@@ -24,11 +23,6 @@ export class CraneController {
   // Animation timing for easing
   private phaseStartTime = 0
   private phaseDuration = 0
-
-  // Crane configuration from shared package
-  private readonly upperArmLength = CRANE_CONFIG.ARM.UPPER_LENGTH
-  private readonly lowerArmLength = CRANE_CONFIG.ARM.LOWER_LENGTH
-  private readonly minRadius = CRANE_CONFIG.OBSTACLE.RADIUS
 
   constructor() {
     this.state = this.createInitialState()
